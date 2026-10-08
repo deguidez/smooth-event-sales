@@ -36,7 +36,7 @@ export function Logo() {
 }
 
 export function SiteHeader() {
-  const { user, isAdmin } = useAuth();
+  const { user, isAdmin, isProducer } = useAuth();
   const navigate = useNavigate();
   const qc = useQueryClient();
 
