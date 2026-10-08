@@ -85,9 +85,10 @@ function Checkout() {
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
-    if (info!.event.shirt_enabled && !f.shirt_size) { toast.error("Escolha o tamanho da camisa do kit"); return; }
-    const reqMissing = parseFields(info!.event.custom_fields).find((cf) => cf.required && isEmpty(answers[cf.id]));
-    const notAccepted = activeTerms(info!.event.terms).find((t) => !accepted.includes(t.id));
+    if (!info || !user) return;
+    if (info.event.shirt_enabled && !f.shirt_size) { toast.error("Escolha o tamanho da camisa do kit"); return; }
+    const reqMissing = parseFields(info.event.custom_fields).find((cf) => cf.required && isEmpty(answers[cf.id]));
+    const notAccepted = activeTerms(info.event.terms).find((t) => !accepted.includes(t.id));
     if (notAccepted) { toast.error(`Aceite o termo "${notAccepted.title}"`); return; }
     if (reqMissing) { toast.error(`Preencha o campo "${reqMissing.label}"`); return; }
     const missing = chosen.find((x: any) => x.p.sizes.length && !x.c.size);
@@ -98,7 +99,7 @@ function Checkout() {
       await supabase
         .from("profiles")
         .update({ full_name: f.name, cpf, phone: f.phone, birth_date: f.birth_date || null, gender: f.gender || null })
-        .eq("id", user!.id);
+        .eq("id", user.id);
       const r = await submitOrder({
         data: {
           ticketId,
@@ -119,15 +120,15 @@ function Checkout() {
   }
 
   return (
-    <form onSubmit={submit} className="mx-auto grid max-w-6xl gap-8 px-4 py-10 lg:grid-cols-[1fr_380px]">
-      <div className="space-y-6">
+    <form onSubmit={submit} className="mx-auto grid max-w-6xl grid-cols-[minmax(0,1fr)] gap-8 px-4 py-10 lg:grid-cols-[minmax(0,1fr)_380px]">
+      <div className="min-w-0 space-y-6">
         <div>
           <h1 className="text-3xl font-extrabold">Finalizar inscrição</h1>
           <p className="text-muted-foreground">Preencha os dados do participante.</p>
         </div>
         <section className="grid gap-4 rounded-2xl border bg-card p-6 shadow-card sm:grid-cols-2">
           <Field label="Nome completo" className="sm:col-span-2"><Input value={f.name} onChange={set("name")} required minLength={3} maxLength={120} /></Field>
-          <Field label="E-mail"><Input type="email" value={f.email} onChange={set("email")} required /></Field>
+          <Field label="E-mail do participante"><Input id="participant-email" type="email" autoComplete="email" maxLength={200} value={f.email} onChange={set("email")} required /></Field>
           <Field label="CPF"><Input value={f.cpf} onChange={set("cpf")} required placeholder="000.000.000-00" /></Field>
           <Field label="Celular"><Input value={f.phone} onChange={set("phone")} placeholder="(11) 99999-9999" /></Field>
           <Field label="Data de nascimento"><Input type="date" value={f.birth_date} onChange={set("birth_date")} /></Field>
@@ -269,7 +270,7 @@ function Checkout() {
 function Field({ label, children, className }: { label: string; children: React.ReactNode; className?: string }) {
   return (
     <div className={cn("space-y-1.5", className)}>
-      <Label>{label}</Label>
+        <Label htmlFor={label === "E-mail do participante" ? "participant-email" : undefined}>{label}</Label>
       {children}
     </div>
   );

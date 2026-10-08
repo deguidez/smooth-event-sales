@@ -1,69 +1,108 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { EditorContent, useEditor } from "@tiptap/react";
+import StarterKit from "@tiptap/starter-kit";
+import Image from "@tiptap/extension-image";
 import { toast } from "sonner";
-import { ImagePlus } from "lucide-react";
+import { Bold, Italic, Underline, Strikethrough, Heading2, Heading3, List, ListOrdered, Quote, Link as LinkIcon, Unlink, Undo2, Redo2, ImagePlus, type LucideIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { uploadEventFile } from "@/components/event-files";
-
-const IMG_RE = /!\[[^\]]*\]\((https?:\/\/[^\s)]+)\)/g;
+import { descriptionHtml, sanitizeDescription } from "@/lib/description";
 
 export function DescriptionEditor({ producerId, value, onChange }: { producerId: string; value: string; onChange: (v: string) => void }) {
-  const ta = useRef<HTMLTextAreaElement>(null);
   const file = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
+  const [linkValue, setLinkValue] = useState<string | null>(null);
+  const savedSelection = useRef<{ from: number; to: number } | null>(null);
+  const editor = useEditor({
+    extensions: [StarterKit.configure({ link: { openOnClick: false, HTMLAttributes: { rel: "noopener noreferrer", target: "_blank" } } }), Image.configure({ allowBase64: true })],
+    immediatelyRender: false,
+    content: descriptionHtml(value),
+    editorProps: {
+      attributes: { class: "rich-description min-h-64 p-4 outline-none", role: "textbox", "aria-label": "Descrição completa", "aria-multiline": "true" },
+      transformPastedHTML: sanitizeDescription,
+      handlePaste: (_view, event) => {
+        // Prefer clipboard HTML so formatted text and remote images stay together.
+        if (event.clipboardData?.getData("text/html")) return false;
+        const images = Array.from(event.clipboardData?.files ?? []).filter((f) => f.type.startsWith("image/"));
+        if (!images.length) return false;
+        event.preventDefault();
+        void insertFiles(images);
+        return true;
+      },
+      handleDrop: (_view, event, _slice, moved) => {
+        if (moved) return false;
+        const images = Array.from(event.dataTransfer?.files ?? []).filter((f) => f.type.startsWith("image/"));
+        if (!images.length) return false;
+        event.preventDefault();
+        void insertFiles(images);
+        return true;
+      },
+    },
+    onUpdate: ({ editor: current }) => onChange(current.isEmpty ? "" : sanitizeDescription(current.getHTML())),
+  });
 
-  async function onFile(f?: File) {
-    if (!f) return;
-    if (!f.type.startsWith("image/")) return void toast.error("Escolha uma imagem");
-    if (f.size > 8 * 1024 * 1024) return void toast.error("Imagem até 8 MB");
+  useEffect(() => {
+    if (!editor) return;
+    const html = descriptionHtml(value);
+    if (sanitizeDescription(editor.getHTML()) !== html && !editor.isFocused) editor.commands.setContent(html, { emitUpdate: false });
+  }, [editor, value]);
+
+  async function insertFiles(files: File[]) {
+    if (!editor) return;
+    savedSelection.current = { from: editor.state.selection.from, to: editor.state.selection.to };
     setBusy(true);
     try {
-      const url = await uploadEventFile(producerId, f);
-      const pos = ta.current?.selectionStart ?? value.length;
-      const token = `\n![imagem](${url})\n`;
-      onChange(value.slice(0, pos) + token + value.slice(pos));
+      for (const f of files) {
+        if (!f.type.startsWith("image/")) throw new Error("Escolha uma imagem");
+        if (f.size > 8 * 1024 * 1024) throw new Error("Imagem até 8 MB");
+        const src = await uploadEventFile(producerId, f);
+        const position = savedSelection.current;
+        const chain = editor.chain().focus();
+        if (position) chain.setTextSelection(position);
+        chain.setImage({ src, alt: f.name }).run();
+        savedSelection.current = { from: editor.state.selection.from, to: editor.state.selection.to };
+      }
       toast.success("Imagem inserida");
-    } catch (e: any) {
-      toast.error(e?.message ?? "Falha no envio");
-    } finally {
-      setBusy(false);
-      if (file.current) file.current.value = "";
-    }
+    } catch (e) { toast.error(e instanceof Error ? e.message : "Falha no envio"); }
+    finally { setBusy(false); if (file.current) file.current.value = ""; }
+  }
+
+  function tool(label: string, Icon: LucideIcon, action: () => void, active = false, disabled = false) {
+    return <Tooltip key={label}><TooltipTrigger asChild><Button type="button" size="icon" variant={active ? "secondary" : "ghost"} className="h-8 w-8 shrink-0" aria-label={label} aria-pressed={active} disabled={!editor || busy || disabled} onClick={action}><Icon className="h-4 w-4" /></Button></TooltipTrigger><TooltipContent>{label}</TooltipContent></Tooltip>;
   }
 
   return (
-    <div className="space-y-2">
-      <Textarea ref={ta} rows={10} value={value} onChange={(e) => onChange(e.target.value)} />
-      <div className="flex items-center gap-3">
-        <input ref={file} type="file" accept="image/*" hidden onChange={(e) => onFile(e.target.files?.[0])} />
-        <Button type="button" variant="outline" size="sm" disabled={busy} onClick={() => file.current?.click()}>
-          <ImagePlus className="h-4 w-4" /> {busy ? "Enviando..." : "Inserir imagem"}
-        </Button>
-        <span className="text-xs text-muted-foreground">A imagem entra onde o cursor estiver.</span>
-      </div>
-      {IMG_RE.test(value) && (
-        <div className="rounded-lg border p-3"><p className="mb-2 text-xs font-semibold text-muted-foreground">Pré-visualização</p><RichDescription text={value} /></div>
-      )}
+    <div className="min-w-0 max-w-full overflow-hidden rounded-lg border bg-card">
+      <TooltipProvider delayDuration={200}><div role="toolbar" aria-label="Formatação da descrição" className="flex flex-wrap items-center gap-1 border-b bg-muted/50 p-2">
+        {tool("Negrito", Bold, () => editor?.chain().focus().toggleBold().run(), editor?.isActive("bold"))}
+        {tool("Itálico", Italic, () => editor?.chain().focus().toggleItalic().run(), editor?.isActive("italic"))}
+        {tool("Sublinhado", Underline, () => editor?.chain().focus().toggleUnderline().run(), editor?.isActive("underline"))}
+        {tool("Tachado", Strikethrough, () => editor?.chain().focus().toggleStrike().run(), editor?.isActive("strike"))}
+        {tool("Título", Heading2, () => editor?.chain().focus().toggleHeading({ level: 2 }).run(), editor?.isActive("heading", { level: 2 }))}
+        {tool("Subtítulo", Heading3, () => editor?.chain().focus().toggleHeading({ level: 3 }).run(), editor?.isActive("heading", { level: 3 }))}
+        {tool("Lista", List, () => editor?.chain().focus().toggleBulletList().run(), editor?.isActive("bulletList"))}
+        {tool("Lista numerada", ListOrdered, () => editor?.chain().focus().toggleOrderedList().run(), editor?.isActive("orderedList"))}
+        {tool("Citação", Quote, () => editor?.chain().focus().toggleBlockquote().run(), editor?.isActive("blockquote"))}
+        {tool("Inserir link", LinkIcon, () => { if (!editor) return; savedSelection.current = editor.state.selection; setLinkValue(editor.getAttributes("link")["href"] ?? ""); }, editor?.isActive("link"))}
+        {tool("Remover link", Unlink, () => editor?.chain().focus().unsetLink().run(), false, !editor?.isActive("link"))}
+        {tool(busy ? "Enviando imagem" : "Inserir imagem", ImagePlus, () => file.current?.click())}
+        {tool("Desfazer", Undo2, () => editor?.chain().focus().undo().run(), false, !editor?.can().undo())}
+        {tool("Refazer", Redo2, () => editor?.chain().focus().redo().run(), false, !editor?.can().redo())}
+      </div></TooltipProvider>
+      {linkValue !== null && <div className="flex flex-wrap gap-2 border-b p-2"><input aria-label="Endereço do link" type="url" className="min-w-0 flex-1 rounded-md border bg-background px-3 text-sm" placeholder="https://" value={linkValue} onChange={(e) => setLinkValue(e.target.value)} /><Button type="button" size="sm" onClick={() => { if (!editor || !/^(https?:\/\/|mailto:)/i.test(linkValue)) { toast.error("Informe um link válido"); return; } const chain = editor.chain().focus(); if (savedSelection.current) chain.setTextSelection(savedSelection.current); chain.extendMarkRange("link").setLink({ href: linkValue }).run(); setLinkValue(null); }}>Aplicar</Button><Button type="button" size="sm" variant="ghost" onClick={() => setLinkValue(null)}>Cancelar</Button></div>}
+      <input ref={file} type="file" accept="image/*" hidden onChange={(e) => { const selected = e.target.files?.[0]; if (selected) void insertFiles([selected]); }} />
+      <EditorContent editor={editor} />
+      {busy && <p role="status" className="px-4 pb-3 text-sm text-muted-foreground">Enviando imagem…</p>}
     </div>
   );
 }
 
 export function RichDescription({ text }: { text: string | null | undefined }) {
   if (!text) return null;
-  const parts: React.ReactNode[] = [];
-  let last = 0;
-  let i = 0;
-  for (const m of text.matchAll(IMG_RE)) {
-    const idx = m.index ?? 0;
-    if (idx > last) parts.push(<span key={i++}>{text.slice(last, idx)}</span>);
-    parts.push(<img key={i++} src={m[1]} alt="" loading="lazy" className="my-3 block w-full rounded-xl" />);
-    last = idx + m[0].length;
-  }
-  if (last < text.length) parts.push(<span key={i++}>{text.slice(last)}</span>);
-  return <div className="whitespace-pre-line leading-relaxed text-muted-foreground">{parts}</div>;
+  return <div className="rich-description min-w-0 max-w-full text-muted-foreground" dangerouslySetInnerHTML={{ __html: descriptionHtml(text) }} />;
 }
 
-/** Accepts a Google My Maps share link, embed link or full <iframe> code; returns embed URL. */
 export function myMapsEmbed(input: string | null | undefined): string | null {
   if (!input) return null;
   const mid = input.match(/[?&]mid=([\w-]+)/)?.[1];
@@ -73,10 +112,5 @@ export function myMapsEmbed(input: string | null | undefined): string | null {
 export function RouteMap({ value }: { value: string | null | undefined }) {
   const src = myMapsEmbed(value);
   if (!src) return null;
-  return (
-    <div className="rounded-2xl border bg-card p-5">
-      <h2 className="text-xl font-bold">Mapa do percurso</h2>
-      <iframe src={src} title="Mapa do percurso" className="mt-3 h-[420px] w-full rounded-xl border-0" loading="lazy" />
-    </div>
-  );
+  return <section className="min-w-0 max-w-full space-y-3"><h2 className="text-xl font-bold">Mapa do percurso</h2><iframe src={src} title="Mapa do percurso" className="block h-64 w-full max-w-full rounded-lg border sm:h-72" loading="lazy" /></section>;
 }
