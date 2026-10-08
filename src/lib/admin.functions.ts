@@ -294,6 +294,62 @@ export const updateUser = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
+/** Super admin cria um usuário (conta já confirmada) com perfil e acessos. */
+export const adminCreateUser = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) =>
+    z
+      .object({
+        email: z.string().trim().email().max(200),
+        password: z.string().min(6).max(72),
+        full_name: z.string().trim().max(150).nullable(),
+        phone: z.string().trim().max(30).nullable(),
+        cpf: z.string().trim().max(20).nullable(),
+        roles: z.array(z.enum(["super_admin", "producer", "athlete"])),
+      })
+      .parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context);
+    const admin = await getAdmin();
+    const { data: created, error } = await admin.auth.admin.createUser({
+      email: data.email,
+      password: data.password,
+      email_confirm: true,
+      user_metadata: { full_name: data.full_name ?? undefined },
+    });
+    if (error) throw new Error(error.message);
+    const userId = created.user.id;
+    await admin.from("profiles").upsert({
+      id: userId,
+      full_name: data.full_name,
+      email: data.email,
+      phone: data.phone,
+      cpf: data.cpf,
+      updated_at: new Date().toISOString(),
+    });
+    if (data.roles.length)
+      await admin.from("user_roles").upsert(data.roles.map((role) => ({ user_id: userId, role })), { onConflict: "user_id,role" });
+    return { ok: true, id: userId };
+  });
+
+/** Super admin exclui um usuário por completo (conta, perfil e acessos). */
+export const deleteUser = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) => z.object({ userId: z.string().uuid() }).parse(d))
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context);
+    if (data.userId === context.userId) throw new Error("Você não pode excluir a sua própria conta");
+    const admin = await getAdmin();
+    const { count: orders } = await admin.from("orders").select("id", { count: "exact", head: true }).eq("user_id", data.userId);
+    if (orders) throw new Error(`Esse usuário tem ${orders} inscrição(ões) e não pode ser excluído.`);
+    const { count: prods } = await admin.from("producers").select("id", { count: "exact", head: true }).eq("user_id", data.userId);
+    if (prods) throw new Error("Esse usuário tem um cadastro de produtor. Exclua o produtor primeiro na aba Produtores.");
+    const { error } = await admin.auth.admin.deleteUser(data.userId);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
 const producerSchema = z.object({
   account_email: z.string().trim().email().max(200),
   account_password: z.string().min(6).max(72).optional(),
