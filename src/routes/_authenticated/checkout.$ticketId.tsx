@@ -84,10 +84,16 @@ function Checkout() {
     .filter((x: any) => x.c && x.c.qty > 0);
   const productsTotal = chosen.reduce((s: number, x: any) => s + x.p.price * x.c.qty, 0);
   const subtotal = info.ticket.price + productsTotal;
-  const discount = coupon ? Math.min(subtotal, Math.round(subtotal * coupon.percent) / 100) : 0;
+  // Desconto apenas sobre o valor da inscrição; a taxa é calculada sobre o valor cheio.
+  const discount = coupon ? Math.min(info.ticket.price, Math.round(info.ticket.price * coupon.percent) / 100) : 0;
   const net = Math.max(0, subtotal - discount);
   const free = net <= 0;
-  const quote = computeFees(net, method, info.feeSettings as any, info.feeOverride);
+  const quoteFull = computeFees(subtotal, method, info.feeSettings as any, info.feeOverride);
+  const quote = {
+    ...quoteFull,
+    total: Math.max(0, Math.round((quoteFull.total - discount) * 100) / 100),
+    producerAmount: Math.max(0, Math.round((quoteFull.producerAmount - discount) * 100) / 100),
+  };
   const set = (k: keyof typeof f) => (e: React.ChangeEvent<HTMLInputElement>) => setF({ ...f, [k]: e.target.value });
 
   async function submit(e: React.FormEvent) {
