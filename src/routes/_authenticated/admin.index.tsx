@@ -106,6 +106,7 @@ function Users() {
         </Table>
       </div>
       {editing && <UserDialog u={editing} onClose={() => setEditing(null)} onSaved={() => { setEditing(null); qc.invalidateQueries({ queryKey: ["admin-users"] }); }} />}
+      {creating && <NewUserDialog onClose={() => setCreating(false)} onSaved={() => { setCreating(false); qc.invalidateQueries({ queryKey: ["admin-users"] }); }} />}
       <p className="text-xs text-muted-foreground">O perfil de produtor é liberado ao aprovar o cadastro na aba Produtores.</p>
     </div>
   );
@@ -119,6 +120,7 @@ export const Route = createFileRoute("/_authenticated/admin/")({
 
 function UserDialog({ u, onClose, onSaved }: { u: any; onClose: () => void; onSaved: () => void }) {
   const save = useServerFn(updateUser);
+  const del = useServerFn(deleteUser);
   const [busy, setBusy] = useState(false);
   const [f, setF] = useState({
     full_name: u.full_name ?? "", email: u.email ?? "", phone: u.phone ?? "", cpf: u.cpf ?? "",
