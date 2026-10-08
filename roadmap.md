@@ -1,4 +1,6 @@
 # Roadmap
+- [ ] Corrigir contagem financeira de inscrições confirmadas/pagas em admin e produtor
+- [ ] Logs seguros de atividades e erros de admin, produtor e atleta, com consulta exclusiva do superadmin
 - [x] Ingresso com QR dentro do comprovante e adicionar ao calendário — inscrição real, QR, link Google e download .ics verificados; sem rolagem lateral no celular
 - [x] Descrição com formatação e colagem de imagens — salvar e exibir verificados com conta real; e-mail editável conferido; mapa reduzido e páginas sem rolagem lateral em 390, 886 e 1280 px
 - [x] Remover menu de produtores e abrir o painel automaticamente ao entrar como produtor — verificado com conta real
