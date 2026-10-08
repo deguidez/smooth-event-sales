@@ -17,6 +17,7 @@ import { Route as EventosIndexRouteImport } from './routes/eventos.index'
 import { Route as EventosSlugRouteImport } from './routes/eventos.$slug'
 import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin.index'
 import { Route as AuthenticatedAdminConfiguracoesRouteImport } from './routes/_authenticated/admin.configuracoes'
+import { Route as AuthenticatedAdminEmailRouteImport } from './routes/_authenticated/admin.email'
 import { Route as AuthenticatedCheckoutTicketIdRouteImport } from './routes/_authenticated/checkout.$ticketId'
 import { Route as AuthenticatedPedidoIdRouteImport } from './routes/_authenticated/pedido.$id'
 import { Route as AuthenticatedProdutorIndexRouteImport } from './routes/_authenticated/produtor.index'
@@ -63,6 +64,11 @@ const AuthenticatedAdminConfiguracoesRoute =
     path: '/admin/configuracoes',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedAdminEmailRoute = AuthenticatedAdminEmailRouteImport.update({
+  id: '/admin/email',
+  path: '/admin/email',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedCheckoutTicketIdRoute =
   AuthenticatedCheckoutTicketIdRouteImport.update({
     id: '/checkout/$ticketId',
@@ -99,6 +105,7 @@ export interface FileRoutesByFullPath {
   '/eventos/$slug': typeof EventosSlugRoute
   '/eventos/': typeof EventosIndexRoute
   '/admin/configuracoes': typeof AuthenticatedAdminConfiguracoesRoute
+  '/admin/email': typeof AuthenticatedAdminEmailRoute
   '/checkout/$ticketId': typeof AuthenticatedCheckoutTicketIdRoute
   '/pedido/$id': typeof AuthenticatedPedidoIdRoute
   '/api/public/asaas-webhook': typeof ApiPublicAsaasWebhookRoute
@@ -113,6 +120,7 @@ export interface FileRoutesByTo {
   '/eventos/$slug': typeof EventosSlugRoute
   '/eventos': typeof EventosIndexRoute
   '/admin/configuracoes': typeof AuthenticatedAdminConfiguracoesRoute
+  '/admin/email': typeof AuthenticatedAdminEmailRoute
   '/checkout/$ticketId': typeof AuthenticatedCheckoutTicketIdRoute
   '/pedido/$id': typeof AuthenticatedPedidoIdRoute
   '/api/public/asaas-webhook': typeof ApiPublicAsaasWebhookRoute
@@ -129,6 +137,7 @@ export interface FileRoutesById {
   '/eventos/$slug': typeof EventosSlugRoute
   '/eventos/': typeof EventosIndexRoute
   '/_authenticated/admin/configuracoes': typeof AuthenticatedAdminConfiguracoesRoute
+  '/_authenticated/admin/email': typeof AuthenticatedAdminEmailRoute
   '/_authenticated/checkout/$ticketId': typeof AuthenticatedCheckoutTicketIdRoute
   '/_authenticated/pedido/$id': typeof AuthenticatedPedidoIdRoute
   '/api/public/asaas-webhook': typeof ApiPublicAsaasWebhookRoute
@@ -145,6 +154,7 @@ export interface FileRouteTypes {
     | '/eventos/$slug'
     | '/eventos/'
     | '/admin/configuracoes'
+    | '/admin/email'
     | '/checkout/$ticketId'
     | '/pedido/$id'
     | '/api/public/asaas-webhook'
@@ -159,6 +169,7 @@ export interface FileRouteTypes {
     | '/eventos/$slug'
     | '/eventos'
     | '/admin/configuracoes'
+    | '/admin/email'
     | '/checkout/$ticketId'
     | '/pedido/$id'
     | '/api/public/asaas-webhook'
@@ -174,6 +185,7 @@ export interface FileRouteTypes {
     | '/eventos/$slug'
     | '/eventos/'
     | '/_authenticated/admin/configuracoes'
+    | '/_authenticated/admin/email'
     | '/_authenticated/checkout/$ticketId'
     | '/_authenticated/pedido/$id'
     | '/api/public/asaas-webhook'
@@ -249,6 +261,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminConfiguracoesRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/admin/email': {
+      id: '/_authenticated/admin/email'
+      path: '/admin/email'
+      fullPath: '/admin/email'
+      preLoaderRoute: typeof AuthenticatedAdminEmailRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/checkout/$ticketId': {
       id: '/_authenticated/checkout/$ticketId'
       path: '/checkout/$ticketId'
@@ -290,6 +309,7 @@ declare module '@tanstack/react-router' {
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedMinhaContaRoute: typeof AuthenticatedMinhaContaRoute
   AuthenticatedAdminConfiguracoesRoute: typeof AuthenticatedAdminConfiguracoesRoute
+  AuthenticatedAdminEmailRoute: typeof AuthenticatedAdminEmailRoute
   AuthenticatedCheckoutTicketIdRoute: typeof AuthenticatedCheckoutTicketIdRoute
   AuthenticatedPedidoIdRoute: typeof AuthenticatedPedidoIdRoute
   AuthenticatedAdminIndexRoute: typeof AuthenticatedAdminIndexRoute
@@ -300,6 +320,7 @@ interface AuthenticatedRouteRouteChildren {
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedMinhaContaRoute: AuthenticatedMinhaContaRoute,
   AuthenticatedAdminConfiguracoesRoute: AuthenticatedAdminConfiguracoesRoute,
+  AuthenticatedAdminEmailRoute: AuthenticatedAdminEmailRoute,
   AuthenticatedCheckoutTicketIdRoute: AuthenticatedCheckoutTicketIdRoute,
   AuthenticatedPedidoIdRoute: AuthenticatedPedidoIdRoute,
   AuthenticatedAdminIndexRoute: AuthenticatedAdminIndexRoute,

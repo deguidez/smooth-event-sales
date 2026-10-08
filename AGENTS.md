@@ -10,6 +10,8 @@
 <!-- LOVABLE:END -->
 
 ## Architecture rules
+- Post-login navigation is resolved once on the auth page after roles finish loading, including OAuth returns, to avoid competing redirects.
+- The Hostinger mailbox uses fetch-only authenticated server functions with a super_admin role check on every operation; credentials and raw email HTML never enter the main page context.
 - Asaas credentials and fee config live in `platform_settings` (service-role only); read them only inside server functions via `src/lib/asaas.server.ts` — keeps the API key out of the browser.
 - Fee/split math lives only in `src/lib/fees.ts` (`computeFees`), shared by checkout, server and admin simulator — one source of truth for buyer total, producer split and platform cut.
 - Order status changes go through `applyOrderStatus` (webhook + manual refresh) — guarantees ticket counters and email notifications fire once.

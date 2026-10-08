@@ -272,7 +272,7 @@ function AdminDashboard() {
           <p className="text-sm text-muted-foreground">Super admin</p>
           <h1 className="text-3xl font-extrabold md:text-4xl">Visão geral da plataforma</h1>
         </div>
-        <Button variant="ink" asChild><Link to="/admin/configuracoes"><Settings /> Configurações</Link></Button>
+        <div className="flex flex-wrap gap-2"><Button variant="outline" asChild><Link to="/admin/email">Caixa de e-mail</Link></Button><Button variant="ink" asChild><Link to="/admin/configuracoes"><Settings /> Configurações</Link></Button></div>
       </div>
       <div className="grid gap-4 md:grid-cols-4">
         <StatCard icon={DollarSign} label="Volume vendido" value={brl(sum("total"))} hint={`${paid.length} inscrições pagas`} />
