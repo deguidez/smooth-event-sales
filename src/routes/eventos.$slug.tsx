@@ -48,6 +48,8 @@ function EventPage() {
   const tickets = [...(ev.ticket_types ?? [])].filter((t) => t.active).sort((a, b) => a.position - b.position);
   const now = Date.now();
   const regEnd = (ev as any).registration_ends_at as string | null;
+  const regOpen = (ev as any).registrations_open_at as string | null;
+  const notOpen = !!regOpen && new Date(regOpen).getTime() > now;
   const closed = ev.status !== "publicado" || (!!regEnd && new Date(regEnd).getTime() < now);
 
   return (
@@ -92,13 +94,14 @@ function EventPage() {
         </div>
         <aside className="min-w-0 h-fit space-y-3 rounded-2xl border bg-card p-5 shadow-card lg:sticky lg:top-24">
           <h2 className="text-xl font-bold">Inscrições</h2>
+          {regOpen && <p className="text-sm text-muted-foreground">Inscrições abrem em {fmtDate(regOpen, true)}</p>}
           {regEnd && <p className="text-sm text-muted-foreground">Inscrições até {fmtDate(regEnd, true)}</p>}
           {tickets.length === 0 && <p className="text-sm text-muted-foreground">Nenhuma categoria disponível.</p>}
           {tickets.map((t) => {
             const soldOut = t.sold >= t.quantity;
             const notYet = t.sales_start && new Date(t.sales_start).getTime() > now;
             const ended = t.sales_end && new Date(t.sales_end).getTime() < now;
-            const disabled = closed || soldOut || !!notYet || !!ended;
+            const disabled = closed || notOpen || soldOut || !!notYet || !!ended;
             return (
               <div key={t.id} className="rounded-xl border p-4">
                 <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-3">
@@ -114,7 +117,7 @@ function EventPage() {
                 </div>
                 <Button variant="hero" className="mt-3 w-full" disabled={disabled} asChild={!disabled}>
                   {disabled ? (
-                    <span>{soldOut ? "Esgotado" : notYet ? "Em breve" : "Encerrado"}</span>
+                    <span>{soldOut ? "Esgotado" : notOpen || notYet ? "Em breve" : "Encerrado"}</span>
                   ) : (
                     <Link to="/checkout/$ticketId" params={{ ticketId: t.id }}>Inscrever-se</Link>
                   )}

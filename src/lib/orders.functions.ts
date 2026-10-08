@@ -78,7 +78,7 @@ export const createOrder = createServerFn({ method: "POST" })
     const s = await loadSettings();
     const { data: tt } = await admin
       .from("ticket_types")
-      .select("*, events!inner(id, title, status, producer_id, starts_at, shirt_enabled, shirt_sizes, fee_percent, fee_fixed, custom_fields, terms, registration_ends_at, registration_limit)")
+      .select("*, events!inner(id, title, status, producer_id, starts_at, shirt_enabled, shirt_sizes, fee_percent, fee_fixed, custom_fields, terms, registration_ends_at, registrations_open_at, registration_limit)")
       .eq("id", data.ticketId)
       .single();
     if (!tt || tt.events.status !== "publicado" || !tt.active) throw new Error("Inscrição indisponível");
@@ -86,6 +86,7 @@ export const createOrder = createServerFn({ method: "POST" })
     if (tt.sales_start && new Date(tt.sales_start).getTime() > now) throw new Error("Vendas ainda não começaram");
     if (tt.sales_end && new Date(tt.sales_end).getTime() < now) throw new Error("Vendas encerradas para este lote");
     const ev: any = tt.events;
+    if (ev.registrations_open_at && new Date(ev.registrations_open_at).getTime() > now) throw new Error("As inscrições ainda não abriram para este evento");
     if (ev.registration_ends_at && new Date(ev.registration_ends_at).getTime() < now) throw new Error("Inscrições encerradas para este evento");
     if (ev.registration_limit != null) {
       const { count: evCount } = await admin.from("orders").select("id", { count: "exact", head: true }).eq("event_id", ev.id).in("status", ["pago", "pendente"]);
