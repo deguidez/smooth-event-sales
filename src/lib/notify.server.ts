@@ -11,17 +11,7 @@ export async function notifyOrder(orderId: string, kind: NotifyKind) {
     .eq("id", orderId)
     .single();
   if (!order) return;
-  let status = "aguardando_dominio";
-  try {
-    const mod: any = await import("./email-sender.server").catch(() => null);
-    if (mod?.sendOrderEmail) {
-      const r = await mod.sendOrderEmail(orderId, kind);
-      status = r?.sent ? "enviado" : (r?.reason ?? "nao_enviado");
-    }
-  } catch (e) {
-    console.error("email error", e);
-    status = "erro";
-  }
+  const status = "aguardando_dominio";
   await supabaseAdmin.from("email_log").insert({
     order_id: orderId,
     kind,
