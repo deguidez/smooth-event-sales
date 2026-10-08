@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { ProducerFinance } from "@/components/producer-finance";
 import { SalesChart, StatCard } from "@/components/dash";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -176,6 +177,8 @@ function ProducerDashboard({ producer }: { producer: any }) {
           )}
         </div>
       </div>
+
+      <ProducerFinance producer={producer} />
 
       <div className="mt-6"><SalesChart orders={orders as any} /></div>
 
