@@ -152,6 +152,8 @@ export type Database = {
           description: string | null
           ends_at: string | null
           featured: boolean
+          fee_fixed: number | null
+          fee_percent: number | null
           id: string
           producer_id: string
           shirt_enabled: boolean
@@ -172,6 +174,8 @@ export type Database = {
           description?: string | null
           ends_at?: string | null
           featured?: boolean
+          fee_fixed?: number | null
+          fee_percent?: number | null
           id?: string
           producer_id: string
           shirt_enabled?: boolean
@@ -192,6 +196,8 @@ export type Database = {
           description?: string | null
           ends_at?: string | null
           featured?: boolean
+          fee_fixed?: number | null
+          fee_percent?: number | null
           id?: string
           producer_id?: string
           shirt_enabled?: boolean

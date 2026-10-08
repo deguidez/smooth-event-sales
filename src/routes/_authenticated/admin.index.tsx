@@ -136,7 +136,7 @@ function AdminDashboard() {
   });
   const { data: events = [] } = useQuery({
     queryKey: ["admin-events"],
-    queryFn: async () => (await supabase.from("events").select("id, title, slug, status, featured, starts_at, producers(company_name)").order("created_at", { ascending: false })).data ?? [],
+    queryFn: async () => (await supabase.from("events").select("id, title, slug, status, featured, starts_at, fee_percent, fee_fixed, producers(company_name)").order("created_at", { ascending: false })).data ?? [],
   });
   const paid = orders.filter((o) => o.status === "pago");
   const sum = (k: "total" | "platform_amount" | "producer_amount") => paid.reduce((s, o) => s + Number(o[k]), 0);
@@ -287,10 +287,12 @@ function Events({ events }: { events: any[] }) {
     if (error) toast.error(error.message);
     qc.invalidateQueries({ queryKey: ["admin-events"] });
   }
+  const [editing, setEditing] = useState<any>(null);
   return (
     <div className="overflow-hidden rounded-2xl border bg-card shadow-card">
+      {editing && <EventFeeDialog e={editing} onClose={() => setEditing(null)} onSave={async (p) => { await patch(editing.id, p); toast.success("Taxa do evento salva"); setEditing(null); }} />}
       <Table>
-        <TableHeader><TableRow><TableHead>Evento</TableHead><TableHead>Produtor</TableHead><TableHead>Data</TableHead><TableHead>Status</TableHead><TableHead>Destaque</TableHead><TableHead /></TableRow></TableHeader>
+        <TableHeader><TableRow><TableHead>Evento</TableHead><TableHead>Produtor</TableHead><TableHead>Data</TableHead><TableHead>Status</TableHead><TableHead>Destaque</TableHead><TableHead>Taxa do evento</TableHead><TableHead /></TableRow></TableHeader>
         <TableBody>
           {events.map((e) => (
             <TableRow key={e.id}>
@@ -306,13 +308,38 @@ function Events({ events }: { events: any[] }) {
                 </Select>
               </TableCell>
               <TableCell><Switch checked={e.featured} onCheckedChange={(v) => patch(e.id, { featured: v })} /></TableCell>
+              <TableCell>
+                <Button size="sm" variant="outline" onClick={() => setEditing(e)}>
+                  {e.fee_percent != null || e.fee_fixed != null ? `${e.fee_percent ?? "padrão"}% + ${e.fee_fixed != null ? brl(e.fee_fixed) : "padrão"}` : "Padrão"}
+                </Button>
+              </TableCell>
               <TableCell className="text-right">{e.status === "publicado" && <Link to="/eventos/$slug" params={{ slug: e.slug }} className="text-sm text-primary">Ver</Link>}</TableCell>
             </TableRow>
           ))}
-          {events.length === 0 && <TableRow><TableCell colSpan={6} className="py-8 text-center text-muted-foreground">Nenhum evento.</TableCell></TableRow>}
+          {events.length === 0 && <TableRow><TableCell colSpan={7} className="py-8 text-center text-muted-foreground">Nenhum evento.</TableCell></TableRow>}
         </TableBody>
       </Table>
     </div>
+  );
+}
+
+function EventFeeDialog({ e, onClose, onSave }: { e: any; onClose: () => void; onSave: (p: any) => Promise<void> }) {
+  const [pct, setPct] = useState(e.fee_percent ?? "");
+  const [fix, setFix] = useState(e.fee_fixed ?? "");
+  return (
+    <Dialog open onOpenChange={(o) => !o && onClose()}>
+      <DialogContent className="max-w-md">
+        <DialogHeader><DialogTitle>Taxa e comissão — {e.title}</DialogTitle></DialogHeader>
+        <div className="space-y-4">
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1.5"><Label>Comissão %</Label><Input type="number" step="0.01" min="0" value={pct} onChange={(ev) => setPct(ev.target.value)} placeholder="Padrão" /></div>
+            <div className="space-y-1.5"><Label>Taxa fixa R$</Label><Input type="number" step="0.01" min="0" value={fix} onChange={(ev) => setFix(ev.target.value)} placeholder="Padrão" /></div>
+          </div>
+          <p className="text-xs text-muted-foreground">Vale só para este evento. Campo vazio usa a taxa do produtor ou, se não houver, a taxa geral das Configurações.</p>
+          <Button variant="hero" className="w-full" onClick={() => onSave({ fee_percent: pct === "" ? null : Number(pct), fee_fixed: fix === "" ? null : Number(fix) })}>Salvar</Button>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }
 
