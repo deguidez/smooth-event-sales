@@ -57,11 +57,14 @@ export const getPublicEvent = createServerFn({ method: "GET" })
     const { data: ev } = await publicClient()
       .from("events")
       .select(
-        "id, title, slug, category, short_description, description, route_map_url, cover_url, venue, city, state, starts_at, ends_at, registration_ends_at, registrations_open_at, status, producers(company_name), ticket_types(id, name, description, price, quantity, sold, sales_start, sales_end, active, position), event_documents(id, title, kind, url, is_file, position)",
+        "id, title, slug, category, short_description, description, route_map_url, cover_url, venue, city, state, starts_at, ends_at, registration_ends_at, registrations_open_at, status, fee_fixed, producers(company_name, fee_fixed), ticket_types(id, name, description, price, quantity, sold, sales_start, sales_end, active, position), event_documents(id, title, kind, url, is_file, position)",
       )
       .eq("slug", data.slug)
       .maybeSingle();
-    return ev ?? null;
+    if (!ev) return null;
+    const globalFee = await getGlobalFeeFixed();
+    const feeFixed = effectiveFeeFixed(ev, globalFee);
+    return { ...ev, producers: ev.producers ? { company_name: (ev.producers as any).company_name } : null, fee_fixed: feeFixed };
   });
 
 export const getBranding = createServerFn({ method: "GET" }).handler(async () => {
