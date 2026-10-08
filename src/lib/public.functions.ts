@@ -53,6 +53,14 @@ export const getPublicEvent = createServerFn({ method: "GET" })
 export const getBranding = createServerFn({ method: "GET" }).handler(async () => {
   const { getAdmin } = await import("@/lib/asaas.server");
   const admin = await getAdmin();
-  const { data } = await admin.from("platform_settings").select("site_name, site_logo").eq("id", 1).maybeSingle();
-  return { name: data?.site_name ?? "Inscreva", logo: data?.site_logo ?? null };
+  const { data } = await admin.from("platform_settings").select("site_name, site_logo, home_images").eq("id", 1).maybeSingle();
+  const raw = data?.home_images;
+  const images: Record<string, string> = {};
+  if (raw && typeof raw === "object" && !Array.isArray(raw)) {
+    for (const key of ["banner", "esporte", "show", "congresso"]) {
+      const value = raw[key];
+      if (typeof value === "string" && value.startsWith("https://")) images[key] = value;
+    }
+  }
+  return { name: data?.site_name ?? "Inscreva", logo: data?.site_logo ?? null, images };
 });

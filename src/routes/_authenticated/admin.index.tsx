@@ -114,7 +114,7 @@ function Users() {
 import { brl, fmtDate, METHOD_LABEL, ORDER_STATUS } from "@/lib/format";
 
 export const Route = createFileRoute("/_authenticated/admin/")({
-  head: () => ({ meta: [{ title: "Super admin — Inscreva" }, { name: "robots", content: "noindex" }] }),
+  head: () => ({ meta: [{ title: "Super admin — Inscreva" }, { name: "description", content: "Administre usuários, eventos e o financeiro da Inscreva." }, { property: "og:title", content: "Super admin — Inscreva" }, { property: "og:description", content: "Administre usuários, eventos e o financeiro da Inscreva." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary_large_image" }, { name: "robots", content: "noindex" }] }),
   component: AdminPage,
 });
 

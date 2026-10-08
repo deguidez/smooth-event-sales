@@ -5,45 +5,46 @@ import { ArrowRight, CreditCard, QrCode, Receipt, Search, Wallet } from "lucide-
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { EventCard } from "@/components/event-card";
-import { listPublicEvents } from "@/lib/public.functions";
-import hero from "@/assets/hero.jpg";
-import catEsporte from "@/assets/cat-esporte.jpg";
-import catShow from "@/assets/cat-show.jpg";
-import catCongresso from "@/assets/cat-congresso.jpg";
+import { getBranding, listPublicEvents } from "@/lib/public.functions";
+import { HOME_IMAGES } from "@/lib/home-images";
 
 const eventsQuery = queryOptions({
   queryKey: ["public-events", "home"],
   queryFn: () => listPublicEvents({ data: {} }),
 });
+const brandingQuery = queryOptions({ queryKey: ["branding"], queryFn: () => getBranding(), staleTime: 300_000 });
 
 export const Route = createFileRoute("/")({
-  head: () => ({
+  loader: async ({ context }) => {
+    const [, branding] = await Promise.all([context.queryClient.ensureQueryData(eventsQuery), context.queryClient.ensureQueryData(brandingQuery)]);
+    return branding;
+  },
+  head: ({ loaderData }) => ({
     meta: [
       { title: "Inscreva — Inscrições para corridas, shows e congressos" },
       { name: "description", content: "Encontre eventos e garanta sua inscrição com Pix, boleto ou cartão. Produtores recebem direto na carteira." },
       { property: "og:title", content: "Inscreva — Inscrições para eventos" },
       { property: "og:description", content: "Corridas, shows e congressos com pagamento seguro e comprovante na hora." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
+      ...(loaderData?.images["banner"] ? [{ property: "og:image", content: loaderData.images["banner"] }, { name: "twitter:image", content: loaderData.images["banner"] }] : []),
     ],
   }),
-  loader: ({ context }) => context.queryClient.ensureQueryData(eventsQuery),
   component: Home,
 });
 
-const cats = [
-  { key: "esporte", label: "Esportes", img: catEsporte },
-  { key: "show", label: "Shows", img: catShow },
-  { key: "congresso", label: "Congressos", img: catCongresso },
-];
+const cats = HOME_IMAGES.filter((image) => image.key !== "banner");
 
 function Home() {
   const { data: events } = useSuspenseQuery(eventsQuery);
+  const { data: branding } = useSuspenseQuery(brandingQuery);
   const [q, setQ] = useState("");
   const navigate = useNavigate();
 
   return (
     <div>
       <section className="relative isolate overflow-hidden bg-ink">
-        <img src={hero} alt="" width={1920} height={1088} className="absolute inset-0 -z-10 h-full w-full object-cover opacity-80" />
+        <img src={branding.images["banner"] || HOME_IMAGES[0].fallback} alt="Banner principal" width={1920} height={1088} className="absolute inset-0 -z-10 h-full w-full object-cover opacity-80" />
         <div className="absolute inset-0 -z-10 bg-gradient-hero" />
         <div className="mx-auto max-w-7xl px-4 pb-24 pt-28 md:pb-32 md:pt-40">
           <p className="mb-4 inline-flex rounded-full bg-accent px-3 py-1 text-xs font-bold uppercase tracking-wider text-accent-foreground">
@@ -80,7 +81,7 @@ function Home() {
               search={{ categoria: c.key }}
               className="group relative h-44 overflow-hidden rounded-2xl"
             >
-              <img src={c.img} alt={c.label} loading="lazy" width={1024} height={768} className="h-full w-full object-cover transition duration-500 group-hover:scale-105" />
+              <img src={branding.images[c.key] || c.fallback} alt={c.label} loading="lazy" width={1024} height={768} className="h-full w-full object-cover transition duration-500 group-hover:scale-105" />
               <div className="absolute inset-0 bg-gradient-hero" />
               <div className="absolute bottom-4 left-5 flex items-center gap-2 text-2xl font-extrabold text-ink-foreground">
                 {c.label} <ArrowRight className="h-5 w-5 transition group-hover:translate-x-1" />

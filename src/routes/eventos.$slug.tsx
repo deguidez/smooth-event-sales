@@ -1,4 +1,5 @@
 import { RichDescription, RouteMap } from "@/components/rich-description";
+import { EventCountdown } from "@/components/event-countdown";
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { queryOptions, useSuspenseQuery } from "@tanstack/react-query";
 import { Calendar, FileText, MapPin, Users } from "lucide-react";
@@ -23,6 +24,8 @@ export const Route = createFileRoute("/eventos/$slug")({
       { name: "description", content: loaderData.desc ?? `Inscrições para ${loaderData.title}` },
       { property: "og:title", content: loaderData.title },
       { property: "og:description", content: loaderData.desc ?? `Inscrições para ${loaderData.title}` },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
     ];
     if (loaderData.cover?.startsWith("https://")) {
       meta.push({ property: "og:image", content: loaderData.cover }, { name: "twitter:image", content: loaderData.cover });
@@ -66,6 +69,7 @@ function EventPage() {
               </span>
             )}
           </div>
+          <EventCountdown startsAt={ev.starts_at} />
           {ev.short_description && <p className="text-lg font-medium">{ev.short_description}</p>}
           <RichDescription text={ev.description} />
           <RouteMap value={(ev as any).route_map_url} />

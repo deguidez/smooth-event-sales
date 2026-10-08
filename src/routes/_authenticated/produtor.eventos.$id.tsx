@@ -24,7 +24,7 @@ import { DescriptionEditor, myMapsEmbed } from "@/components/rich-description";
 import { formatAnswer, parseFields } from "@/lib/custom-fields";
 
 export const Route = createFileRoute("/_authenticated/produtor/eventos/$id")({
-  head: () => ({ meta: [{ title: "Gerenciar evento — Inscreva" }, { name: "robots", content: "noindex" }] }),
+  head: () => ({ meta: [{ title: "Gerenciar evento — Inscreva" }, { name: "description", content: "Gerencie inscrições, kits e informações do evento na Inscreva." }, { property: "og:title", content: "Gerenciar evento — Inscreva" }, { property: "og:description", content: "Gerencie inscrições, kits e informações do evento na Inscreva." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary_large_image" }, { name: "robots", content: "noindex" }] }),
   component: ManageEvent,
 });
 

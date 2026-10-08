@@ -1,29 +1,34 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { CheckCircle2, Clock, Copy, ExternalLink, Printer, RefreshCw, XCircle } from "lucide-react";
+import { CheckCircle2, Clock, Copy, Download, ExternalLink, FileText, PackageCheck, Printer, RefreshCw, XCircle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { createReceiptPdf } from "@/lib/receipt-pdf";
 import { supabase } from "@/integrations/supabase/client";
 import { refreshOrder } from "@/lib/orders.functions";
 import { brl, fmtDate, METHOD_LABEL, ORDER_STATUS } from "@/lib/format";
 
 export const Route = createFileRoute("/_authenticated/pedido/$id")({
-  head: () => ({ meta: [{ title: "Minha inscrição — Inscreva" }, { name: "robots", content: "noindex" }] }),
+  head: () => ({ meta: [{ title: "Minha inscrição — Inscreva" }, { name: "description", content: "Consulte sua inscrição, pagamento e comprovantes da Inscreva." }, { property: "og:title", content: "Minha inscrição — Inscreva" }, { property: "og:description", content: "Consulte sua inscrição, pagamento e comprovantes da Inscreva." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary_large_image" }, { name: "robots", content: "noindex" }] }),
   component: OrderPage,
 });
 
 function OrderPage() {
   const { id } = Route.useParams();
   const refresh = useServerFn(refreshOrder);
+  const [pdf, setPdf] = useState<string | null>(null);
+  const [pdfBusy, setPdfBusy] = useState(false);
+  useEffect(() => () => { if (pdf) URL.revokeObjectURL(pdf); }, [pdf]);
   const { data: o, refetch } = useQuery({
     queryKey: ["order", id],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("orders")
-        .select("*, events(title, starts_at, venue, city, state), ticket_types(name)")
+        .select("*, events(title, starts_at, venue, city, state, shirt_enabled), ticket_types(name)")
         .eq("id", id)
         .single();
       if (error) throw error;
@@ -40,16 +45,36 @@ function OrderPage() {
   }, [o?.status, o?.asaas_payment_id, id, refresh, refetch]);
 
   if (!o) return <div className="mx-auto max-w-3xl px-4 py-20 text-muted-foreground">Carregando...</div>;
-  const st = ORDER_STATUS[o.status]!;
+  const st = ORDER_STATUS[o.status] ?? { label: o.status, variant: "secondary" as const };
+  async function receipt(kind: "registration" | "kit", download: boolean) {
+    if (!o) return;
+    setPdfBusy(true);
+    try {
+      const doc = await createReceiptPdf(o, kind, window.location.origin);
+      if (download) doc.save(`${kind === "kit" ? "retirada-kit" : "inscricao"}-${o.code}.pdf`);
+      else setPdf(URL.createObjectURL(doc.output("blob")));
+    } catch (error) { toast.error((error as Error).message); }
+    finally { setPdfBusy(false); }
+  }
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-10">
-      <div className="no-print mb-6 flex items-center justify-between">
+      <div className="no-print mb-6 flex flex-wrap items-center justify-between gap-3">
         <Link to="/minha-conta" className="text-sm text-muted-foreground">← Minhas inscrições</Link>
         {o.status === "pago" && (
           <Button variant="outline" onClick={() => window.print()}><Printer /> Imprimir comprovante</Button>
         )}
       </div>
+      {o.status === "pago" && <div className="no-print mb-6 flex flex-wrap gap-2">
+        <Button variant="outline" disabled={pdfBusy} onClick={() => receipt("registration", false)}><FileText /> Ver comprovante PDF</Button>
+        <Button variant="outline" disabled={pdfBusy} onClick={() => receipt("registration", true)}><Download /> Baixar inscrição PDF</Button>
+        <Button variant="hero" disabled={pdfBusy} onClick={() => receipt("kit", true)}><PackageCheck /> Comprovante de retirada de kit</Button>
+      </div>}
+      <Dialog open={!!pdf} onOpenChange={(open) => { if (!open) setPdf(null); }}>
+        <DialogContent className="max-w-4xl"><DialogHeader><DialogTitle>Comprovante de inscrição</DialogTitle></DialogHeader>
+          {pdf && <iframe title="Comprovante de inscrição PDF" src={pdf} className="h-[65vh] w-full rounded border" />}
+        </DialogContent>
+      </Dialog>
 
       <div className="overflow-hidden rounded-3xl border bg-card shadow-card">
         <div className={o.status === "pago" ? "bg-success p-6 text-success-foreground" : "bg-ink p-6 text-ink-foreground"}>

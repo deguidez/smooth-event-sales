@@ -20,7 +20,7 @@ import { brl, categoryCover, fmtDate, onlyDigits } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authenticated/checkout/$ticketId")({
-  head: () => ({ meta: [{ title: "Finalizar inscrição — Inscreva" }, { name: "robots", content: "noindex" }] }),
+  head: () => ({ meta: [{ title: "Finalizar inscrição — Inscreva" }, { name: "description", content: "Finalize sua inscrição com pagamento seguro na Inscreva." }, { property: "og:title", content: "Finalizar inscrição — Inscreva" }, { property: "og:description", content: "Finalize sua inscrição com pagamento seguro na Inscreva." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary_large_image" }, { name: "robots", content: "noindex" }] }),
   component: Checkout,
 });
 
