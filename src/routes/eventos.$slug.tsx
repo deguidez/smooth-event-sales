@@ -67,6 +67,21 @@ function EventPage() {
           </div>
           {ev.short_description && <p className="text-lg font-medium">{ev.short_description}</p>}
           <div className="whitespace-pre-line leading-relaxed text-muted-foreground">{ev.description}</div>
+          {(ev as any).event_documents?.length > 0 && (
+            <div className="rounded-2xl border bg-card p-5">
+              <h2 className="text-xl font-bold">Documentos</h2>
+              <ul className="mt-3 grid gap-2 sm:grid-cols-2">
+                {[...(ev as any).event_documents].sort((a: any, b: any) => a.position - b.position).map((d: any) => (
+                  <li key={d.id}>
+                    <a href={d.url} target="_blank" rel="noreferrer" className="flex items-center gap-3 rounded-xl border p-3 transition hover:border-primary">
+                      <FileText className="h-5 w-5 shrink-0 text-primary" />
+                      <span><span className="block font-semibold">{d.title}</span><span className="text-xs text-muted-foreground">{d.is_file ? "PDF" : "Link"} · abrir</span></span>
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
         </div>
         <aside className="h-fit space-y-3 rounded-2xl border bg-card p-5 shadow-card lg:sticky lg:top-24">
           <h2 className="text-xl font-bold">Inscrições</h2>
