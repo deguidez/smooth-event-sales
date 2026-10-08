@@ -487,6 +487,7 @@ export type Database = {
           asaas_fee_pix: number
           asaas_webhook_token: string | null
           boleto_due_days: number
+          card_release_days: number
           email_from_address: string | null
           email_from_name: string | null
           enable_boleto: boolean
@@ -516,6 +517,7 @@ export type Database = {
           asaas_fee_pix?: number
           asaas_webhook_token?: string | null
           boleto_due_days?: number
+          card_release_days?: number
           email_from_address?: string | null
           email_from_name?: string | null
           enable_boleto?: boolean
@@ -545,6 +547,7 @@ export type Database = {
           asaas_fee_pix?: number
           asaas_webhook_token?: string | null
           boleto_due_days?: number
+          card_release_days?: number
           email_from_address?: string | null
           email_from_name?: string | null
           enable_boleto?: boolean
@@ -565,6 +568,82 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      producer_bank_accounts: {
+        Row: {
+          account: string
+          account_digit: string | null
+          account_type: string
+          agency: string
+          agency_digit: string | null
+          bank_code: string
+          bank_name: string
+          owner_document: string
+          owner_name: string
+          producer_id: string
+          updated_at: string
+        }
+        Insert: {
+          account: string
+          account_digit?: string | null
+          account_type?: string
+          agency: string
+          agency_digit?: string | null
+          bank_code: string
+          bank_name: string
+          owner_document: string
+          owner_name: string
+          producer_id: string
+          updated_at?: string
+        }
+        Update: {
+          account?: string
+          account_digit?: string | null
+          account_type?: string
+          agency?: string
+          agency_digit?: string | null
+          bank_code?: string
+          bank_name?: string
+          owner_document?: string
+          owner_name?: string
+          producer_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "producer_bank_accounts_producer_id_fkey"
+            columns: ["producer_id"]
+            isOneToOne: true
+            referencedRelation: "producers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      producer_secrets: {
+        Row: {
+          asaas_api_key: string | null
+          producer_id: string
+          updated_at: string
+        }
+        Insert: {
+          asaas_api_key?: string | null
+          producer_id: string
+          updated_at?: string
+        }
+        Update: {
+          asaas_api_key?: string | null
+          producer_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "producer_secrets_producer_id_fkey"
+            columns: ["producer_id"]
+            isOneToOne: true
+            referencedRelation: "producers"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       producers: {
         Row: {
@@ -747,6 +826,62 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      withdrawals: {
+        Row: {
+          amount: number
+          asaas_transfer_id: string | null
+          attempts: number
+          bank: Json
+          code_expires_at: string | null
+          code_hash: string | null
+          confirmed_at: string | null
+          created_at: string
+          error: string | null
+          id: string
+          processed_at: string | null
+          producer_id: string
+          status: string
+        }
+        Insert: {
+          amount: number
+          asaas_transfer_id?: string | null
+          attempts?: number
+          bank?: Json
+          code_expires_at?: string | null
+          code_hash?: string | null
+          confirmed_at?: string | null
+          created_at?: string
+          error?: string | null
+          id?: string
+          processed_at?: string | null
+          producer_id: string
+          status?: string
+        }
+        Update: {
+          amount?: number
+          asaas_transfer_id?: string | null
+          attempts?: number
+          bank?: Json
+          code_expires_at?: string | null
+          code_hash?: string | null
+          confirmed_at?: string | null
+          created_at?: string
+          error?: string | null
+          id?: string
+          processed_at?: string | null
+          producer_id?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "withdrawals_producer_id_fkey"
+            columns: ["producer_id"]
+            isOneToOne: false
+            referencedRelation: "producers"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
