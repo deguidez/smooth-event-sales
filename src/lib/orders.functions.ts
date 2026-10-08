@@ -57,6 +57,7 @@ const orderSchema = z.object({
   method: z.enum(["PIX", "BOLETO", "CREDIT_CARD"]),
   answers: z.record(z.string(), z.any()).default({}),
   accepted: z.array(z.string().max(100)).max(50).default([]),
+  coupon: z.string().trim().max(40).optional().nullable(),
   installments: z.number().int().min(1).max(21).default(1),
   items: z.array(z.object({ productId: z.string().uuid(), qty: z.number().int().min(1).max(20), size: z.string().max(10).optional().nullable() })).max(30).default([]),
   participant: z.object({
@@ -128,7 +129,13 @@ export const createOrder = createServerFn({ method: "POST" })
     }
     const productsTotal = Math.round(items.reduce((s2, i) => s2 + i.unit_price * i.qty, 0) * 100) / 100;
 
-    const price = Number(tt.price) + productsTotal;
+    const subtotal = Number(tt.price) + productsTotal;
+    let coupon: { id: string; code: string; discount: number } | null = null;
+    if (data.coupon) {
+      const { evaluateCoupon } = await import("./coupons.server");
+      coupon = await evaluateCoupon(data.coupon, tt.events.id, subtotal);
+    }
+    const price = Math.max(0, Math.round((subtotal - (coupon?.discount ?? 0)) * 100) / 100);
     const f = computeFees(price, data.method, s as any, {
       fee_percent: tt.events.fee_percent ?? producer.fee_percent,
       fee_fixed: tt.events.fee_fixed ?? producer.fee_fixed,
@@ -158,6 +165,9 @@ export const createOrder = createServerFn({ method: "POST" })
       platform_amount: f.platformAmount,
       asaas_fee_estimate: f.asaasFee,
       payment_method: data.method,
+      coupon_id: coupon?.id ?? null,
+      coupon_code: coupon?.code ?? null,
+      discount: coupon?.discount ?? 0,
     };
 
     // Inscrição gratuita: confirma direto
