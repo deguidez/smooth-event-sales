@@ -47,7 +47,8 @@ function EventPage() {
   if (!ev) return null;
   const tickets = [...(ev.ticket_types ?? [])].filter((t) => t.active).sort((a, b) => a.position - b.position);
   const now = Date.now();
-  const closed = ev.status !== "publicado";
+  const regEnd = (ev as any).registration_ends_at as string | null;
+  const closed = ev.status !== "publicado" || (!!regEnd && new Date(regEnd).getTime() < now);
 
   return (
     <div>
@@ -91,6 +92,7 @@ function EventPage() {
         </div>
         <aside className="min-w-0 h-fit space-y-3 rounded-2xl border bg-card p-5 shadow-card lg:sticky lg:top-24">
           <h2 className="text-xl font-bold">Inscrições</h2>
+          {regEnd && <p className="text-sm text-muted-foreground">Inscrições até {fmtDate(regEnd, true)}</p>}
           {tickets.length === 0 && <p className="text-sm text-muted-foreground">Nenhuma categoria disponível.</p>}
           {tickets.map((t) => {
             const soldOut = t.sold >= t.quantity;
@@ -103,6 +105,7 @@ function EventPage() {
                   <div className="min-w-0 break-words">
                     <p className="font-semibold">{t.name}</p>
                     {t.description && <p className="text-xs text-muted-foreground">{t.description}</p>}
+                    {(t.sales_start || t.sales_end) && <p className="text-xs text-muted-foreground">Vendas{t.sales_start ? ` de ${fmtDate(t.sales_start, true)}` : ""}{t.sales_end ? ` até ${fmtDate(t.sales_end, true)}` : ""}</p>}
                     <p className="mt-1 flex items-center gap-1 text-xs text-muted-foreground">
                       <Users className="h-3 w-3" /> {Math.max(0, t.quantity - t.sold)} vagas
                     </p>

@@ -78,13 +78,19 @@ export const createOrder = createServerFn({ method: "POST" })
     const s = await loadSettings();
     const { data: tt } = await admin
       .from("ticket_types")
-      .select("*, events!inner(id, title, status, producer_id, starts_at, shirt_enabled, shirt_sizes, fee_percent, fee_fixed, custom_fields, terms)")
+      .select("*, events!inner(id, title, status, producer_id, starts_at, shirt_enabled, shirt_sizes, fee_percent, fee_fixed, custom_fields, terms, registration_ends_at, registration_limit)")
       .eq("id", data.ticketId)
       .single();
     if (!tt || tt.events.status !== "publicado" || !tt.active) throw new Error("Inscrição indisponível");
     const now = Date.now();
     if (tt.sales_start && new Date(tt.sales_start).getTime() > now) throw new Error("Vendas ainda não começaram");
     if (tt.sales_end && new Date(tt.sales_end).getTime() < now) throw new Error("Vendas encerradas para este lote");
+    const ev: any = tt.events;
+    if (ev.registration_ends_at && new Date(ev.registration_ends_at).getTime() < now) throw new Error("Inscrições encerradas para este evento");
+    if (ev.registration_limit != null) {
+      const { count: evCount } = await admin.from("orders").select("id", { count: "exact", head: true }).eq("event_id", ev.id).in("status", ["pago", "pendente"]);
+      if ((evCount ?? 0) >= ev.registration_limit) throw new Error("Inscrições esgotadas para este evento");
+    }
     if (tt.events.shirt_enabled && !tt.events.shirt_sizes.includes(data.participant.shirt_size ?? ""))
       throw new Error("Escolha o tamanho da camisa do kit");
     const terms = activeTerms(tt.events.terms);
