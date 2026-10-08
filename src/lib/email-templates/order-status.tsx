@@ -42,7 +42,7 @@ function OrderStatusEmail({ kind = 'inscricao_criada', name = 'Atleta', eventTit
 
 export const template = {
   component: OrderStatusEmail,
-  subject: (d) => `${(copy as any)[d.kind]?.title ?? 'Sua inscrição'} — ${d.eventTitle ?? 'Inscreva'}`,
+  subject: (d) => `${(copy as any)[d['kind']]?.title ?? 'Sua inscrição'} — ${d['eventTitle'] ?? 'Inscreva'}`,
   displayName: 'Status da inscrição',
   previewData: { kind: 'pagamento_confirmado', name: 'Maria', eventTitle: 'Open de Jiu-Jitsu', code: '55B7E3C5', total: 'R$ 80,00' },
 } satisfies TemplateEntry
