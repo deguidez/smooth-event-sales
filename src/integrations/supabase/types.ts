@@ -157,6 +157,7 @@ export type Database = {
           fee_percent: number | null
           id: string
           producer_id: string
+          route_map_url: string | null
           shirt_enabled: boolean
           shirt_sizes: string[]
           short_description: string | null
@@ -180,6 +181,7 @@ export type Database = {
           fee_percent?: number | null
           id?: string
           producer_id: string
+          route_map_url?: string | null
           shirt_enabled?: boolean
           shirt_sizes?: string[]
           short_description?: string | null
@@ -203,6 +205,7 @@ export type Database = {
           fee_percent?: number | null
           id?: string
           producer_id?: string
+          route_map_url?: string | null
           shirt_enabled?: boolean
           shirt_sizes?: string[]
           short_description?: string | null
