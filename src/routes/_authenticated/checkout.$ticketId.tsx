@@ -3,7 +3,8 @@ import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { CreditCard, QrCode, Receipt, ShieldCheck } from "lucide-react";
+import { CreditCard, Minus, Plus, QrCode, Receipt, ShieldCheck } from "lucide-react";
+import { computeFees } from "@/lib/fees";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -39,6 +40,7 @@ function Checkout() {
   const [installments, setInstallments] = useState(1);
   const [busy, setBusy] = useState(false);
   const [f, setF] = useState({ name: "", email: "", cpf: "", phone: "", birth_date: "", gender: "", shirt_size: "", team: "" });
+  const [cart, setCart] = useState<Record<string, { qty: number; size: string }>>({});
 
   useEffect(() => {
     if (!user) return;
@@ -67,12 +69,19 @@ function Checkout() {
   if (isLoading) return <div className="mx-auto max-w-5xl px-4 py-20 text-muted-foreground">Carregando...</div>;
   if (error || !info) return <div className="mx-auto max-w-5xl px-4 py-20">{(error as Error)?.message ?? "Indisponível"}</div>;
 
-  const free = info.ticket.price <= 0;
-  const quote = info.quotes[method];
+  const chosen = info.products
+    .map((p: any) => ({ p, c: cart[p.id] }))
+    .filter((x: any) => x.c && x.c.qty > 0);
+  const productsTotal = chosen.reduce((s: number, x: any) => s + x.p.price * x.c.qty, 0);
+  const free = info.ticket.price + productsTotal <= 0;
+  const quote = computeFees(info.ticket.price + productsTotal, method, info.feeSettings as any, info.feeOverride);
   const set = (k: keyof typeof f) => (e: React.ChangeEvent<HTMLInputElement>) => setF({ ...f, [k]: e.target.value });
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
+    if (info!.event.shirt_enabled && !f.shirt_size) { toast.error("Escolha o tamanho da camisa do kit"); return; }
+    const missing = chosen.find((x: any) => x.p.sizes.length && !x.c.size);
+    if (missing) { toast.error(`Escolha o tamanho de ${missing.p.name}`); return; }
     setBusy(true);
     try {
       const cpf = onlyDigits(f.cpf);
@@ -85,6 +94,7 @@ function Checkout() {
           ticketId,
           method,
           installments,
+          items: chosen.map((x: any) => ({ productId: x.p.id, qty: x.c.qty, size: x.c.size || null })),
           participant: { ...f, cpf, phone: onlyDigits(f.phone) },
         },
       });
@@ -119,20 +129,55 @@ function Checkout() {
               </SelectContent>
             </Select>
           </Field>
+          {info.event.shirt_enabled && (
+            <Field label="Tamanho da camisa do kit *">
+              <Select value={f.shirt_size} onValueChange={(v) => setF({ ...f, shirt_size: v })}>
+                <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                <SelectContent>
+                  {info.event.shirt_sizes.map((s: string) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </Field>
+          )}
           {info.event.category === "esporte" && (
-            <>
-              <Field label="Tamanho da camiseta">
-                <Select value={f.shirt_size} onValueChange={(v) => setF({ ...f, shirt_size: v })}>
-                  <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
-                  <SelectContent>
-                    {["PP", "P", "M", "G", "GG", "XG"].map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-              </Field>
-              <Field label="Equipe / assessoria"><Input value={f.team} onChange={set("team")} maxLength={100} /></Field>
-            </>
+            <Field label="Equipe / assessoria"><Input value={f.team} onChange={set("team")} maxLength={100} /></Field>
           )}
         </section>
+
+        {info.products.length > 0 && (
+          <section className="rounded-2xl border bg-card p-6 shadow-card">
+            <h2 className="text-lg font-bold">Adicione à sua inscrição</h2>
+            <p className="mb-4 text-sm text-muted-foreground">Produtos do evento, somados no total.</p>
+            <div className="grid gap-4 sm:grid-cols-2">
+              {info.products.map((p: any) => {
+                const c = cart[p.id] ?? { qty: 0, size: "" };
+                const setC = (patch: Partial<typeof c>) => setCart({ ...cart, [p.id]: { ...c, ...patch } });
+                return (
+                  <div key={p.id} className={cn("overflow-hidden rounded-xl border-2 transition", c.qty > 0 ? "border-primary" : "border-border")}>
+                    {p.image_url && <img src={p.image_url} alt={p.name} className="aspect-[4/3] w-full object-cover" />}
+                    <div className="space-y-2 p-4">
+                      <div className="flex justify-between gap-2"><p className="font-semibold">{p.name}</p><p className="font-bold text-primary">{brl(p.price)}</p></div>
+                      {p.description && <p className="text-xs text-muted-foreground">{p.description}</p>}
+                      {p.available <= 0 ? <p className="text-sm text-muted-foreground">Esgotado</p> : (
+                        <div className="flex items-center gap-2">
+                          {p.sizes.length > 0 && (
+                            <Select value={c.size} onValueChange={(v) => setC({ size: v })}>
+                              <SelectTrigger className="w-24"><SelectValue placeholder="Tam." /></SelectTrigger>
+                              <SelectContent>{p.sizes.map((s: string) => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
+                            </Select>
+                          )}
+                          <Button type="button" size="icon" variant="outline" onClick={() => setC({ qty: Math.max(0, c.qty - 1) })}><Minus /></Button>
+                          <span className="w-6 text-center font-bold">{c.qty}</span>
+                          <Button type="button" size="icon" variant="outline" onClick={() => setC({ qty: Math.min(p.available, c.qty + 1) })}><Plus /></Button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </section>
+        )}
 
         {!free && (
           <section className="rounded-2xl border bg-card p-6 shadow-card">
@@ -185,6 +230,7 @@ function Checkout() {
         </div>
         <div className="space-y-2 border-t pt-4 text-sm">
           <Row l={info.ticket.name} r={brl(info.ticket.price)} />
+          {chosen.map((x: any) => <Row key={x.p.id} l={`${x.c.qty}x ${x.p.name}${x.c.size ? ` (${x.c.size})` : ""}`} r={brl(x.p.price * x.c.qty)} />)}
           {!free && quote.serviceFee > 0 && <Row l="Taxa de serviço" r={brl(quote.serviceFee)} />}
           <div className="flex justify-between border-t pt-3 text-lg font-extrabold">
             <span>Total</span>
