@@ -249,6 +249,8 @@ export type Database = {
           asaas_fee_pix: number
           asaas_webhook_token: string | null
           boleto_due_days: number
+          email_from_address: string | null
+          email_from_name: string | null
           enable_boleto: boolean
           enable_card: boolean
           enable_pix: boolean
@@ -258,7 +260,9 @@ export type Database = {
           id: number
           max_installments: number
           platform_wallet_id: string | null
+          site_domain: string | null
           site_name: string
+          support_email: string | null
           updated_at: string
         }
         Insert: {
@@ -271,6 +275,8 @@ export type Database = {
           asaas_fee_pix?: number
           asaas_webhook_token?: string | null
           boleto_due_days?: number
+          email_from_address?: string | null
+          email_from_name?: string | null
           enable_boleto?: boolean
           enable_card?: boolean
           enable_pix?: boolean
@@ -280,7 +286,9 @@ export type Database = {
           id?: number
           max_installments?: number
           platform_wallet_id?: string | null
+          site_domain?: string | null
           site_name?: string
+          support_email?: string | null
           updated_at?: string
         }
         Update: {
@@ -293,6 +301,8 @@ export type Database = {
           asaas_fee_pix?: number
           asaas_webhook_token?: string | null
           boleto_due_days?: number
+          email_from_address?: string | null
+          email_from_name?: string | null
           enable_boleto?: boolean
           enable_card?: boolean
           enable_pix?: boolean
@@ -302,7 +312,9 @@ export type Database = {
           id?: number
           max_installments?: number
           platform_wallet_id?: string | null
+          site_domain?: string | null
           site_name?: string
+          support_email?: string | null
           updated_at?: string
         }
         Relationships: []
