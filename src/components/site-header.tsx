@@ -2,7 +2,7 @@ import { Link, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getBranding } from "@/lib/public.functions";
 import { useEffect, useState } from "react";
-import { LogOut, Shield, Ticket, User } from "lucide-react";
+import { LogOut, Shield, Store, Ticket, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -68,6 +68,11 @@ export function SiteHeader() {
               <DropdownMenuItem onClick={() => navigate({ to: "/minha-conta" })}>
                 <Ticket /> Área do atleta
               </DropdownMenuItem>
+              {isProducer && (
+                <DropdownMenuItem onClick={() => navigate({ to: "/produtor" })}>
+                  <Store /> Painel do produtor
+                </DropdownMenuItem>
+              )}
               {isAdmin && (
                 <DropdownMenuItem onClick={() => navigate({ to: "/admin" })}>
                   <Shield /> Super admin
