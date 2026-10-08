@@ -165,6 +165,7 @@ export type Database = {
           starts_at: string
           state: string | null
           status: Database["public"]["Enums"]["event_status"]
+          terms: Json
           title: string
           venue: string | null
         }
@@ -189,6 +190,7 @@ export type Database = {
           starts_at: string
           state?: string | null
           status?: Database["public"]["Enums"]["event_status"]
+          terms?: Json
           title: string
           venue?: string | null
         }
@@ -213,6 +215,7 @@ export type Database = {
           starts_at?: string
           state?: string | null
           status?: Database["public"]["Enums"]["event_status"]
+          terms?: Json
           title?: string
           venue?: string | null
         }
@@ -228,6 +231,7 @@ export type Database = {
       }
       orders: {
         Row: {
+          accepted_terms: Json
           asaas_fee_estimate: number
           asaas_payment_id: string | null
           bank_slip_url: string | null
@@ -264,6 +268,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          accepted_terms?: Json
           asaas_fee_estimate?: number
           asaas_payment_id?: string | null
           bank_slip_url?: string | null
@@ -300,6 +305,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          accepted_terms?: Json
           asaas_fee_estimate?: number
           asaas_payment_id?: string | null
           bank_slip_url?: string | null

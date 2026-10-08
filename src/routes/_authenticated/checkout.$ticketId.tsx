@@ -3,6 +3,8 @@ import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useState } from "react";
 import { CustomFieldsForm } from "@/components/custom-fields";
+import { TermsAccept } from "@/components/terms-editor";
+import { activeTerms } from "@/lib/terms";
 import { isEmpty, parseFields } from "@/lib/custom-fields";
 import { toast } from "sonner";
 import { CreditCard, Minus, Plus, QrCode, Receipt, ShieldCheck } from "lucide-react";
@@ -43,6 +45,7 @@ function Checkout() {
   const [busy, setBusy] = useState(false);
   const [f, setF] = useState({ name: "", email: "", cpf: "", phone: "", birth_date: "", gender: "", shirt_size: "", team: "" });
   const [answers, setAnswers] = useState<Record<string, any>>({});
+  const [accepted, setAccepted] = useState<string[]>([]);
   const [cart, setCart] = useState<Record<string, { qty: number; size: string }>>({});
 
   useEffect(() => {
@@ -84,6 +87,8 @@ function Checkout() {
     e.preventDefault();
     if (info!.event.shirt_enabled && !f.shirt_size) { toast.error("Escolha o tamanho da camisa do kit"); return; }
     const reqMissing = parseFields(info!.event.custom_fields).find((cf) => cf.required && isEmpty(answers[cf.id]));
+    const notAccepted = activeTerms(info!.event.terms).find((t) => !accepted.includes(t.id));
+    if (notAccepted) { toast.error(`Aceite o termo "${notAccepted.title}"`); return; }
     if (reqMissing) { toast.error(`Preencha o campo "${reqMissing.label}"`); return; }
     const missing = chosen.find((x: any) => x.p.sizes.length && !x.c.size);
     if (missing) { toast.error(`Escolha o tamanho de ${missing.p.name}`); return; }
@@ -102,6 +107,7 @@ function Checkout() {
           items: chosen.map((x: any) => ({ productId: x.p.id, qty: x.c.qty, size: x.c.size || null })),
           participant: { ...f, cpf, phone: onlyDigits(f.phone) },
           answers,
+          accepted,
         },
       });
       navigate({ to: "/pedido/$id", params: { id: r.orderId } });
@@ -150,6 +156,8 @@ function Checkout() {
           )}
           <CustomFieldsForm fields={parseFields(info.event.custom_fields)} answers={answers} onChange={setAnswers} />
         </section>
+
+        <TermsAccept terms={activeTerms(info.event.terms)} accepted={accepted} onChange={setAccepted} />
 
         {info.products.length > 0 && (
           <section className="rounded-2xl border bg-card p-6 shadow-card">
