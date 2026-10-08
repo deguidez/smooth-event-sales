@@ -36,6 +36,7 @@ export const getAdminSettings = createServerFn({ method: "GET" })
 
 const settingsSchema = z.object({
   site_name: z.string().trim().min(1).max(80).optional(),
+  site_logo: z.string().max(700_000).regex(/^data:image\/(png|jpeg|webp|svg\+xml);base64,/).nullable().optional(),
   asaas_env: z.enum(["sandbox", "producao"]).optional(),
   asaas_api_key: z.string().trim().max(400).optional(),
   platform_wallet_id: z.string().trim().max(100).nullable().optional(),

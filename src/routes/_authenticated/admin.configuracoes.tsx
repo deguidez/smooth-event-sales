@@ -43,6 +43,7 @@ function SettingsPage() {
       await save({
         data: {
           site_name: f.site_name,
+          site_logo: f.site_logo || null,
           asaas_env: f.asaas_env,
           platform_wallet_id: f.platform_wallet_id || null,
           fee_percent: Number(f.fee_percent),
@@ -64,6 +65,7 @@ function SettingsPage() {
       toast.success("Configurações salvas");
       setApiKey("");
       qc.invalidateQueries({ queryKey: ["admin-settings"] });
+      qc.invalidateQueries({ queryKey: ["branding"] });
     } catch (e) {
       toast.error((e as Error).message);
     }
@@ -86,6 +88,20 @@ function SettingsPage() {
           <Card title="Conexão com o Asaas" desc="Cole a chave de API da sua conta Asaas (Integrações → Chave de API).">
             <div className="grid gap-4 sm:grid-cols-2">
               <Field l="Nome do site"><Input value={f.site_name} onChange={num("site_name")} /></Field>
+              <Field l="Logo do sistema (PNG, JPG, WEBP ou SVG, até 500 KB)">
+                <div className="flex items-center gap-3">
+                  {f.site_logo && <img src={f.site_logo} alt="Logo" className="h-10 max-w-[160px] rounded border bg-background object-contain p-1" />}
+                  <Input type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml" onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (!file) return;
+                    if (file.size > 500 * 1024) { toast.error("Logo até 500 KB"); return; }
+                    const r = new FileReader();
+                    r.onload = () => setF({ ...f, site_logo: String(r.result) });
+                    r.readAsDataURL(file);
+                  }} />
+                  {f.site_logo && <Button type="button" variant="outline" size="sm" onClick={() => setF({ ...f, site_logo: null })}>Remover</Button>}
+                </div>
+              </Field>
               <Field l="Ambiente">
                 <Select value={f.asaas_env} onValueChange={(v) => setF({ ...f, asaas_env: v })}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
