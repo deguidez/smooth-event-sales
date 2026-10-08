@@ -50,6 +50,13 @@
       "when": 1791486166131,
       "tag": "0006_route_map",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1791486296717,
+      "tag": "0007_site_logo",
+      "breakpoints": true
     }
   ]
 }
