@@ -12,6 +12,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { ProducerKeyField, WithdrawalsAdmin } from "@/components/withdrawals-admin";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { SalesChart, StatCard, toCsv } from "@/components/dash";
 import { supabase } from "@/integrations/supabase/client";
@@ -290,6 +291,7 @@ function AdminDashboard() {
           <TabsTrigger value="eventos">Eventos</TabsTrigger>
           <TabsTrigger value="inscricoes">Inscrições</TabsTrigger>
           <TabsTrigger value="cupons">Cupons</TabsTrigger>
+          <TabsTrigger value="saques">Saques</TabsTrigger>
           <TabsTrigger value="emails">E-mails</TabsTrigger>
           <TabsTrigger value="logs">Logs</TabsTrigger>
         </TabsList>
@@ -298,6 +300,7 @@ function AdminDashboard() {
         <TabsContent value="usuarios" className="mt-6"><Users /></TabsContent>
         <TabsContent value="eventos" className="mt-6"><Events events={events} /></TabsContent>
         <TabsContent value="inscricoes" className="mt-6"><Orders orders={orders} /></TabsContent>
+        <TabsContent value="saques"><WithdrawalsAdmin /></TabsContent>
         <TabsContent value="cupons" className="mt-6"><CouponsAdmin events={events} /></TabsContent>
         <TabsContent value="emails" className="mt-6"><Emails /></TabsContent>
         <TabsContent value="logs" className="mt-6"><ActivityLogView /></TabsContent>
@@ -496,6 +499,7 @@ function ProducerDialog({ p, onClose }: { p: any; onClose: () => void }) {
             </div>
             <p className="text-xs text-muted-foreground">Crie uma subconta automaticamente ou informe a carteira de uma conta Asaas já existente do produtor.</p>
           </div>
+          <ProducerKeyField producerId={p.id} />
           <Button variant="hero" className="w-full" onClick={save} disabled={busy}>Salvar</Button>
           <Button variant="outline" className="w-full text-destructive" onClick={remove} disabled={busy}>Excluir produtor</Button>
         </div>

@@ -62,6 +62,7 @@ function SettingsPage() {
           asaas_fee_paid_by: f.asaas_fee_paid_by,
           max_installments: Number(f.max_installments),
           boleto_due_days: Number(f.boleto_due_days),
+          card_release_days: Number(f.card_release_days ?? 4),
           enable_pix: f.enable_pix,
           enable_boleto: f.enable_boleto,
           enable_card: f.enable_card,
@@ -184,6 +185,7 @@ function SettingsPage() {
               <div className="grid gap-4 pt-2 sm:grid-cols-2">
                 <Field l="Máximo de parcelas no cartão"><Input type="number" min={1} max={21} value={f.max_installments} onChange={num("max_installments")} /></Field>
                 <Field l="Vencimento do boleto (dias)"><Input type="number" min={1} max={30} value={f.boleto_due_days} onChange={num("boleto_due_days")} /></Field>
+                <Field l="Saque de cartão liberado após (dias)"><Input type="number" min={0} max={60} value={f.card_release_days ?? 4} onChange={num("card_release_days")} /></Field>
               </div>
               <Button variant="hero" onClick={() => persist()}>Salvar</Button>
             </div>
