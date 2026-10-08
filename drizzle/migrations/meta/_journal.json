@@ -92,6 +92,13 @@
       "when": 1791493022369,
       "tag": "0012_activity_logs_and_financial_summary",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1791497859636,
+      "tag": "0013_coupons",
+      "breakpoints": true
     }
   ]
 }
