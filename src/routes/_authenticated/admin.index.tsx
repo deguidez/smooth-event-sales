@@ -16,7 +16,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { SalesChart, StatCard, toCsv } from "@/components/dash";
 import { supabase } from "@/integrations/supabase/client";
 import { AdminGate } from "@/components/admin-gate";
-import { createProducerWallet, listUsers, setUserRole, updateProducer } from "@/lib/admin.functions";
+import { createProducerWallet, listUsers, setUserRole, updateProducer, updateUser } from "@/lib/admin.functions";
 
 function Finance({ orders }: { orders: any[] }) {
   const paid = orders.filter((o) => o.status === "pago");
@@ -64,6 +64,7 @@ function Users() {
   const setRole = useServerFn(setUserRole);
   const [q, setQ] = useState("");
   const [filter, setFilter] = useState("todos");
+  const [editing, setEditing] = useState<any>(null);
   const { data: users = [] } = useQuery({ queryKey: ["admin-users"], queryFn: () => load() });
   const list = users.filter((u: any) => (filter === "todos" || u.roles.includes(filter)) && `${u.full_name ?? ""} ${u.email ?? ""} ${u.cpf ?? ""}`.toLowerCase().includes(q.toLowerCase()));
   async function toggle(userId: string, role: "super_admin" | "producer" | "athlete", enabled: boolean) {
@@ -86,9 +87,9 @@ function Users() {
       </div>
       <div className="rounded-2xl border bg-card">
         <Table>
-          <TableHeader><TableRow><TableHead>Nome</TableHead><TableHead>Contato</TableHead><TableHead>Inscrições</TableHead><TableHead>Perfis</TableHead><TableHead>Super admin</TableHead></TableRow></TableHeader>
+          <TableHeader><TableRow><TableHead>Nome</TableHead><TableHead>Contato</TableHead><TableHead>Inscrições</TableHead><TableHead>Perfis</TableHead><TableHead>Super admin</TableHead><TableHead></TableHead></TableRow></TableHeader>
           <TableBody>
-            {list.length === 0 && <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground">Nenhum usuário encontrado.</TableCell></TableRow>}
+            {list.length === 0 && <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground">Nenhum usuário encontrado.</TableCell></TableRow>}
             {list.map((u: any) => (
               <TableRow key={u.id}>
                 <TableCell><p className="font-medium">{u.full_name || "—"}</p><p className="text-xs text-muted-foreground">desde {fmtDate(u.created_at)}</p></TableCell>
@@ -96,11 +97,13 @@ function Users() {
                 <TableCell>{u.orders} · {brl(u.spent)}</TableCell>
                 <TableCell className="space-x-1">{u.roles.map((r: string) => <Badge key={r} variant={r === "super_admin" ? "lime" : "secondary"}>{ROLE_LABEL[r] ?? r}</Badge>)}</TableCell>
                 <TableCell><Switch checked={u.roles.includes("super_admin")} onCheckedChange={(v) => toggle(u.id, "super_admin", v)} /></TableCell>
+                <TableCell><Button size="sm" variant="outline" onClick={() => setEditing(u)}>Editar</Button></TableCell>
               </TableRow>
             ))}
           </TableBody>
         </Table>
       </div>
+      {editing && <UserDialog u={editing} onClose={() => setEditing(null)} onSaved={() => { setEditing(null); qc.invalidateQueries({ queryKey: ["admin-users"] }); }} />}
       <p className="text-xs text-muted-foreground">O perfil de produtor é liberado ao aprovar o cadastro na aba Produtores.</p>
     </div>
   );
@@ -111,6 +114,66 @@ export const Route = createFileRoute("/_authenticated/admin/")({
   head: () => ({ meta: [{ title: "Super admin — Inscreva" }, { name: "robots", content: "noindex" }] }),
   component: AdminPage,
 });
+
+function UserDialog({ u, onClose, onSaved }: { u: any; onClose: () => void; onSaved: () => void }) {
+  const save = useServerFn(updateUser);
+  const [busy, setBusy] = useState(false);
+  const [f, setF] = useState({
+    full_name: u.full_name ?? "", email: u.email ?? "", phone: u.phone ?? "", cpf: u.cpf ?? "",
+    birth_date: u.birth_date ?? "", gender: u.gender ?? "", city: u.city ?? "", state: u.state ?? "", password: "",
+  });
+  const [roles, setRoles] = useState<string[]>(u.roles);
+  const set = (k: keyof typeof f) => (e: React.ChangeEvent<HTMLInputElement>) => setF({ ...f, [k]: e.target.value });
+  const n = (v: string) => (v.trim() ? v.trim() : null);
+  async function submit() {
+    setBusy(true);
+    try {
+      await save({ data: {
+        userId: u.id, email: f.email.trim(), full_name: n(f.full_name), phone: n(f.phone), cpf: n(f.cpf),
+        birth_date: n(f.birth_date), gender: n(f.gender), city: n(f.city), state: n(f.state)?.toUpperCase() ?? null,
+        password: f.password ? f.password : undefined, roles: roles as any,
+      } });
+      toast.success("Usuário atualizado");
+      onSaved();
+    } catch (e) { toast.error((e as Error).message); } finally { setBusy(false); }
+  }
+  const fields: [keyof typeof f, string, string?][] = [
+    ["full_name", "Nome completo"], ["email", "E-mail", "email"], ["phone", "Telefone"], ["cpf", "CPF"],
+    ["birth_date", "Nascimento", "date"], ["gender", "Gênero"], ["city", "Cidade"], ["state", "UF"],
+  ];
+  return (
+    <Dialog open onOpenChange={(o) => !o && onClose()}>
+      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
+        <DialogHeader><DialogTitle>Editar usuário</DialogTitle></DialogHeader>
+        <div className="grid gap-3 sm:grid-cols-2">
+          {fields.map(([k, label, type]) => (
+            <div key={k} className={k === "full_name" || k === "email" ? "sm:col-span-2" : ""}>
+              <Label>{label}</Label>
+              <Input type={type ?? "text"} value={f[k]} onChange={set(k)} maxLength={k === "state" ? 2 : undefined} />
+            </div>
+          ))}
+          <div className="sm:col-span-2">
+            <Label>Nova senha</Label>
+            <Input type="text" placeholder="Deixe em branco para manter a atual" value={f.password} onChange={set("password")} />
+          </div>
+          <div className="sm:col-span-2 space-y-2">
+            <Label>Perfis de acesso</Label>
+            {(["athlete", "producer", "super_admin"] as const).map((r) => (
+              <div key={r} className="flex items-center justify-between rounded-lg border px-3 py-2">
+                <span className="text-sm">{ROLE_LABEL[r] ?? r}</span>
+                <Switch checked={roles.includes(r)} onCheckedChange={(v) => setRoles(v ? [...roles, r] : roles.filter((x) => x !== r))} />
+              </div>
+            ))}
+          </div>
+        </div>
+        <div className="flex justify-end gap-2 pt-2">
+          <Button variant="outline" onClick={onClose}>Cancelar</Button>
+          <Button variant="hero" disabled={busy || !f.email} onClick={submit}>{busy ? "Salvando..." : "Salvar"}</Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
 
 function AdminPage() {
   return (

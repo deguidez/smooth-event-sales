@@ -287,7 +287,9 @@ export const updateUser = createServerFn({ method: "POST" })
     const { userId, password, roles, ...profile } = data;
     const { error: pErr } = await admin.from("profiles").upsert({ id: userId, ...profile, birth_date: profile.birth_date || null, updated_at: new Date().toISOString() });
     if (pErr) throw new Error(pErr.message);
-    await admin.from("user_roles").delete().eq("user_id", userId).not("role", "in", `(${roles.join(",") || "x"})`);
+    let del = admin.from("user_roles").delete().eq("user_id", userId);
+    if (roles.length) del = del.not("role", "in", `(${roles.join(",")})`);
+    await del;
     if (roles.length) await admin.from("user_roles").upsert(roles.map((role) => ({ user_id: userId, role })), { onConflict: "user_id,role" });
     return { ok: true };
   });
