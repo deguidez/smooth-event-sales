@@ -3,7 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { CheckCircle2, Copy, Database, KeyRound, Percent, Plug, XCircle } from "lucide-react";
+import { CheckCircle2, Copy, Database, Globe, KeyRound, Percent, Plug, XCircle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -78,6 +78,7 @@ function SettingsPage() {
           <TabsTrigger value="api"><Plug className="mr-1.5 h-4 w-4" /> API Asaas</TabsTrigger>
           <TabsTrigger value="taxas"><Percent className="mr-1.5 h-4 w-4" /> Taxas e comissões</TabsTrigger>
           <TabsTrigger value="pagamentos"><KeyRound className="mr-1.5 h-4 w-4" /> Pagamentos</TabsTrigger>
+          <TabsTrigger value="dominio"><Globe className="mr-1.5 h-4 w-4" /> Domínio e e-mail</TabsTrigger>
           <TabsTrigger value="banco"><Database className="mr-1.5 h-4 w-4" /> Banco de dados</TabsTrigger>
         </TabsList>
 
@@ -158,6 +159,19 @@ function SettingsPage() {
               </div>
               <Button variant="hero" onClick={() => persist()}>Salvar</Button>
             </div>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="dominio" className="mt-6">
+          <Card title="Domínio e e-mail" desc="Endereço do site e remetente dos e-mails de confirmação de pagamento.">
+            <div className="grid gap-4 sm:grid-cols-2">
+              <Field l="Domínio do site"><Input placeholder="www.seusite.com.br" value={f.site_domain ?? ""} onChange={(e) => setF({ ...f, site_domain: e.target.value })} /></Field>
+              <Field l="Nome do remetente"><Input placeholder="Inscreva" value={f.email_from_name ?? ""} onChange={(e) => setF({ ...f, email_from_name: e.target.value })} /></Field>
+              <Field l="E-mail remetente"><Input placeholder="nao-responda@seusite.com.br" value={f.email_from_address ?? ""} onChange={(e) => setF({ ...f, email_from_address: e.target.value })} /></Field>
+              <Field l="E-mail de suporte"><Input placeholder="contato@seusite.com.br" value={f.support_email ?? ""} onChange={(e) => setF({ ...f, support_email: e.target.value })} /></Field>
+            </div>
+            <p className="mt-4 text-sm text-muted-foreground">Para os e-mails serem enviados de verdade, o domínio também precisa ser verificado (peça no chat para configurar o domínio de e-mail).</p>
+            <Button className="mt-4" variant="hero" onClick={() => persist({ site_domain: f.site_domain || null, email_from_name: f.email_from_name || null, email_from_address: f.email_from_address || null, support_email: f.support_email || null })}>Salvar</Button>
           </Card>
         </TabsContent>
 

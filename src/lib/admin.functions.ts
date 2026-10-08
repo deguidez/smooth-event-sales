@@ -52,7 +52,46 @@ const settingsSchema = z.object({
   enable_pix: z.boolean().optional(),
   enable_boleto: z.boolean().optional(),
   enable_card: z.boolean().optional(),
+  site_domain: z.string().trim().max(200).nullable().optional(),
+  email_from_name: z.string().trim().max(100).nullable().optional(),
+  email_from_address: z.string().trim().email().max(200).nullable().optional(),
+  support_email: z.string().trim().email().max(200).nullable().optional(),
 });
+
+export const listUsers = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    await assertAdmin(context);
+    const { data: profiles } = await context.supabase.from("profiles").select("id, full_name, email, phone, cpf, city, state, created_at").order("created_at", { ascending: false });
+    const { data: roles } = await context.supabase.from("user_roles").select("user_id, role");
+    const { data: orders } = await context.supabase.from("orders").select("user_id, status, total");
+    return (profiles ?? []).map((p: any) => {
+      const mine = (orders ?? []).filter((o: any) => o.user_id === p.id);
+      return {
+        ...p,
+        roles: (roles ?? []).filter((r: any) => r.user_id === p.id).map((r: any) => r.role as string),
+        orders: mine.length,
+        spent: mine.filter((o: any) => o.status === "pago").reduce((s: number, o: any) => s + Number(o.total), 0),
+      };
+    });
+  });
+
+export const setUserRole = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) => z.object({ userId: z.string().uuid(), role: z.enum(["super_admin", "producer", "athlete"]), enabled: z.boolean() }).parse(d))
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context);
+    if (data.userId === context.userId && data.role === "super_admin" && !data.enabled) throw new Error("Você não pode remover seu próprio acesso de super admin");
+    const admin = await getAdmin();
+    if (data.enabled) {
+      const { error } = await admin.from("user_roles").upsert({ user_id: data.userId, role: data.role }, { onConflict: "user_id,role" });
+      if (error) throw new Error(error.message);
+    } else {
+      const { error } = await admin.from("user_roles").delete().eq("user_id", data.userId).eq("role", data.role);
+      if (error) throw new Error(error.message);
+    }
+    return { ok: true };
+  });
 
 export const saveAdminSettings = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
