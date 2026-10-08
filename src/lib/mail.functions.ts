@@ -15,7 +15,7 @@ async function request<T>(path: string, method = 'GET', body?: unknown): Promise
   if (!token) throw new Error('A conexão com a Hostinger ainda não foi configurada.');
   const res = await fetch(`https://api.mail.hostinger.com/api/v1${path}`, {
     method, headers: { Authorization: `Bearer ${token}`, Accept: 'application/json', 'Content-Type': 'application/json' },
-    body: body ? JSON.stringify(body) : undefined, signal: AbortSignal.timeout(20000),
+    body: body ? JSON.stringify(body) : null, signal: AbortSignal.timeout(20000),
   });
   if (!res.ok) {
     console.error('Hostinger Mail request failed', res.status);
