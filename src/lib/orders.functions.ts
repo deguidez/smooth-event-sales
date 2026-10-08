@@ -4,6 +4,7 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { applyOrderStatus, asaasFetch, getAdmin, loadSettings, mapAsaasStatus } from "./asaas.server";
 import { computeFees, type Method } from "./fees";
+import { cleanAnswers, parseFields } from "./custom-fields";
 
 export const getCheckoutInfo = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
@@ -12,7 +13,7 @@ export const getCheckoutInfo = createServerFn({ method: "GET" })
     const admin = await getAdmin();
     const { data: tt } = await admin
       .from("ticket_types")
-      .select("*, events!inner(id, title, slug, category, cover_url, starts_at, city, state, venue, status, producer_id, shirt_enabled, shirt_sizes, fee_percent, fee_fixed)")
+      .select("*, events!inner(id, title, slug, category, cover_url, starts_at, city, state, venue, status, producer_id, shirt_enabled, shirt_sizes, fee_percent, fee_fixed, custom_fields)")
       .eq("id", data.ticketId)
       .single();
     if (!tt || tt.events.status !== "publicado" || !tt.active) throw new Error("Inscrição indisponível");
@@ -52,6 +53,7 @@ export const getCheckoutInfo = createServerFn({ method: "GET" })
 const orderSchema = z.object({
   ticketId: z.string().uuid(),
   method: z.enum(["PIX", "BOLETO", "CREDIT_CARD"]),
+  answers: z.record(z.string(), z.any()).default({}),
   installments: z.number().int().min(1).max(21).default(1),
   items: z.array(z.object({ productId: z.string().uuid(), qty: z.number().int().min(1).max(20), size: z.string().max(10).optional().nullable() })).max(30).default([]),
   participant: z.object({
@@ -74,7 +76,7 @@ export const createOrder = createServerFn({ method: "POST" })
     const s = await loadSettings();
     const { data: tt } = await admin
       .from("ticket_types")
-      .select("*, events!inner(id, title, status, producer_id, starts_at, shirt_enabled, shirt_sizes, fee_percent, fee_fixed)")
+      .select("*, events!inner(id, title, status, producer_id, starts_at, shirt_enabled, shirt_sizes, fee_percent, fee_fixed, custom_fields)")
       .eq("id", data.ticketId)
       .single();
     if (!tt || tt.events.status !== "publicado" || !tt.active) throw new Error("Inscrição indisponível");
@@ -83,6 +85,7 @@ export const createOrder = createServerFn({ method: "POST" })
     if (tt.sales_end && new Date(tt.sales_end).getTime() < now) throw new Error("Vendas encerradas para este lote");
     if (tt.events.shirt_enabled && !tt.events.shirt_sizes.includes(data.participant.shirt_size ?? ""))
       throw new Error("Escolha o tamanho da camisa do kit");
+    const customAnswers = cleanAnswers(parseFields(tt.events.custom_fields), data.answers);
     const { count: reserved } = await admin
       .from("orders")
       .select("id", { count: "exact", head: true })
@@ -133,6 +136,7 @@ export const createOrder = createServerFn({ method: "POST" })
       ticket_price: Number(tt.price),
       products_total: productsTotal,
       items: items as any,
+      custom_answers: customAnswers as any,
       service_fee: f.serviceFee,
       total: f.total,
       producer_amount: f.producerAmount,

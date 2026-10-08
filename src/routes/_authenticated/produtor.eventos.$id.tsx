@@ -17,6 +17,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { brl, CATEGORIES, fmtDate, METHOD_LABEL, ORDER_STATUS } from "@/lib/format";
 import { CoverUpload, EventDocsEditor } from "@/components/event-files";
 import { ProductsEditor } from "@/components/products-editor";
+import { CustomFieldsEditor } from "@/components/custom-fields";
+import { formatAnswer, parseFields } from "@/lib/custom-fields";
 
 export const Route = createFileRoute("/_authenticated/produtor/eventos/$id")({
   head: () => ({ meta: [{ title: "Gerenciar evento — Inscreva" }, { name: "robots", content: "noindex" }] }),
@@ -55,6 +57,7 @@ function ManageEvent() {
         description: f.description,
         cover_url: f.cover_url || null,
         shirt_enabled: !!f.shirt_enabled,
+        custom_fields: parseFields(f.custom_fields).map((x) => ({ ...x, label: x.label.trim() })) as any,
         shirt_sizes: f.shirt_sizes?.length ? f.shirt_sizes : ["PP", "P", "M", "G", "GG", "XG"],
         venue: f.venue,
         city: f.city,
@@ -98,6 +101,7 @@ function ManageEvent() {
           <TabsTrigger value="docs">Documentos</TabsTrigger>
           <TabsTrigger value="lotes">Categorias e lotes</TabsTrigger>
           <TabsTrigger value="produtos">Kit e produtos</TabsTrigger>
+          <TabsTrigger value="campos">Campos da inscrição</TabsTrigger>
           <TabsTrigger value="inscritos">Inscritos</TabsTrigger>
         </TabsList>
         <TabsContent value="dados" className="mt-6">
@@ -134,8 +138,18 @@ function ManageEvent() {
           </div>
           <ProductsEditor eventId={id} producerId={ev.producer_id} />
         </TabsContent>
+        <TabsContent value="campos" className="mt-6">
+          <div className="space-y-4 rounded-2xl border bg-card p-6 shadow-card">
+            <div>
+              <h2 className="text-lg font-bold">Campos extras do formulário</h2>
+              <p className="text-sm text-muted-foreground">Perguntas que o participante responde ao se inscrever. As respostas aparecem na planilha de inscritos.</p>
+            </div>
+            <CustomFieldsEditor value={f.custom_fields ?? []} onChange={(v) => setF({ ...f, custom_fields: v })} />
+            <div><Button variant="hero" onClick={() => save()}>Salvar campos</Button></div>
+          </div>
+        </TabsContent>
         <TabsContent value="lotes" className="mt-6"><Tickets eventId={id} /></TabsContent>
-        <TabsContent value="inscritos" className="mt-6"><Attendees eventId={id} title={ev.title} /></TabsContent>
+        <TabsContent value="inscritos" className="mt-6"><Attendees eventId={id} title={ev.title} fields={parseFields(ev.custom_fields)} /></TabsContent>
       </Tabs>
     </div>
   );
@@ -209,7 +223,7 @@ function Tickets({ eventId }: { eventId: string }) {
   );
 }
 
-function Attendees({ eventId, title }: { eventId: string; title: string }) {
+function Attendees({ eventId, title, fields }: { eventId: string; title: string; fields: import("@/lib/custom-fields").CustomField[] }) {
   const [filter, setFilter] = useState("todos");
   const { data: rows = [] } = useQuery({
     queryKey: ["attendees", eventId],
@@ -234,6 +248,7 @@ function Attendees({ eventId, title }: { eventId: string; title: string }) {
               list.map((r) => ({
                 codigo: r.code, nome: r.participant_name, email: r.participant_email, cpf: r.participant_cpf, telefone: r.participant_phone,
                 nascimento: r.participant_birth_date, sexo: r.participant_gender, camiseta: r.shirt_size, equipe: r.team, produtos: ((r.items as any[]) ?? []).map((i: any) => `${i.qty}x ${i.name}${i.size ? ` (${i.size})` : ""}`).join("; "),
+                ...Object.fromEntries(fields.map((cf) => [cf.label, formatAnswer(cf, (r.custom_answers as any)?.[cf.id])])),
                 categoria: r.ticket_types?.name, status: r.status, pagamento: r.payment_method, total: r.total, voce_recebe: r.producer_amount, data: r.created_at,
               })),
               `inscritos-${title}.csv`,
