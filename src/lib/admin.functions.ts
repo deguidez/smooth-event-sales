@@ -58,6 +58,7 @@ const settingsSchema = z.object({
   asaas_fee_paid_by: z.enum(["plataforma", "produtor"]).optional(),
   max_installments: z.number().int().min(1).max(21).optional(),
   boleto_due_days: z.number().int().min(1).max(30).optional(),
+  card_release_days: z.number().int().min(0).max(60).optional(),
   enable_pix: z.boolean().optional(),
   enable_boleto: z.boolean().optional(),
   enable_card: z.boolean().optional(),

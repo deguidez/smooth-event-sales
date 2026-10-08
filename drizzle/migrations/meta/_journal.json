@@ -113,6 +113,20 @@
       "when": 1791498748540,
       "tag": "0015_superadmin_event_children_write",
       "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "7",
+      "when": 1791500543345,
+      "tag": "0016_producer_withdrawals",
+      "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1791500559499,
+      "tag": "0017_withdrawals_column_grants",
+      "breakpoints": true
     }
   ]
 }

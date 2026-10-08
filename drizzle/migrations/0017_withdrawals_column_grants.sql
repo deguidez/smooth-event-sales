@@ -1,0 +1,2 @@
+REVOKE SELECT ON public.withdrawals FROM authenticated;
+GRANT SELECT (id, producer_id, amount, status, bank, asaas_transfer_id, error, created_at, confirmed_at, processed_at, code_expires_at) ON public.withdrawals TO authenticated;
