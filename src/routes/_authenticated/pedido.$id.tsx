@@ -139,7 +139,7 @@ function OrderPage() {
               <Item l="Produtos" v={(o as any).items.map((i: any) => `${i.qty}x ${i.name}${i.size ? ` (${i.size})` : ""}`).join(", ")} />
             )}
             {o.team && <Item l="Equipe" v={o.team} />}
-            <Item l="Pagamento" v={METHOD_LABEL[o.payment_method]} />
+            <Item l="Pagamento" v={Number(o.total) <= 0 ? "Inscrição gratuita" : METHOD_LABEL[o.payment_method]} />
             <Item l="Status" v={<Badge variant={st.variant}>{st.label}</Badge>} />
             {o.paid_at && <Item l="Pago em" v={fmtDate(o.paid_at, true)} />}
             <Item l="Valor total" v={<span className="text-lg font-extrabold">{brl(o.total)}</span>} />

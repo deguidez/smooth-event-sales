@@ -42,7 +42,7 @@ export async function createReceiptPdf(order: ReceiptOrder, kind: "registration"
       }
     }
   }
-  line(`Pagamento: ${METHOD_LABEL[order.payment_method] ?? order.payment_method} · ${brl(order.total)}`);
+  line(Number(order.total) <= 0 ? "Pagamento: Inscrição gratuita" : `Pagamento: ${METHOD_LABEL[order.payment_method] ?? order.payment_method} · ${brl(order.total)}`);
   if (order.paid_at) line(`Pagamento confirmado em: ${fmtDate(order.paid_at, true)}`);
   line(`Inscrição realizada em: ${fmtDate(order.created_at, true)}`);
   if (kind === "kit") line("Apresente este comprovante e um documento de identificação na retirada do kit. A organização confere o pagamento e registra a entrega.", 10);

@@ -220,7 +220,7 @@ function Tickets({ eventId }: { eventId: string }) {
             {tickets.map((t) => (
               <TableRow key={t.id}>
                 <TableCell className="font-semibold">{t.name}</TableCell>
-                <TableCell>{brl(t.price)}</TableCell>
+                <TableCell>{Number(t.price) === 0 ? "Grátis" : brl(t.price)}</TableCell>
                 <TableCell>
                   <Input type="number" className="h-8 w-24" defaultValue={t.quantity} onBlur={(e) => Number(e.target.value) !== t.quantity && patch(t.id, { quantity: Number(e.target.value) })} />
                 </TableCell>
@@ -236,7 +236,7 @@ function Tickets({ eventId }: { eventId: string }) {
       </div>
       <form onSubmit={add} className="grid items-end gap-3 rounded-2xl border bg-card p-5 shadow-card md:grid-cols-5">
         <F l="Nome"><Input value={n.name} onChange={(e) => setN({ ...n, name: e.target.value })} required placeholder="10 km - 1º lote" /></F>
-        <F l="Preço (R$)"><Input type="number" step="0.01" min="0" value={n.price} onChange={(e) => setN({ ...n, price: e.target.value })} required /></F>
+        <F l="Preço (R$) — 0 = gratuita"><Input type="number" step="0.01" min="0" value={n.price} onChange={(e) => setN({ ...n, price: e.target.value })} required /></F>
         <F l="Vagas"><Input type="number" min="1" value={n.quantity} onChange={(e) => setN({ ...n, quantity: e.target.value })} /></F>
         <F l="Fim das vendas"><Input type="datetime-local" value={n.sales_end} onChange={(e) => setN({ ...n, sales_end: e.target.value })} /></F>
         <Button type="submit" variant="hero"><Plus /> Adicionar</Button>
