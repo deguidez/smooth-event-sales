@@ -24,3 +24,4 @@
 - Event countdowns calculate from starts_at after hydration and stop at zero; no stored countdown state is needed.
 - Calendar actions use browser-generated RFC 5545 files and Google Calendar template links from actual event timestamps; no account access is required and exports never mutate registrations.
 - Event descriptions use Tiptap HTML sanitized through src/lib/description.ts on editor input and public rendering, with legacy plain text/Markdown image support; clipboard HTML supports remote and raster base64 images, while pasted image files use the existing event upload flow.
+- Coupon rules (event scope, percent, minimum, expiry, usage limit) are evaluated only server-side in src/lib/coupons.server.ts; the discount reduces the price before computeFees.

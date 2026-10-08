@@ -19,6 +19,6 @@
 - [x] Super admin (dashboard, produtores, eventos, inscrições, e-mails)
 - [x] Configurações: API Asaas, webhook, taxas/comissões, formas de pagamento, banco de dados
 - [x] Envio real dos e-mails (inscrição, pago, vencido) — ativa após verificação do domínio
-- [ ] Cupons de desconto
+- [x] Cupons de desconto (aba Cupons do super admin + campo no checkout)
 - [x] Upload de capa do evento + documentos (PDF/link: regulamento, resultado)
 - [x] Kit com camisa + produtos extras com foto no checkout
