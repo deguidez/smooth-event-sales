@@ -71,6 +71,13 @@
       "when": 1791486868621,
       "tag": "0009_homepage_images",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1791491852605,
+      "tag": "0010_event_registration_limits",
+      "breakpoints": true
     }
   ]
 }

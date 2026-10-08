@@ -1,0 +1,1 @@
+ALTER TABLE public.events ADD COLUMN IF NOT EXISTS registration_ends_at timestamptz, ADD COLUMN IF NOT EXISTS registration_limit integer;

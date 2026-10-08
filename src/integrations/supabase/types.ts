@@ -157,6 +157,8 @@ export type Database = {
           fee_percent: number | null
           id: string
           producer_id: string
+          registration_ends_at: string | null
+          registration_limit: number | null
           route_map_url: string | null
           shirt_enabled: boolean
           shirt_sizes: string[]
@@ -182,6 +184,8 @@ export type Database = {
           fee_percent?: number | null
           id?: string
           producer_id: string
+          registration_ends_at?: string | null
+          registration_limit?: number | null
           route_map_url?: string | null
           shirt_enabled?: boolean
           shirt_sizes?: string[]
@@ -207,6 +211,8 @@ export type Database = {
           fee_percent?: number | null
           id?: string
           producer_id?: string
+          registration_ends_at?: string | null
+          registration_limit?: number | null
           route_map_url?: string | null
           shirt_enabled?: boolean
           shirt_sizes?: string[]
