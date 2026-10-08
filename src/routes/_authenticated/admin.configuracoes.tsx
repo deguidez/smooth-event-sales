@@ -148,19 +148,10 @@ function SettingsPage() {
         </TabsContent>
 
         <TabsContent value="taxas" className="mt-6 space-y-6">
-          <Card title="Comissão da plataforma" desc="Valor que fica com o dono do site em cada inscrição. Pode ser alterado por produtor no painel do admin.">
-            <div className="grid gap-4 sm:grid-cols-3">
+          <Card title="Comissão da plataforma" desc="Valor que fica com o dono do site em cada inscrição, sempre descontado do repasse do produtor — o comprador paga só o valor da inscrição. Pode ser alterado por produtor no painel do admin.">
+            <div className="grid gap-4 sm:grid-cols-2">
               <Field l="Porcentagem (%)"><Input type="number" step="0.01" value={f.fee_percent} onChange={num("fee_percent")} /></Field>
               <Field l="Valor fixo (R$)"><Input type="number" step="0.01" value={f.fee_fixed} onChange={num("fee_fixed")} /></Field>
-              <Field l="Quem paga a comissão">
-                <Select value={f.fee_paid_by_buyer ? "comprador" : "produtor"} onValueChange={(v) => setF({ ...f, fee_paid_by_buyer: v === "comprador" })}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="comprador">Comprador (somada ao preço)</SelectItem>
-                    <SelectItem value="produtor">Produtor (descontada do repasse)</SelectItem>
-                  </SelectContent>
-                </Select>
-              </Field>
             </div>
           </Card>
           <Card title="Taxas do Asaas" desc="Informe as taxas do seu contrato com o Asaas para calcular o lucro real.">
