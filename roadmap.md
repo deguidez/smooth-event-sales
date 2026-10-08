@@ -1,5 +1,7 @@
 # Roadmap
 
+- [ ] Caixa de e-mail Hostinger exclusiva do superadmin — leitura e resposta; validar acesso real da Hostinger
+
 - [x] Trocar banner e imagens das modalidades nas configurações do super admin
 - [x] Contador regressivo na página do evento
 - [x] Comprovante PDF da inscrição e retirada de kit — geração testada; não há inscrições pagas para teste completo
