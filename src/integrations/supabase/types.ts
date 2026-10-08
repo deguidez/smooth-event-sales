@@ -49,6 +49,47 @@ export type Database = {
           },
         ]
       }
+      event_documents: {
+        Row: {
+          created_at: string
+          event_id: string
+          id: string
+          is_file: boolean
+          kind: string
+          position: number
+          title: string
+          url: string
+        }
+        Insert: {
+          created_at?: string
+          event_id: string
+          id?: string
+          is_file?: boolean
+          kind?: string
+          position?: number
+          title: string
+          url: string
+        }
+        Update: {
+          created_at?: string
+          event_id?: string
+          id?: string
+          is_file?: boolean
+          kind?: string
+          position?: number
+          title?: string
+          url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_documents_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       events: {
         Row: {
           category: Database["public"]["Enums"]["event_category"]
