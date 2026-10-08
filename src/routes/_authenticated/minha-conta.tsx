@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { OrderQrDialog, OrderQrImage } from "@/components/order-qr";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { brl, categoryCover, fmtDate, onlyDigits, ORDER_STATUS } from "@/lib/format";
@@ -60,16 +61,29 @@ function AthleteArea() {
             <div className="grid gap-4 md:grid-cols-2">
               {orders.map((o) => {
                 const st = ORDER_STATUS[o.status]!;
+                const paid = o.status === "pago";
                 return (
-                  <Link key={o.id} to="/pedido/$id" params={{ id: o.id }} className="flex gap-4 rounded-2xl border bg-card p-3 shadow-card transition hover:border-primary">
-                    <img src={o.events?.cover_url || categoryCover(o.events?.category)} alt="" className="h-24 w-24 shrink-0 rounded-xl object-cover" />
-                    <div className="min-w-0 flex-1 py-1">
-                      <Badge variant={st.variant}>{st.label}</Badge>
-                      <p className="mt-1.5 truncate font-bold">{o.events?.title}</p>
-                      <p className="text-sm text-muted-foreground">{o.ticket_types?.name} · {brl(o.total)}</p>
-                      <p className="mt-1 flex items-center gap-1 text-xs text-muted-foreground"><Calendar className="h-3 w-3" /> {fmtDate(o.events?.starts_at)}</p>
-                    </div>
-                  </Link>
+                  <div key={o.id} className="flex flex-col overflow-hidden rounded-2xl border bg-card shadow-card transition hover:border-primary">
+                    <Link to="/pedido/$id" params={{ id: o.id }} className="flex gap-4 p-3">
+                      <img src={o.events?.cover_url || categoryCover(o.events?.category)} alt="" className="h-24 w-24 shrink-0 rounded-xl object-cover" />
+                      <div className="min-w-0 flex-1 py-1">
+                        <Badge variant={st.variant}>{st.label}</Badge>
+                        <p className="mt-1.5 truncate font-bold">{o.events?.title}</p>
+                        <p className="text-sm text-muted-foreground">{o.ticket_types?.name} · {brl(o.total)}</p>
+                        <p className="mt-1 flex items-center gap-1 text-xs text-muted-foreground"><Calendar className="h-3 w-3" /> {fmtDate(o.events?.starts_at)}</p>
+                      </div>
+                    </Link>
+                    {paid && (
+                      <div className="mt-auto flex items-center gap-3 border-t bg-muted/40 px-3 py-2.5">
+                        <OrderQrImage orderId={o.id} size={52} />
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate text-xs font-semibold">Código {o.code}</p>
+                          <p className="text-[11px] leading-tight text-muted-foreground">Apresente na retirada do kit ou na entrada.</p>
+                        </div>
+                        <OrderQrDialog orderId={o.id} code={o.code} title={o.events?.title} className="shrink-0" />
+                      </div>
+                    )}
+                  </div>
                 );
               })}
             </div>
