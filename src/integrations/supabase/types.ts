@@ -149,6 +149,7 @@ export type Database = {
           city: string | null
           cover_url: string | null
           created_at: string
+          custom_fields: Json
           description: string | null
           ends_at: string | null
           featured: boolean
@@ -171,6 +172,7 @@ export type Database = {
           city?: string | null
           cover_url?: string | null
           created_at?: string
+          custom_fields?: Json
           description?: string | null
           ends_at?: string | null
           featured?: boolean
@@ -193,6 +195,7 @@ export type Database = {
           city?: string | null
           cover_url?: string | null
           created_at?: string
+          custom_fields?: Json
           description?: string | null
           ends_at?: string | null
           featured?: boolean
@@ -227,6 +230,7 @@ export type Database = {
           bank_slip_url: string | null
           code: string
           created_at: string
+          custom_answers: Json
           due_date: string | null
           event_id: string
           id: string
@@ -262,6 +266,7 @@ export type Database = {
           bank_slip_url?: string | null
           code?: string
           created_at?: string
+          custom_answers?: Json
           due_date?: string | null
           event_id: string
           id?: string
@@ -297,6 +302,7 @@ export type Database = {
           bank_slip_url?: string | null
           code?: string
           created_at?: string
+          custom_answers?: Json
           due_date?: string | null
           event_id?: string
           id?: string
