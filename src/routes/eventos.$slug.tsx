@@ -51,6 +51,7 @@ function EventPage() {
   const regOpen = (ev as any).registrations_open_at as string | null;
   const notOpen = !!regOpen && new Date(regOpen).getTime() > now;
   const closed = ev.status !== "publicado" || (!!regEnd && new Date(regEnd).getTime() < now);
+  const feeFixed = Number((ev as any).fee_fixed ?? 0);
 
   return (
     <div>
