@@ -18,6 +18,8 @@ import { brl, CATEGORIES, fmtDate, METHOD_LABEL, ORDER_STATUS } from "@/lib/form
 import { CoverUpload, EventDocsEditor } from "@/components/event-files";
 import { ProductsEditor } from "@/components/products-editor";
 import { CustomFieldsEditor } from "@/components/custom-fields";
+import { TermsEditor } from "@/components/terms-editor";
+import { parseTerms } from "@/lib/terms";
 import { DescriptionEditor, myMapsEmbed } from "@/components/rich-description";
 import { formatAnswer, parseFields } from "@/lib/custom-fields";
 
@@ -56,6 +58,7 @@ function ManageEvent() {
         category: f.category,
         short_description: f.short_description,
         description: f.description,
+        terms: parseTerms(f.terms) as any,
         route_map_url: f.route_map_url?.trim() || null,
         cover_url: f.cover_url || null,
         shirt_enabled: !!f.shirt_enabled,
@@ -104,6 +107,7 @@ function ManageEvent() {
           <TabsTrigger value="lotes">Categorias e lotes</TabsTrigger>
           <TabsTrigger value="produtos">Kit e produtos</TabsTrigger>
           <TabsTrigger value="campos">Campos da inscrição</TabsTrigger>
+          <TabsTrigger value="termos">Termos</TabsTrigger>
           <TabsTrigger value="inscritos">Inscritos</TabsTrigger>
         </TabsList>
         <TabsContent value="dados" className="mt-6">
@@ -153,6 +157,16 @@ function ManageEvent() {
             </div>
             <CustomFieldsEditor value={f.custom_fields ?? []} onChange={(v) => setF({ ...f, custom_fields: v })} />
             <div><Button variant="hero" onClick={() => save()}>Salvar campos</Button></div>
+          </div>
+        </TabsContent>
+        <TabsContent value="termos" className="mt-6">
+          <div className="space-y-4 rounded-2xl border bg-card p-6 shadow-card">
+            <div>
+              <h2 className="text-lg font-bold">Termos da inscrição</h2>
+              <p className="text-sm text-muted-foreground">Ligue os termos que o participante precisa aceitar. Você pode editar o título e o texto de cada um.</p>
+            </div>
+            <TermsEditor value={f.terms} onChange={(v) => setF({ ...f, terms: v })} />
+            <div><Button variant="hero" onClick={() => save()}>Salvar termos</Button></div>
           </div>
         </TabsContent>
         <TabsContent value="lotes" className="mt-6"><Tickets eventId={id} /></TabsContent>
