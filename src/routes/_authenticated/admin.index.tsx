@@ -16,7 +16,95 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { SalesChart, StatCard, toCsv } from "@/components/dash";
 import { supabase } from "@/integrations/supabase/client";
 import { AdminGate } from "@/components/admin-gate";
-import { createProducerWallet, updateProducer } from "@/lib/admin.functions";
+import { createProducerWallet, listUsers, setUserRole, updateProducer } from "@/lib/admin.functions";
+
+function Finance({ orders }: { orders: any[] }) {
+  const paid = orders.filter((o) => o.status === "pago");
+  const by = new Map<string, { name: string; count: number; total: number; producer: number; platform: number; fee: number }>();
+  for (const o of paid) {
+    const name = o.producers?.company_name ?? "—";
+    const r = by.get(name) ?? { name, count: 0, total: 0, producer: 0, platform: 0, fee: 0 };
+    r.count++; r.total += Number(o.total); r.producer += Number(o.producer_amount); r.platform += Number(o.platform_amount); r.fee += Number(o.asaas_fee_estimate);
+    by.set(name, r);
+  }
+  const rows = [...by.values()].sort((a, b) => b.total - a.total);
+  const t = rows.reduce((s, r) => ({ total: s.total + r.total, producer: s.producer + r.producer, platform: s.platform + r.platform, fee: s.fee + r.fee }), { total: 0, producer: 0, platform: 0, fee: 0 });
+  return (
+    <div className="space-y-4">
+      <div className="rounded-2xl border bg-card p-5 text-sm">
+        <p className="font-semibold">Como o dinheiro é dividido</p>
+        <p className="mt-1 text-muted-foreground">Em cada pagamento, o valor do evento vai direto para a carteira Asaas do produtor. A plataforma fica somente com as taxas e comissões configuradas.</p>
+        <div className="mt-4 grid gap-3 sm:grid-cols-4">
+          <div><p className="text-muted-foreground">Total pago</p><p className="text-xl font-bold">{brl(t.total)}</p></div>
+          <div><p className="text-muted-foreground">Para os produtores</p><p className="text-xl font-bold">{brl(t.producer)}</p></div>
+          <div><p className="text-muted-foreground">Sua comissão (líquida)</p><p className="text-xl font-bold text-primary">{brl(t.platform)}</p></div>
+          <div><p className="text-muted-foreground">Taxas Asaas (estimadas)</p><p className="text-xl font-bold">{brl(t.fee)}</p></div>
+        </div>
+      </div>
+      <div className="rounded-2xl border bg-card">
+        <Table>
+          <TableHeader><TableRow><TableHead>Produtor</TableHead><TableHead>Pagas</TableHead><TableHead>Total</TableHead><TableHead>Repasse produtor</TableHead><TableHead>Comissão plataforma</TableHead></TableRow></TableHeader>
+          <TableBody>
+            {rows.length === 0 && <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground">Nenhuma venda paga ainda.</TableCell></TableRow>}
+            {rows.map((r) => (
+              <TableRow key={r.name}><TableCell className="font-medium">{r.name}</TableCell><TableCell>{r.count}</TableCell><TableCell>{brl(r.total)}</TableCell><TableCell>{brl(r.producer)}</TableCell><TableCell className="font-semibold">{brl(r.platform)}</TableCell></TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
+    </div>
+  );
+}
+
+const ROLE_LABEL: Record<string, string> = { super_admin: "Super admin", producer: "Produtor", athlete: "Atleta" };
+
+function Users() {
+  const qc = useQueryClient();
+  const load = useServerFn(listUsers);
+  const setRole = useServerFn(setUserRole);
+  const [q, setQ] = useState("");
+  const [filter, setFilter] = useState("todos");
+  const { data: users = [] } = useQuery({ queryKey: ["admin-users"], queryFn: () => load() });
+  const list = users.filter((u: any) => (filter === "todos" || u.roles.includes(filter)) && `${u.full_name ?? ""} ${u.email ?? ""} ${u.cpf ?? ""}`.toLowerCase().includes(q.toLowerCase()));
+  async function toggle(userId: string, role: "super_admin" | "producer" | "athlete", enabled: boolean) {
+    try { await setRole({ data: { userId, role, enabled } }); toast.success("Acesso atualizado"); qc.invalidateQueries({ queryKey: ["admin-users"] }); }
+    catch (e) { toast.error((e as Error).message); }
+  }
+  return (
+    <div className="space-y-4">
+      <div className="flex flex-wrap gap-3">
+        <Input placeholder="Buscar por nome, e-mail ou CPF" value={q} onChange={(e) => setQ(e.target.value)} className="max-w-sm" />
+        <Select value={filter} onValueChange={setFilter}>
+          <SelectTrigger className="w-48"><SelectValue /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="todos">Todos ({users.length})</SelectItem>
+            <SelectItem value="athlete">Atletas</SelectItem>
+            <SelectItem value="producer">Produtores</SelectItem>
+            <SelectItem value="super_admin">Super admins</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+      <div className="rounded-2xl border bg-card">
+        <Table>
+          <TableHeader><TableRow><TableHead>Nome</TableHead><TableHead>Contato</TableHead><TableHead>Inscrições</TableHead><TableHead>Perfis</TableHead><TableHead>Super admin</TableHead></TableRow></TableHeader>
+          <TableBody>
+            {list.length === 0 && <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground">Nenhum usuário encontrado.</TableCell></TableRow>}
+            {list.map((u: any) => (
+              <TableRow key={u.id}>
+                <TableCell><p className="font-medium">{u.full_name || "—"}</p><p className="text-xs text-muted-foreground">desde {fmtDate(u.created_at)}</p></TableCell>
+                <TableCell><p>{u.email}</p><p className="text-xs text-muted-foreground">{u.phone || ""} {u.city ? `· ${u.city}/${u.state ?? ""}` : ""}</p></TableCell>
+                <TableCell>{u.orders} · {brl(u.spent)}</TableCell>
+                <TableCell className="space-x-1">{u.roles.map((r: string) => <Badge key={r} variant={r === "super_admin" ? "lime" : "secondary"}>{ROLE_LABEL[r] ?? r}</Badge>)}</TableCell>
+                <TableCell><Switch checked={u.roles.includes("super_admin")} onCheckedChange={(v) => toggle(u.id, "super_admin", v)} /></TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
+      <p className="text-xs text-muted-foreground">O perfil de produtor é liberado ao aprovar o cadastro na aba Produtores.</p>
+    </div>
+  );
+}
 import { brl, fmtDate, METHOD_LABEL, ORDER_STATUS } from "@/lib/format";
 
 export const Route = createFileRoute("/_authenticated/admin/")({
@@ -71,13 +159,17 @@ function AdminDashboard() {
       <div className="mt-6"><SalesChart orders={orders as any} /></div>
 
       <Tabs defaultValue="produtores" className="mt-10">
-        <TabsList>
+        <TabsList className="flex-wrap h-auto">
+          <TabsTrigger value="financeiro">Financeiro</TabsTrigger>
           <TabsTrigger value="produtores">Produtores {producers.some((p) => p.status === "pendente") && <Badge variant="warning" className="ml-2">{producers.filter((p) => p.status === "pendente").length}</Badge>}</TabsTrigger>
+          <TabsTrigger value="usuarios">Usuários</TabsTrigger>
           <TabsTrigger value="eventos">Eventos</TabsTrigger>
           <TabsTrigger value="inscricoes">Inscrições</TabsTrigger>
           <TabsTrigger value="emails">E-mails</TabsTrigger>
         </TabsList>
+        <TabsContent value="financeiro" className="mt-6"><Finance orders={orders} /></TabsContent>
         <TabsContent value="produtores" className="mt-6"><Producers producers={producers} /></TabsContent>
+        <TabsContent value="usuarios" className="mt-6"><Users /></TabsContent>
         <TabsContent value="eventos" className="mt-6"><Events events={events} /></TabsContent>
         <TabsContent value="inscricoes" className="mt-6"><Orders orders={orders} /></TabsContent>
         <TabsContent value="emails" className="mt-6"><Emails /></TabsContent>

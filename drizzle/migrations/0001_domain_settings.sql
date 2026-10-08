@@ -1,0 +1,1 @@
+ALTER TABLE public.platform_settings ADD COLUMN IF NOT EXISTS site_domain text, ADD COLUMN IF NOT EXISTS email_from_name text, ADD COLUMN IF NOT EXISTS email_from_address text, ADD COLUMN IF NOT EXISTS support_email text;

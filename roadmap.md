@@ -9,3 +9,4 @@
 - [ ] Envio real dos e-mails (pago / não pago) — bloqueado: usuário precisa configurar domínio de e-mail
 - [ ] Upload de imagem de capa (hoje é por link)
 - [ ] Cupons de desconto
+- [x] Upload de capa do evento + documentos (PDF/link: regulamento, resultado)

@@ -15,6 +15,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toCsv } from "@/components/dash";
 import { supabase } from "@/integrations/supabase/client";
 import { brl, CATEGORIES, fmtDate, METHOD_LABEL, ORDER_STATUS } from "@/lib/format";
+import { CoverUpload, EventDocsEditor } from "@/components/event-files";
 
 export const Route = createFileRoute("/_authenticated/produtor/eventos/$id")({
   head: () => ({ meta: [{ title: "Gerenciar evento — Inscreva" }, { name: "robots", content: "noindex" }] }),
@@ -91,6 +92,7 @@ function ManageEvent() {
       <Tabs defaultValue="dados" className="mt-8">
         <TabsList>
           <TabsTrigger value="dados">Dados do evento</TabsTrigger>
+          <TabsTrigger value="docs">Documentos</TabsTrigger>
           <TabsTrigger value="lotes">Categorias e lotes</TabsTrigger>
           <TabsTrigger value="inscritos">Inscritos</TabsTrigger>
         </TabsList>
@@ -103,7 +105,7 @@ function ManageEvent() {
                 <SelectContent>{Object.entries(CATEGORIES).map(([k, v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}</SelectContent>
               </Select>
             </F>
-            <F l="URL da imagem de capa"><Input value={f.cover_url ?? ""} onChange={set("cover_url")} placeholder="https://..." /></F>
+            <CoverUpload producerId={ev.producer_id} value={f.cover_url} onChange={(url) => setF({ ...f, cover_url: url })} />
             <F l="Início"><Input type="datetime-local" value={f.starts_at} onChange={set("starts_at")} /></F>
             <F l="Término"><Input type="datetime-local" value={f.ends_at} onChange={set("ends_at")} /></F>
             <F l="Local"><Input value={f.venue ?? ""} onChange={set("venue")} /></F>
@@ -116,6 +118,7 @@ function ManageEvent() {
             <div><Button variant="hero" onClick={() => save()}>Salvar alterações</Button></div>
           </div>
         </TabsContent>
+        <TabsContent value="docs" className="mt-6"><EventDocsEditor eventId={id} producerId={ev.producer_id} /></TabsContent>
         <TabsContent value="lotes" className="mt-6"><Tickets eventId={id} /></TabsContent>
         <TabsContent value="inscritos" className="mt-6"><Attendees eventId={id} title={ev.title} /></TabsContent>
       </Tabs>

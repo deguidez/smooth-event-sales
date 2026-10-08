@@ -49,6 +49,47 @@ export type Database = {
           },
         ]
       }
+      event_documents: {
+        Row: {
+          created_at: string
+          event_id: string
+          id: string
+          is_file: boolean
+          kind: string
+          position: number
+          title: string
+          url: string
+        }
+        Insert: {
+          created_at?: string
+          event_id: string
+          id?: string
+          is_file?: boolean
+          kind?: string
+          position?: number
+          title: string
+          url: string
+        }
+        Update: {
+          created_at?: string
+          event_id?: string
+          id?: string
+          is_file?: boolean
+          kind?: string
+          position?: number
+          title?: string
+          url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_documents_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       events: {
         Row: {
           category: Database["public"]["Enums"]["event_category"]
@@ -249,6 +290,8 @@ export type Database = {
           asaas_fee_pix: number
           asaas_webhook_token: string | null
           boleto_due_days: number
+          email_from_address: string | null
+          email_from_name: string | null
           enable_boleto: boolean
           enable_card: boolean
           enable_pix: boolean
@@ -258,7 +301,9 @@ export type Database = {
           id: number
           max_installments: number
           platform_wallet_id: string | null
+          site_domain: string | null
           site_name: string
+          support_email: string | null
           updated_at: string
         }
         Insert: {
@@ -271,6 +316,8 @@ export type Database = {
           asaas_fee_pix?: number
           asaas_webhook_token?: string | null
           boleto_due_days?: number
+          email_from_address?: string | null
+          email_from_name?: string | null
           enable_boleto?: boolean
           enable_card?: boolean
           enable_pix?: boolean
@@ -280,7 +327,9 @@ export type Database = {
           id?: number
           max_installments?: number
           platform_wallet_id?: string | null
+          site_domain?: string | null
           site_name?: string
+          support_email?: string | null
           updated_at?: string
         }
         Update: {
@@ -293,6 +342,8 @@ export type Database = {
           asaas_fee_pix?: number
           asaas_webhook_token?: string | null
           boleto_due_days?: number
+          email_from_address?: string | null
+          email_from_name?: string | null
           enable_boleto?: boolean
           enable_card?: boolean
           enable_pix?: boolean
@@ -302,7 +353,9 @@ export type Database = {
           id?: number
           max_installments?: number
           platform_wallet_id?: string | null
+          site_domain?: string | null
           site_name?: string
+          support_email?: string | null
           updated_at?: string
         }
         Relationships: []
