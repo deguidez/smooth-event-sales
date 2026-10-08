@@ -180,8 +180,56 @@ function UserDialog({ u, onClose, onSaved }: { u: any; onClose: () => void; onSa
           </div>
         </div>
         <div className="flex justify-end gap-2 pt-2">
+          <Button variant="outline" className="mr-auto text-destructive" disabled={busy} onClick={remove}>Excluir usuário</Button>
           <Button variant="outline" onClick={onClose}>Cancelar</Button>
           <Button variant="hero" disabled={busy || !f.email} onClick={submit}>{busy ? "Salvando..." : "Salvar"}</Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function NewUserDialog({ onClose, onSaved }: { onClose: () => void; onSaved: () => void }) {
+  const make = useServerFn(adminCreateUser);
+  const [busy, setBusy] = useState(false);
+  const [f, setF] = useState({ full_name: "", email: "", phone: "", cpf: "", password: "" });
+  const [roles, setRoles] = useState<string[]>(["athlete"]);
+  const set = (k: keyof typeof f) => (e: React.ChangeEvent<HTMLInputElement>) => setF({ ...f, [k]: e.target.value });
+  const n = (v: string) => (v.trim() ? v.trim() : null);
+  async function submit() {
+    setBusy(true);
+    try {
+      await make({ data: {
+        email: f.email.trim(), password: f.password, full_name: n(f.full_name), phone: n(f.phone), cpf: n(f.cpf),
+        roles: roles as any,
+      } });
+      toast.success("Usuário criado");
+      onSaved();
+    } catch (e) { toast.error((e as Error).message); } finally { setBusy(false); }
+  }
+  return (
+    <Dialog open onOpenChange={(o) => !o && onClose()}>
+      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
+        <DialogHeader><DialogTitle>Novo usuário</DialogTitle></DialogHeader>
+        <div className="grid gap-3 sm:grid-cols-2">
+          <div className="sm:col-span-2"><Label>Nome completo</Label><Input value={f.full_name} onChange={set("full_name")} /></div>
+          <div className="sm:col-span-2"><Label>E-mail</Label><Input type="email" value={f.email} onChange={set("email")} /></div>
+          <div><Label>Telefone</Label><Input value={f.phone} onChange={set("phone")} /></div>
+          <div><Label>CPF</Label><Input value={f.cpf} onChange={set("cpf")} /></div>
+          <div className="sm:col-span-2"><Label>Senha</Label><Input type="text" placeholder="mín. 6 caracteres" value={f.password} onChange={set("password")} /></div>
+          <div className="sm:col-span-2 space-y-2">
+            <Label>Perfis de acesso</Label>
+            {(["athlete", "producer", "super_admin"] as const).map((r) => (
+              <div key={r} className="flex items-center justify-between rounded-lg border px-3 py-2">
+                <span className="text-sm">{ROLE_LABEL[r] ?? r}</span>
+                <Switch checked={roles.includes(r)} onCheckedChange={(v) => setRoles(v ? [...roles, r] : roles.filter((x) => x !== r))} />
+              </div>
+            ))}
+          </div>
+        </div>
+        <div className="flex justify-end gap-2 pt-2">
+          <Button variant="outline" onClick={onClose}>Cancelar</Button>
+          <Button variant="hero" disabled={busy || !f.email || f.password.length < 6} onClick={submit}>{busy ? "Criando..." : "Criar usuário"}</Button>
         </div>
       </DialogContent>
     </Dialog>
