@@ -65,6 +65,7 @@ function Users() {
   const [q, setQ] = useState("");
   const [filter, setFilter] = useState("todos");
   const [editing, setEditing] = useState<any>(null);
+  const [creating, setCreating] = useState(false);
   const { data: users = [] } = useQuery({ queryKey: ["admin-users"], queryFn: () => load() });
   const list = users.filter((u: any) => (filter === "todos" || u.roles.includes(filter)) && `${u.full_name ?? ""} ${u.email ?? ""} ${u.cpf ?? ""}`.toLowerCase().includes(q.toLowerCase()));
   async function toggle(userId: string, role: "super_admin" | "producer" | "athlete", enabled: boolean) {
@@ -84,6 +85,7 @@ function Users() {
             <SelectItem value="super_admin">Super admins</SelectItem>
           </SelectContent>
         </Select>
+        <div className="ml-auto"><Button variant="hero" onClick={() => setCreating(true)}>Novo usuário</Button></div>
       </div>
       <div className="rounded-2xl border bg-card">
         <Table>
