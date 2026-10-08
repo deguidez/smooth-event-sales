@@ -2,6 +2,8 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useState } from "react";
+import { CustomFieldsForm } from "@/components/custom-fields";
+import { isEmpty, parseFields } from "@/lib/custom-fields";
 import { toast } from "sonner";
 import { CreditCard, Minus, Plus, QrCode, Receipt, ShieldCheck } from "lucide-react";
 import { computeFees } from "@/lib/fees";
@@ -40,6 +42,7 @@ function Checkout() {
   const [installments, setInstallments] = useState(1);
   const [busy, setBusy] = useState(false);
   const [f, setF] = useState({ name: "", email: "", cpf: "", phone: "", birth_date: "", gender: "", shirt_size: "", team: "" });
+  const [answers, setAnswers] = useState<Record<string, any>>({});
   const [cart, setCart] = useState<Record<string, { qty: number; size: string }>>({});
 
   useEffect(() => {
@@ -80,6 +83,8 @@ function Checkout() {
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     if (info!.event.shirt_enabled && !f.shirt_size) { toast.error("Escolha o tamanho da camisa do kit"); return; }
+    const reqMissing = parseFields(info!.event.custom_fields).find((cf) => cf.required && isEmpty(answers[cf.id]));
+    if (reqMissing) { toast.error(`Preencha o campo "${reqMissing.label}"`); return; }
     const missing = chosen.find((x: any) => x.p.sizes.length && !x.c.size);
     if (missing) { toast.error(`Escolha o tamanho de ${missing.p.name}`); return; }
     setBusy(true);
@@ -96,6 +101,7 @@ function Checkout() {
           installments,
           items: chosen.map((x: any) => ({ productId: x.p.id, qty: x.c.qty, size: x.c.size || null })),
           participant: { ...f, cpf, phone: onlyDigits(f.phone) },
+          answers,
         },
       });
       navigate({ to: "/pedido/$id", params: { id: r.orderId } });
@@ -142,6 +148,7 @@ function Checkout() {
           {info.event.category === "esporte" && (
             <Field label="Equipe / assessoria"><Input value={f.team} onChange={set("team")} maxLength={100} /></Field>
           )}
+          <CustomFieldsForm fields={parseFields(info.event.custom_fields)} answers={answers} onChange={setAnswers} />
         </section>
 
         {info.products.length > 0 && (
