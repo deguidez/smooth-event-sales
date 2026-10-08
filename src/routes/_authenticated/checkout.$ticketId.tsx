@@ -14,6 +14,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { createOrder, getCheckoutInfo } from "@/lib/orders.functions";
+import { checkCoupon } from "@/lib/coupons.functions";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { brl, categoryCover, fmtDate, onlyDigits } from "@/lib/format";
@@ -46,6 +47,9 @@ function Checkout() {
   const [f, setF] = useState({ name: "", email: "", cpf: "", phone: "", birth_date: "", gender: "", shirt_size: "", team: "" });
   const [answers, setAnswers] = useState<Record<string, any>>({});
   const [accepted, setAccepted] = useState<string[]>([]);
+  const applyCoupon = useServerFn(checkCoupon);
+  const [couponInput, setCouponInput] = useState("");
+  const [coupon, setCoupon] = useState<{ code: string; percent: number } | null>(null);
   const [cart, setCart] = useState<Record<string, { qty: number; size: string }>>({});
 
   useEffect(() => {
@@ -79,8 +83,11 @@ function Checkout() {
     .map((p: any) => ({ p, c: cart[p.id] }))
     .filter((x: any) => x.c && x.c.qty > 0);
   const productsTotal = chosen.reduce((s: number, x: any) => s + x.p.price * x.c.qty, 0);
-  const free = info.ticket.price + productsTotal <= 0;
-  const quote = computeFees(info.ticket.price + productsTotal, method, info.feeSettings as any, info.feeOverride);
+  const subtotal = info.ticket.price + productsTotal;
+  const discount = coupon ? Math.min(subtotal, Math.round(subtotal * coupon.percent) / 100) : 0;
+  const net = Math.max(0, subtotal - discount);
+  const free = net <= 0;
+  const quote = computeFees(net, method, info.feeSettings as any, info.feeOverride);
   const set = (k: keyof typeof f) => (e: React.ChangeEvent<HTMLInputElement>) => setF({ ...f, [k]: e.target.value });
 
   async function submit(e: React.FormEvent) {
@@ -109,6 +116,7 @@ function Checkout() {
           participant: { ...f, cpf, phone: onlyDigits(f.phone) },
           answers,
           accepted,
+          coupon: coupon?.code ?? null,
         },
       });
       navigate({ to: "/pedido/$id", params: { id: r.orderId } });
@@ -247,11 +255,31 @@ function Checkout() {
         <div className="space-y-2 border-t pt-4 text-sm">
           <Row l={info.ticket.name} r={brl(info.ticket.price)} />
           {chosen.map((x: any) => <Row key={x.p.id} l={`${x.c.qty}x ${x.p.name}${x.c.size ? ` (${x.c.size})` : ""}`} r={brl(x.p.price * x.c.qty)} />)}
+          {coupon && <Row l={`Cupom ${coupon.code} (-${coupon.percent}%)`} r={`- ${brl(discount)}`} />}
           {!free && quote.serviceFee > 0 && <Row l="Taxa de serviço" r={brl(quote.serviceFee)} />}
           <div className="flex justify-between border-t pt-3 text-lg font-extrabold">
             <span>Total</span>
             <span className="text-primary">{brl(free ? 0 : quote.total)}</span>
           </div>
+        </div>
+        <div className="space-y-1.5 border-t pt-4">
+          <Label htmlFor="coupon">Cupom de desconto</Label>
+          {coupon ? (
+            <div className="flex items-center justify-between rounded-lg bg-primary/10 px-3 py-2 text-sm">
+              <span className="font-semibold">{coupon.code} aplicado</span>
+              <Button type="button" variant="ghost" size="sm" onClick={() => setCoupon(null)}>Remover</Button>
+            </div>
+          ) : (
+            <div className="flex gap-2">
+              <Input id="coupon" value={couponInput} onChange={(e) => setCouponInput(e.target.value.toUpperCase())} placeholder="CÓDIGO" maxLength={40} />
+              <Button type="button" variant="outline" disabled={!couponInput.trim()} onClick={async () => {
+                try {
+                  const c = await applyCoupon({ data: { code: couponInput, eventId: info.event.id, subtotal } });
+                  setCoupon(c); toast.success("Cupom aplicado");
+                } catch (err) { toast.error((err as Error).message); }
+              }}>Aplicar</Button>
+            </div>
+          )}
         </div>
         {!free && !info.ready && (
           <p className="rounded-lg bg-warning/20 p-3 text-xs">As vendas deste evento ainda não estão habilitadas para pagamento.</p>

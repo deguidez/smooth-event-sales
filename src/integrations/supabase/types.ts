@@ -56,6 +56,50 @@ export type Database = {
         }
         Relationships: []
       }
+      coupons: {
+        Row: {
+          active: boolean
+          code: string
+          created_at: string
+          event_id: string | null
+          id: string
+          max_uses: number | null
+          min_amount: number | null
+          percent: number
+          valid_until: string | null
+        }
+        Insert: {
+          active?: boolean
+          code: string
+          created_at?: string
+          event_id?: string | null
+          id?: string
+          max_uses?: number | null
+          min_amount?: number | null
+          percent: number
+          valid_until?: string | null
+        }
+        Update: {
+          active?: boolean
+          code?: string
+          created_at?: string
+          event_id?: string | null
+          id?: string
+          max_uses?: number | null
+          min_amount?: number | null
+          percent?: number
+          valid_until?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "coupons_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       email_log: {
         Row: {
           created_at: string
@@ -287,8 +331,11 @@ export type Database = {
           asaas_payment_id: string | null
           bank_slip_url: string | null
           code: string
+          coupon_code: string | null
+          coupon_id: string | null
           created_at: string
           custom_answers: Json
+          discount: number
           due_date: string | null
           event_id: string
           id: string
@@ -324,8 +371,11 @@ export type Database = {
           asaas_payment_id?: string | null
           bank_slip_url?: string | null
           code?: string
+          coupon_code?: string | null
+          coupon_id?: string | null
           created_at?: string
           custom_answers?: Json
+          discount?: number
           due_date?: string | null
           event_id: string
           id?: string
@@ -361,8 +411,11 @@ export type Database = {
           asaas_payment_id?: string | null
           bank_slip_url?: string | null
           code?: string
+          coupon_code?: string | null
+          coupon_id?: string | null
           created_at?: string
           custom_answers?: Json
+          discount?: number
           due_date?: string | null
           event_id?: string
           id?: string
@@ -393,6 +446,13 @@ export type Database = {
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "orders_coupon_id_fkey"
+            columns: ["coupon_id"]
+            isOneToOne: false
+            referencedRelation: "coupons"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "orders_event_id_fkey"
             columns: ["event_id"]

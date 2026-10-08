@@ -17,6 +17,7 @@ import { SalesChart, StatCard, toCsv } from "@/components/dash";
 import { supabase } from "@/integrations/supabase/client";
 import { AdminGate } from "@/components/admin-gate";
 import { createProducerWallet, listUsers, setUserRole, updateProducer, updateUser, adminCreateProducer, deleteProducer, adminCreateUser, deleteUser } from "@/lib/admin.functions";
+import { CouponsAdmin } from "@/components/coupons-admin";
 import { ActivityLogView } from "@/components/activity-log-view";
 import { loadFinancialOrders, loadFinancialSummary } from "@/lib/financial";
 
@@ -288,6 +289,7 @@ function AdminDashboard() {
           <TabsTrigger value="usuarios">Usuários</TabsTrigger>
           <TabsTrigger value="eventos">Eventos</TabsTrigger>
           <TabsTrigger value="inscricoes">Inscrições</TabsTrigger>
+          <TabsTrigger value="cupons">Cupons</TabsTrigger>
           <TabsTrigger value="emails">E-mails</TabsTrigger>
           <TabsTrigger value="logs">Logs</TabsTrigger>
         </TabsList>
@@ -296,6 +298,7 @@ function AdminDashboard() {
         <TabsContent value="usuarios" className="mt-6"><Users /></TabsContent>
         <TabsContent value="eventos" className="mt-6"><Events events={events} /></TabsContent>
         <TabsContent value="inscricoes" className="mt-6"><Orders orders={orders} /></TabsContent>
+        <TabsContent value="cupons" className="mt-6"><CouponsAdmin events={events} /></TabsContent>
         <TabsContent value="emails" className="mt-6"><Emails /></TabsContent>
         <TabsContent value="logs" className="mt-6"><ActivityLogView /></TabsContent>
       </Tabs>
