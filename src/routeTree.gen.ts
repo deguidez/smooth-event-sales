@@ -15,6 +15,8 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedMinhaContaRouteImport } from './routes/_authenticated/minha-conta'
 import { Route as EventosIndexRouteImport } from './routes/eventos.index'
 import { Route as EventosSlugRouteImport } from './routes/eventos.$slug'
+import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin.index'
+import { Route as AuthenticatedAdminConfiguracoesRouteImport } from './routes/_authenticated/admin.configuracoes'
 import { Route as AuthenticatedCheckoutTicketIdRouteImport } from './routes/_authenticated/checkout.$ticketId'
 import { Route as AuthenticatedPedidoIdRouteImport } from './routes/_authenticated/pedido.$id'
 import { Route as AuthenticatedProdutorIndexRouteImport } from './routes/_authenticated/produtor.index'
@@ -50,6 +52,17 @@ const EventosSlugRoute = EventosSlugRouteImport.update({
   path: '/eventos/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedAdminIndexRoute = AuthenticatedAdminIndexRouteImport.update({
+  id: '/admin/',
+  path: '/admin/',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedAdminConfiguracoesRoute =
+  AuthenticatedAdminConfiguracoesRouteImport.update({
+    id: '/admin/configuracoes',
+    path: '/admin/configuracoes',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedCheckoutTicketIdRoute =
   AuthenticatedCheckoutTicketIdRouteImport.update({
     id: '/checkout/$ticketId',
@@ -85,9 +98,11 @@ export interface FileRoutesByFullPath {
   '/minha-conta': typeof AuthenticatedMinhaContaRoute
   '/eventos/$slug': typeof EventosSlugRoute
   '/eventos/': typeof EventosIndexRoute
+  '/admin/configuracoes': typeof AuthenticatedAdminConfiguracoesRoute
   '/checkout/$ticketId': typeof AuthenticatedCheckoutTicketIdRoute
   '/pedido/$id': typeof AuthenticatedPedidoIdRoute
   '/api/public/asaas-webhook': typeof ApiPublicAsaasWebhookRoute
+  '/admin/': typeof AuthenticatedAdminIndexRoute
   '/produtor/': typeof AuthenticatedProdutorIndexRoute
   '/produtor/eventos/$id': typeof AuthenticatedProdutorEventosIdRoute
 }
@@ -97,9 +112,11 @@ export interface FileRoutesByTo {
   '/minha-conta': typeof AuthenticatedMinhaContaRoute
   '/eventos/$slug': typeof EventosSlugRoute
   '/eventos': typeof EventosIndexRoute
+  '/admin/configuracoes': typeof AuthenticatedAdminConfiguracoesRoute
   '/checkout/$ticketId': typeof AuthenticatedCheckoutTicketIdRoute
   '/pedido/$id': typeof AuthenticatedPedidoIdRoute
   '/api/public/asaas-webhook': typeof ApiPublicAsaasWebhookRoute
+  '/admin': typeof AuthenticatedAdminIndexRoute
   '/produtor': typeof AuthenticatedProdutorIndexRoute
   '/produtor/eventos/$id': typeof AuthenticatedProdutorEventosIdRoute
 }
@@ -111,9 +128,11 @@ export interface FileRoutesById {
   '/_authenticated/minha-conta': typeof AuthenticatedMinhaContaRoute
   '/eventos/$slug': typeof EventosSlugRoute
   '/eventos/': typeof EventosIndexRoute
+  '/_authenticated/admin/configuracoes': typeof AuthenticatedAdminConfiguracoesRoute
   '/_authenticated/checkout/$ticketId': typeof AuthenticatedCheckoutTicketIdRoute
   '/_authenticated/pedido/$id': typeof AuthenticatedPedidoIdRoute
   '/api/public/asaas-webhook': typeof ApiPublicAsaasWebhookRoute
+  '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
   '/_authenticated/produtor/': typeof AuthenticatedProdutorIndexRoute
   '/_authenticated/produtor/eventos/$id': typeof AuthenticatedProdutorEventosIdRoute
 }
@@ -125,9 +144,11 @@ export interface FileRouteTypes {
     | '/minha-conta'
     | '/eventos/$slug'
     | '/eventos/'
+    | '/admin/configuracoes'
     | '/checkout/$ticketId'
     | '/pedido/$id'
     | '/api/public/asaas-webhook'
+    | '/admin/'
     | '/produtor/'
     | '/produtor/eventos/$id'
   fileRoutesByTo: FileRoutesByTo
@@ -137,9 +158,11 @@ export interface FileRouteTypes {
     | '/minha-conta'
     | '/eventos/$slug'
     | '/eventos'
+    | '/admin/configuracoes'
     | '/checkout/$ticketId'
     | '/pedido/$id'
     | '/api/public/asaas-webhook'
+    | '/admin'
     | '/produtor'
     | '/produtor/eventos/$id'
   id:
@@ -150,9 +173,11 @@ export interface FileRouteTypes {
     | '/_authenticated/minha-conta'
     | '/eventos/$slug'
     | '/eventos/'
+    | '/_authenticated/admin/configuracoes'
     | '/_authenticated/checkout/$ticketId'
     | '/_authenticated/pedido/$id'
     | '/api/public/asaas-webhook'
+    | '/_authenticated/admin/'
     | '/_authenticated/produtor/'
     | '/_authenticated/produtor/eventos/$id'
   fileRoutesById: FileRoutesById
@@ -210,6 +235,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof EventosSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/admin/': {
+      id: '/_authenticated/admin/'
+      path: '/admin'
+      fullPath: '/admin/'
+      preLoaderRoute: typeof AuthenticatedAdminIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/admin/configuracoes': {
+      id: '/_authenticated/admin/configuracoes'
+      path: '/admin/configuracoes'
+      fullPath: '/admin/configuracoes'
+      preLoaderRoute: typeof AuthenticatedAdminConfiguracoesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/checkout/$ticketId': {
       id: '/_authenticated/checkout/$ticketId'
       path: '/checkout/$ticketId'
@@ -250,16 +289,20 @@ declare module '@tanstack/react-router' {
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedMinhaContaRoute: typeof AuthenticatedMinhaContaRoute
+  AuthenticatedAdminConfiguracoesRoute: typeof AuthenticatedAdminConfiguracoesRoute
   AuthenticatedCheckoutTicketIdRoute: typeof AuthenticatedCheckoutTicketIdRoute
   AuthenticatedPedidoIdRoute: typeof AuthenticatedPedidoIdRoute
+  AuthenticatedAdminIndexRoute: typeof AuthenticatedAdminIndexRoute
   AuthenticatedProdutorIndexRoute: typeof AuthenticatedProdutorIndexRoute
   AuthenticatedProdutorEventosIdRoute: typeof AuthenticatedProdutorEventosIdRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedMinhaContaRoute: AuthenticatedMinhaContaRoute,
+  AuthenticatedAdminConfiguracoesRoute: AuthenticatedAdminConfiguracoesRoute,
   AuthenticatedCheckoutTicketIdRoute: AuthenticatedCheckoutTicketIdRoute,
   AuthenticatedPedidoIdRoute: AuthenticatedPedidoIdRoute,
+  AuthenticatedAdminIndexRoute: AuthenticatedAdminIndexRoute,
   AuthenticatedProdutorIndexRoute: AuthenticatedProdutorIndexRoute,
   AuthenticatedProdutorEventosIdRoute: AuthenticatedProdutorEventosIdRoute,
 }
