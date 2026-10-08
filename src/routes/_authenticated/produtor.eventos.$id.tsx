@@ -43,7 +43,7 @@ function ManageEvent() {
   });
   const [f, setF] = useState<any>(null);
   useEffect(() => {
-    if (ev) setF({ ...ev, starts_at: toLocal(ev.starts_at), ends_at: toLocal(ev.ends_at) });
+    if (ev) setF({ ...ev, starts_at: toLocal(ev.starts_at), ends_at: toLocal(ev.ends_at), registration_ends_at: toLocal((ev as any).registration_ends_at), registration_limit: (ev as any).registration_limit ?? "" });
   }, [ev]);
   if (!ev || !f) return <div className="mx-auto max-w-6xl px-4 py-20 text-muted-foreground">Carregando...</div>;
 
@@ -70,6 +70,8 @@ function ManageEvent() {
         state: f.state,
         starts_at: new Date(f.starts_at).toISOString(),
         ends_at: f.ends_at ? new Date(f.ends_at).toISOString() : null,
+        registration_ends_at: f.registration_ends_at ? new Date(f.registration_ends_at).toISOString() : null,
+        registration_limit: f.registration_limit === "" || f.registration_limit == null ? null : Math.max(1, Number(f.registration_limit)),
         ...(status ? { status: status as any } : {}),
       })
       .eq("id", id);
@@ -121,8 +123,10 @@ function ManageEvent() {
               </Select>
             </F>
             <CoverUpload producerId={ev.producer_id} value={f.cover_url} onChange={(url) => setF({ ...f, cover_url: url })} />
-            <F l="Início"><Input type="datetime-local" value={f.starts_at} onChange={set("starts_at")} /></F>
-            <F l="Término"><Input type="datetime-local" value={f.ends_at} onChange={set("ends_at")} /></F>
+            <F l="Dia do evento (início)"><Input type="datetime-local" value={f.starts_at} onChange={set("starts_at")} /></F>
+            <F l="Término do evento (opcional)"><Input type="datetime-local" value={f.ends_at ?? ""} onChange={set("ends_at")} /></F>
+            <F l="Fim das inscrições (opcional)"><Input type="datetime-local" value={f.registration_ends_at ?? ""} onChange={set("registration_ends_at")} /></F>
+            <F l="Total de inscrições liberadas (vazio = sem limite)"><Input type="number" min="1" value={f.registration_limit} onChange={set("registration_limit")} placeholder="Ex.: 500 (somando todos os lotes)" /></F>
             <F l="Local"><Input value={f.venue ?? ""} onChange={set("venue")} /></F>
             <div className="grid grid-cols-[1fr_80px] gap-3">
               <F l="Cidade"><Input value={f.city ?? ""} onChange={set("city")} /></F>
@@ -184,20 +188,22 @@ function Tickets({ eventId }: { eventId: string }) {
     queryKey: key,
     queryFn: async () => (await supabase.from("ticket_types").select("*").eq("event_id", eventId).order("position")).data ?? [],
   });
-  const [n, setN] = useState({ name: "", price: "", quantity: "100", sales_end: "" });
+  const [n, setN] = useState({ name: "", price: "", quantity: "100", sales_start: "", sales_end: "" });
 
   async function add(e: React.FormEvent) {
     e.preventDefault();
+    if (n.sales_start && n.sales_end && new Date(n.sales_start) >= new Date(n.sales_end)) { toast.error("O fim das vendas precisa ser depois do início"); return; }
     const { error } = await supabase.from("ticket_types").insert({
       event_id: eventId,
       name: n.name.trim(),
       price: Number(n.price) || 0,
       quantity: Number(n.quantity) || 1,
+      sales_start: n.sales_start ? new Date(n.sales_start).toISOString() : null,
       sales_end: n.sales_end ? new Date(n.sales_end).toISOString() : null,
       position: tickets.length,
     });
     if (error) { toast.error(error.message); return; }
-    setN({ name: "", price: "", quantity: "100", sales_end: "" });
+    setN({ name: "", price: "", quantity: "100", sales_start: "", sales_end: "" });
     qc.invalidateQueries({ queryKey: key });
   }
   async function patch(id: string, p: any) {
@@ -215,7 +221,7 @@ function Tickets({ eventId }: { eventId: string }) {
     <div className="space-y-4">
       <div className="overflow-hidden rounded-2xl border bg-card shadow-card">
         <Table>
-          <TableHeader><TableRow><TableHead>Categoria / lote</TableHead><TableHead>Preço</TableHead><TableHead>Vagas</TableHead><TableHead>Vendidos</TableHead><TableHead>Fim das vendas</TableHead><TableHead>Ativo</TableHead><TableHead /></TableRow></TableHeader>
+          <TableHeader><TableRow><TableHead>Categoria / lote</TableHead><TableHead>Preço</TableHead><TableHead>Vagas</TableHead><TableHead>Vendidos</TableHead><TableHead>Início das vendas</TableHead><TableHead>Fim das vendas</TableHead><TableHead>Ativo</TableHead><TableHead /></TableRow></TableHeader>
           <TableBody>
             {tickets.map((t) => (
               <TableRow key={t.id}>
@@ -225,19 +231,21 @@ function Tickets({ eventId }: { eventId: string }) {
                   <Input type="number" className="h-8 w-24" defaultValue={t.quantity} onBlur={(e) => Number(e.target.value) !== t.quantity && patch(t.id, { quantity: Number(e.target.value) })} />
                 </TableCell>
                 <TableCell>{t.sold}</TableCell>
-                <TableCell>{t.sales_end ? fmtDate(t.sales_end, true) : "—"}</TableCell>
+                <TableCell><Input type="datetime-local" className="h-8 w-48" defaultValue={toLocal(t.sales_start)} onBlur={(e) => patch(t.id, { sales_start: e.target.value ? new Date(e.target.value).toISOString() : null })} /></TableCell>
+                <TableCell><Input type="datetime-local" className="h-8 w-48" defaultValue={toLocal(t.sales_end)} onBlur={(e) => patch(t.id, { sales_end: e.target.value ? new Date(e.target.value).toISOString() : null })} /></TableCell>
                 <TableCell><Switch checked={t.active} onCheckedChange={(v) => patch(t.id, { active: v })} /></TableCell>
                 <TableCell><Button size="icon" variant="ghost" onClick={() => remove(t.id)}><Trash2 /></Button></TableCell>
               </TableRow>
             ))}
-            {tickets.length === 0 && <TableRow><TableCell colSpan={7} className="py-8 text-center text-muted-foreground">Adicione a primeira categoria (ex.: 5 km, 10 km, Pista, VIP).</TableCell></TableRow>}
+            {tickets.length === 0 && <TableRow><TableCell colSpan={8} className="py-8 text-center text-muted-foreground">Adicione a primeira categoria (ex.: 5 km, 10 km, Pista, VIP).</TableCell></TableRow>}
           </TableBody>
         </Table>
       </div>
-      <form onSubmit={add} className="grid items-end gap-3 rounded-2xl border bg-card p-5 shadow-card md:grid-cols-5">
+      <form onSubmit={add} className="grid items-end gap-3 rounded-2xl border bg-card p-5 shadow-card md:grid-cols-3 lg:grid-cols-6">
         <F l="Nome"><Input value={n.name} onChange={(e) => setN({ ...n, name: e.target.value })} required placeholder="10 km - 1º lote" /></F>
         <F l="Preço (R$) — 0 = gratuita"><Input type="number" step="0.01" min="0" value={n.price} onChange={(e) => setN({ ...n, price: e.target.value })} required /></F>
         <F l="Vagas"><Input type="number" min="1" value={n.quantity} onChange={(e) => setN({ ...n, quantity: e.target.value })} /></F>
+        <F l="Início das vendas"><Input type="datetime-local" value={n.sales_start} onChange={(e) => setN({ ...n, sales_start: e.target.value })} /></F>
         <F l="Fim das vendas"><Input type="datetime-local" value={n.sales_end} onChange={(e) => setN({ ...n, sales_end: e.target.value })} /></F>
         <Button type="submit" variant="hero"><Plus /> Adicionar</Button>
       </form>
