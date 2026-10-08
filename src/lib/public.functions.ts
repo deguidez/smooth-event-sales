@@ -19,7 +19,21 @@ function publicClient() {
 }
 
 const EVENT_COLS =
-  "id, title, slug, category, short_description, cover_url, venue, city, state, starts_at, status, featured, ticket_types(price, active)";
+  "id, title, slug, category, short_description, cover_url, venue, city, state, starts_at, status, featured, fee_fixed, producers(fee_fixed), ticket_types(price, active)";
+
+/** Taxa fixa (R$) global da plataforma, lida no servidor (platform_settings é restrita). */
+async function getGlobalFeeFixed(): Promise<number> {
+  const { getAdmin } = await import("@/lib/asaas.server");
+  const admin = await getAdmin();
+  const { data } = await admin.from("platform_settings").select("fee_fixed").eq("id", 1).maybeSingle();
+  return Number(data?.fee_fixed ?? 0);
+}
+
+/** Taxa efetiva do evento: taxa do evento → taxa do produtor → taxa global. */
+function effectiveFeeFixed(ev: any, globalFee: number): number {
+  const v = ev?.fee_fixed ?? ev?.producers?.fee_fixed;
+  return v == null ? globalFee : Number(v);
+}
 
 export const listPublicEvents = createServerFn({ method: "GET" })
   .inputValidator((d) =>
@@ -29,12 +43,12 @@ export const listPublicEvents = createServerFn({ method: "GET" })
     let q = publicClient().from("events").select(EVENT_COLS).eq("status", "publicado").order("starts_at");
     if (data.category) q = q.eq("category", data.category as any);
     if (data.q) q = q.ilike("title", `%${data.q.replace(/[%_]/g, "")}%`);
-    const { data: rows, error } = await q.limit(60);
+    const [{ data: rows, error }, globalFee] = await Promise.all([q.limit(60), getGlobalFeeFixed()]);
     if (error) {
       console.error(error);
       return [];
     }
-    return rows ?? [];
+    return (rows ?? []).map((ev: any) => ({ ...ev, producers: undefined, fee_fixed: effectiveFeeFixed(ev, globalFee) }));
   });
 
 export const getPublicEvent = createServerFn({ method: "GET" })
