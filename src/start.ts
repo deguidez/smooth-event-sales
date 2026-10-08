@@ -2,6 +2,7 @@ import { createStart, createCsrfMiddleware, createMiddleware } from "@tanstack/r
 
 import { renderErrorPage } from "./lib/error-page";
 import { attachSupabaseAuth } from "@/integrations/supabase/auth-attacher";
+import { writeActivity } from "./lib/activity.server";
 
 const errorMiddleware = createMiddleware().server(async ({ next }) => {
   try {
@@ -11,6 +12,7 @@ const errorMiddleware = createMiddleware().server(async ({ next }) => {
       throw error;
     }
     console.error(error);
+    await writeActivity({ source: "server", level: "error", action: "request_failed", details: { error_type: error instanceof Error ? error.name : "Error" } });
     return new Response(renderErrorPage(), {
       status: 500,
       headers: { "content-type": "text/html; charset=utf-8" },

@@ -1,3 +1,4 @@
+import { auditedAction } from "./activity-middleware";
 import { createServerFn } from "@tanstack/react-start";
 import { getRequest } from "@tanstack/react-start/server";
 import { z } from "zod";
@@ -20,7 +21,7 @@ function origin() {
 }
 
 export const getAdminSettings = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
+  .middleware([auditedAction("getAdminSettings")])
   .handler(async ({ context }) => {
     await assertAdmin(context);
     const s = await loadSettings();
@@ -66,7 +67,7 @@ const settingsSchema = z.object({
 });
 
 export const listUsers = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
+  .middleware([auditedAction("listUsers")])
   .handler(async ({ context }) => {
     await assertAdmin(context);
     const { data: profiles } = await context.supabase.from("profiles").select("id, full_name, email, phone, cpf, birth_date, gender, city, state, created_at").order("created_at", { ascending: false });
@@ -84,7 +85,7 @@ export const listUsers = createServerFn({ method: "GET" })
   });
 
 export const setUserRole = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([auditedAction("setUserRole")])
   .inputValidator((d) => z.object({ userId: z.string().uuid(), role: z.enum(["super_admin", "producer", "athlete"]), enabled: z.boolean() }).parse(d))
   .handler(async ({ data, context }) => {
     await assertAdmin(context);
@@ -101,7 +102,7 @@ export const setUserRole = createServerFn({ method: "POST" })
   });
 
 export const saveAdminSettings = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([auditedAction("saveAdminSettings")])
   .inputValidator((d) => settingsSchema.parse(d))
   .handler(async ({ data, context }) => {
     await assertAdmin(context);
@@ -114,7 +115,7 @@ export const saveAdminSettings = createServerFn({ method: "POST" })
   });
 
 export const prepareHomeImageUpload = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([auditedAction("prepareHomeImageUpload")])
   .inputValidator((d) => z.object({ extension: z.enum(["jpg", "png", "webp"]) }).parse(d))
   .handler(async ({ data, context }) => {
     await assertAdmin(context);
@@ -126,7 +127,7 @@ export const prepareHomeImageUpload = createServerFn({ method: "POST" })
   });
 
 export const resolveHomeImageUpload = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([auditedAction("resolveHomeImageUpload")])
   .inputValidator((d) => z.object({ path: z.string().regex(/^homepage\/[0-9a-f-]{36}\.(jpg|png|webp)$/) }).parse(d))
   .handler(async ({ data, context }) => {
     await assertAdmin(context);
@@ -137,7 +138,7 @@ export const resolveHomeImageUpload = createServerFn({ method: "POST" })
   });
 
 export const testAsaasConnection = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([auditedAction("testAsaasConnection")])
   .handler(async ({ context }) => {
     await assertAdmin(context);
     const s = await loadSettings();
@@ -156,7 +157,7 @@ export const testAsaasConnection = createServerFn({ method: "POST" })
   });
 
 export const registerAsaasWebhook = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([auditedAction("registerAsaasWebhook")])
   .handler(async ({ context }) => {
     await assertAdmin(context);
     const s = await loadSettings();
@@ -196,7 +197,7 @@ export const registerAsaasWebhook = createServerFn({ method: "POST" })
   });
 
 export const getSystemStatus = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
+  .middleware([auditedAction("getSystemStatus")])
   .handler(async ({ context }) => {
     await assertAdmin(context);
     const admin = await getAdmin();
@@ -218,7 +219,7 @@ export const getSystemStatus = createServerFn({ method: "GET" })
   });
 
 export const updateProducer = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([auditedAction("updateProducer")])
   .inputValidator((d) =>
     z
       .object({
@@ -244,7 +245,7 @@ export const updateProducer = createServerFn({ method: "POST" })
 
 /** Cria a subconta (carteira) do produtor no Asaas. Pode ser chamada pelo admin ou pelo próprio produtor. */
 export const createProducerWallet = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([auditedAction("createProducerWallet")])
   .inputValidator((d) => z.object({ producerId: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
     const admin = await getAdmin();
@@ -287,7 +288,7 @@ export const createProducerWallet = createServerFn({ method: "POST" })
   });
 
 export const updateUser = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([auditedAction("updateUser")])
   .inputValidator((d) =>
     z
       .object({
@@ -326,7 +327,7 @@ export const updateUser = createServerFn({ method: "POST" })
 
 /** Super admin cria um usuário (conta já confirmada) com perfil e acessos. */
 export const adminCreateUser = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([auditedAction("adminCreateUser")])
   .inputValidator((d) =>
     z
       .object({
@@ -365,7 +366,7 @@ export const adminCreateUser = createServerFn({ method: "POST" })
 
 /** Super admin exclui um usuário por completo (conta, perfil e acessos). */
 export const deleteUser = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([auditedAction("deleteUser")])
   .inputValidator((d) => z.object({ userId: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
     await assertAdmin(context);
@@ -399,7 +400,7 @@ const producerSchema = z.object({
 
 /** Super admin cria um produtor: usa a conta existente pelo e-mail ou cria uma nova. */
 export const adminCreateProducer = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([auditedAction("adminCreateProducer")])
   .inputValidator((d) => producerSchema.parse(d))
   .handler(async ({ data, context }) => {
     await assertAdmin(context);
@@ -429,7 +430,7 @@ export const adminCreateProducer = createServerFn({ method: "POST" })
   });
 
 export const deleteProducer = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([auditedAction("deleteProducer")])
   .inputValidator((d) => z.object({ id: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
     await assertAdmin(context);

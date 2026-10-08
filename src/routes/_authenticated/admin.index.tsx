@@ -17,6 +17,8 @@ import { SalesChart, StatCard, toCsv } from "@/components/dash";
 import { supabase } from "@/integrations/supabase/client";
 import { AdminGate } from "@/components/admin-gate";
 import { createProducerWallet, listUsers, setUserRole, updateProducer, updateUser, adminCreateProducer, deleteProducer, adminCreateUser, deleteUser } from "@/lib/admin.functions";
+import { ActivityLogView } from "@/components/activity-log-view";
+import { loadFinancialOrders, loadFinancialSummary } from "@/lib/financial";
 
 function Finance({ orders }: { orders: any[] }) {
   const paid = orders.filter((o) => o.status === "pago");
@@ -43,7 +45,7 @@ function Finance({ orders }: { orders: any[] }) {
       </div>
       <div className="rounded-2xl border bg-card">
         <Table>
-          <TableHeader><TableRow><TableHead>Produtor</TableHead><TableHead>Pagas</TableHead><TableHead>Total</TableHead><TableHead>Repasse produtor</TableHead><TableHead>Comissão plataforma</TableHead></TableRow></TableHeader>
+          <TableHeader><TableRow><TableHead>Produtor</TableHead><TableHead>Confirmadas</TableHead><TableHead>Total</TableHead><TableHead>Repasse produtor</TableHead><TableHead>Comissão plataforma</TableHead></TableRow></TableHeader>
           <TableBody>
             {rows.length === 0 && <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground">Nenhuma venda paga ainda.</TableCell></TableRow>}
             {rows.map((r) => (
@@ -247,13 +249,10 @@ function AdminPage() {
 function AdminDashboard() {
   const { data: orders = [] } = useQuery({
     queryKey: ["admin-orders"],
-    queryFn: async () =>
-      (await supabase
-        .from("orders")
-        .select("id, code, status, total, platform_amount, producer_amount, asaas_fee_estimate, payment_method, created_at, participant_name, participant_email, events(title), producers(company_name)")
-        .order("created_at", { ascending: false })
-        .limit(1000)).data ?? [],
+    queryFn: () => loadFinancialOrders(),
+    refetchInterval: 30000,
   });
+  const financial = useQuery({ queryKey: ["admin-financial"], queryFn: loadFinancialSummary, refetchInterval: 30000 });
   const { data: producers = [] } = useQuery({
     queryKey: ["admin-producers"],
     queryFn: async () => (await supabase.from("producers").select("*").order("created_at", { ascending: false })).data ?? [],
@@ -275,7 +274,7 @@ function AdminDashboard() {
         <div className="flex flex-wrap gap-2"><Button variant="outline" asChild><Link to="/admin/email">Caixa de e-mail</Link></Button><Button variant="ink" asChild><Link to="/admin/configuracoes"><Settings /> Configurações</Link></Button></div>
       </div>
       <div className="grid gap-4 md:grid-cols-4">
-        <StatCard icon={DollarSign} label="Volume vendido" value={brl(sum("total"))} hint={`${paid.length} inscrições pagas`} />
+        <StatCard icon={DollarSign} label="Volume vendido" value={brl(financial.data?.total ?? sum("total"))} hint={`${financial.data?.confirmed ?? paid.length} confirmadas · ${financial.data?.paid ?? paid.filter((o) => Number(o.total) > 0).length} pagas · ${financial.data?.free ?? paid.filter((o) => Number(o.total) === 0).length} gratuitas`} />
         <StatCard icon={Landmark} label="Receita da plataforma" value={brl(sum("platform_amount"))} hint="Taxas e comissões líquidas" />
         <StatCard icon={Briefcase} label="Repassado a produtores" value={brl(sum("producer_amount"))} hint={`${producers.length} produtores`} />
         <StatCard icon={CalendarDays} label="Eventos" value={events.length} hint={`${events.filter((e) => e.status === "publicado").length} publicados`} />
@@ -290,6 +289,7 @@ function AdminDashboard() {
           <TabsTrigger value="eventos">Eventos</TabsTrigger>
           <TabsTrigger value="inscricoes">Inscrições</TabsTrigger>
           <TabsTrigger value="emails">E-mails</TabsTrigger>
+          <TabsTrigger value="logs">Logs</TabsTrigger>
         </TabsList>
         <TabsContent value="financeiro" className="mt-6"><Finance orders={orders} /></TabsContent>
         <TabsContent value="produtores" className="mt-6"><Producers producers={producers} /></TabsContent>
@@ -297,6 +297,7 @@ function AdminDashboard() {
         <TabsContent value="eventos" className="mt-6"><Events events={events} /></TabsContent>
         <TabsContent value="inscricoes" className="mt-6"><Orders orders={orders} /></TabsContent>
         <TabsContent value="emails" className="mt-6"><Emails /></TabsContent>
+        <TabsContent value="logs" className="mt-6"><ActivityLogView /></TabsContent>
       </Tabs>
     </div>
   );
