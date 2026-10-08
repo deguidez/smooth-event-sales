@@ -17,6 +17,7 @@ import { AuthProvider } from "@/hooks/use-auth";
 import { SiteFooter, SiteHeader } from "@/components/site-header";
 import { supabase } from "@/integrations/supabase/client";
 import { ActivityRecorder } from "@/components/activity-recorder";
+import { FaviconSync } from "@/components/favicon-sync";
 
 function NotFoundComponent() {
   return (
@@ -130,6 +131,7 @@ function RootComponent() {
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <ActivityRecorder />
+        <FaviconSync />
         <SiteHeader />
         <main className="min-h-[70vh]">
           <Outlet />
