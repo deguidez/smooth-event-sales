@@ -248,6 +248,10 @@ export const createProducerWallet = createServerFn({ method: "POST" })
         .eq("id", p.id);
       return { ok: true as const, walletId: acc.walletId };
     } catch (e) {
-      return { ok: false as const, error: (e as Error).message };
+      let msg = (e as Error).message;
+      if (/url informada/i.test(msg))
+        msg = "O Asaas recusou a criação: a conta principal do Asaas precisa ter o site cadastrado (Minha conta → Dados comerciais). Ou informe um walletId existente.";
+      if (/já está em uso/i.test(msg)) msg += " Use outro e-mail no cadastro do produtor ou informe o walletId da conta Asaas dele.";
+      return { ok: false as const, error: msg };
     }
   });
