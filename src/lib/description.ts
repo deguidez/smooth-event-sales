@@ -1,4 +1,4 @@
-import { FilterXSS } from "xss";
+import { FilterXSS, escapeAttrValue } from "xss";
 
 const filter = new FilterXSS({
   whiteList: {
@@ -9,6 +9,9 @@ const filter = new FilterXSS({
   stripIgnoreTag: true,
   stripIgnoreTagBody: ["script", "style", "iframe", "object"],
   onTagAttr(tag, name, value) {
+    if (tag === "img" && name === "src" && /^data:image\/(png|jpeg|gif|webp);base64,[a-z0-9+/=\s]+$/i.test(value)) {
+      return `src="${escapeAttrValue(value)}"`;
+    }
     if ((tag === "img" && name === "src") || (tag === "a" && name === "href")) {
       const valid = tag === "img" ? /^https?:\/\//i.test(value) : /^(https?:\/\/|mailto:)/i.test(value);
       if (!valid) return "";

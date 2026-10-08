@@ -15,7 +15,7 @@ export function DescriptionEditor({ producerId, value, onChange }: { producerId:
   const [linkValue, setLinkValue] = useState<string | null>(null);
   const savedSelection = useRef<{ from: number; to: number } | null>(null);
   const editor = useEditor({
-    extensions: [StarterKit.configure({ link: { openOnClick: false, HTMLAttributes: { rel: "noopener noreferrer", target: "_blank" } } }), Image],
+    extensions: [StarterKit.configure({ link: { openOnClick: false, HTMLAttributes: { rel: "noopener noreferrer", target: "_blank" } } }), Image.configure({ allowBase64: true })],
     immediatelyRender: false,
     content: descriptionHtml(value),
     editorProps: {

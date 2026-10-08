@@ -20,4 +20,4 @@
 - Homepage image overrides live in platform_settings.home_images; admin-authorized signed uploads use the homepage prefix in event-files, and getBranding exposes only safe branding fields to public pages.
 - Receipt PDFs are generated on demand in the browser from RLS-protected paid orders through src/lib/receipt-pdf.ts; they never change payment or kit-delivery status.
 - Event countdowns calculate from starts_at after hydration and stop at zero; no stored countdown state is needed.
-- Event descriptions use Tiptap HTML sanitized through src/lib/description.ts on editor input and public rendering, with legacy plain text/Markdown image support; pasted image files use the existing event upload flow to keep content safe and persistent.
+- Event descriptions use Tiptap HTML sanitized through src/lib/description.ts on editor input and public rendering, with legacy plain text/Markdown image support; clipboard HTML supports remote and raster base64 images, while pasted image files use the existing event upload flow.
