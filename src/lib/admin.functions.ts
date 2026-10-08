@@ -293,3 +293,74 @@ export const updateUser = createServerFn({ method: "POST" })
     if (roles.length) await admin.from("user_roles").upsert(roles.map((role) => ({ user_id: userId, role })), { onConflict: "user_id,role" });
     return { ok: true };
   });
+
+const producerSchema = z.object({
+  account_email: z.string().trim().email().max(200),
+  account_password: z.string().min(6).max(72).optional(),
+  company_name: z.string().trim().min(2).max(150),
+  document: z.string().trim().min(11).max(20),
+  email: z.string().trim().email().max(200),
+  phone: z.string().trim().max(30).nullable(),
+  birth_date: z.string().max(10).nullable(),
+  company_type: z.string().max(30).nullable(),
+  postal_code: z.string().trim().max(10).nullable(),
+  address: z.string().trim().max(200).nullable(),
+  address_number: z.string().trim().max(20).nullable(),
+  province: z.string().trim().max(100).nullable(),
+  income_value: z.number().min(0).nullable(),
+  approve: z.boolean(),
+});
+
+/** Super admin cria um produtor: usa a conta existente pelo e-mail ou cria uma nova. */
+export const adminCreateProducer = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) => producerSchema.parse(d))
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context);
+    const admin = await getAdmin();
+    const { account_email, account_password, approve, ...prod } = data;
+    const { data: prof } = await admin.from("profiles").select("id").ilike("email", account_email).maybeSingle();
+    let userId = prof?.id as string | undefined;
+    if (!userId) {
+      if (!account_password) throw new Error("Esse e-mail ainda não tem conta. Informe uma senha para criar a conta do produtor.");
+      const { data: created, error } = await admin.auth.admin.createUser({
+        email: account_email, password: account_password, email_confirm: true,
+        user_metadata: { full_name: prod.company_name },
+      });
+      if (error) throw new Error(error.message);
+      userId = created.user.id;
+    }
+    const { data: exists } = await admin.from("producers").select("id").eq("user_id", userId).maybeSingle();
+    if (exists) throw new Error("Esse usuário já tem um cadastro de produtor.");
+    const { data: p, error } = await admin
+      .from("producers")
+      .insert({ ...prod, birth_date: prod.birth_date || null, user_id: userId, status: approve ? "aprovado" : "pendente" })
+      .select("id")
+      .single();
+    if (error) throw new Error(error.message);
+    if (approve) await admin.from("user_roles").upsert({ user_id: userId, role: "producer" }, { onConflict: "user_id,role" });
+    return { ok: true, id: p.id as string };
+  });
+
+export const deleteProducer = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) => z.object({ id: z.string().uuid() }).parse(d))
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context);
+    const admin = await getAdmin();
+    const { count: orders } = await admin.from("orders").select("id", { count: "exact", head: true }).eq("producer_id", data.id);
+    if (orders) throw new Error(`Esse produtor tem ${orders} inscrição(ões) vendida(s) e não pode ser excluído. Use o status "Suspenso".`);
+    const { data: p } = await admin.from("producers").select("user_id").eq("id", data.id).single();
+    const { data: evs } = await admin.from("events").select("id").eq("producer_id", data.id);
+    const ids = (evs ?? []).map((e: any) => e.id);
+    if (ids.length) {
+      await admin.from("ticket_types").delete().in("event_id", ids);
+      await admin.from("event_products").delete().in("event_id", ids);
+      await admin.from("event_documents").delete().in("event_id", ids);
+      await admin.from("events").delete().in("id", ids);
+    }
+    const { error } = await admin.from("producers").delete().eq("id", data.id);
+    if (error) throw new Error(error.message);
+    if (p) await admin.from("user_roles").delete().eq("user_id", p.user_id).eq("role", "producer");
+    return { ok: true };
+  });

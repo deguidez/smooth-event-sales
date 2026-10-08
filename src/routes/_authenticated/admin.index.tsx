@@ -16,7 +16,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { SalesChart, StatCard, toCsv } from "@/components/dash";
 import { supabase } from "@/integrations/supabase/client";
 import { AdminGate } from "@/components/admin-gate";
-import { createProducerWallet, listUsers, setUserRole, updateProducer, updateUser } from "@/lib/admin.functions";
+import { createProducerWallet, listUsers, setUserRole, updateProducer, updateUser, adminCreateProducer, deleteProducer } from "@/lib/admin.functions";
 
 function Finance({ orders }: { orders: any[] }) {
   const paid = orders.filter((o) => o.status === "pago");
@@ -243,8 +243,10 @@ function AdminDashboard() {
 
 function Producers({ producers }: { producers: any[] }) {
   const [edit, setEdit] = useState<any>(null);
+  const [creating, setCreating] = useState(false);
   return (
     <>
+      <div className="mb-4 flex justify-end"><Button variant="hero" onClick={() => setCreating(true)}>Novo produtor</Button></div>
       <div className="overflow-hidden rounded-2xl border bg-card shadow-card">
         <Table>
           <TableHeader><TableRow><TableHead>Produtor</TableHead><TableHead>Documento</TableHead><TableHead>Status</TableHead><TableHead>Carteira</TableHead><TableHead>Taxa própria</TableHead><TableHead /></TableRow></TableHeader>
@@ -264,7 +266,88 @@ function Producers({ producers }: { producers: any[] }) {
         </Table>
       </div>
       {edit && <ProducerDialog p={edit} onClose={() => setEdit(null)} />}
+      {creating && <NewProducerDialog onClose={() => setCreating(false)} onCreated={(p) => { setCreating(false); setEdit(p); }} />}
     </>
+  );
+}
+
+function NewProducerDialog({ onClose, onCreated }: { onClose: () => void; onCreated: (p: any) => void }) {
+  const qc = useQueryClient();
+  const make = useServerFn(adminCreateProducer);
+  const [busy, setBusy] = useState(false);
+  const [approve, setApprove] = useState(true);
+  const [f, setF] = useState({
+    account_email: "", account_password: "", company_name: "", document: "", email: "", phone: "",
+    birth_date: "", company_type: "", postal_code: "", address: "", address_number: "", province: "", income_value: "5000",
+  });
+  const set = (k: keyof typeof f) => (e: React.ChangeEvent<HTMLInputElement>) => setF({ ...f, [k]: e.target.value });
+  const n = (v: string) => (v.trim() ? v.trim() : null);
+  const isCnpj = f.document.replace(/\D/g, "").length === 14;
+  async function submit() {
+    setBusy(true);
+    try {
+      const r = await make({ data: {
+        account_email: f.account_email.trim(), account_password: f.account_password || undefined,
+        company_name: f.company_name.trim(), document: f.document.trim(), email: (f.email || f.account_email).trim(),
+        phone: n(f.phone), birth_date: n(f.birth_date), company_type: isCnpj ? (f.company_type || "LIMITED") : null,
+        postal_code: n(f.postal_code), address: n(f.address), address_number: n(f.address_number), province: n(f.province),
+        income_value: f.income_value ? Number(f.income_value) : null, approve,
+      } });
+      toast.success("Produtor criado. Agora crie ou informe a carteira.");
+      await qc.invalidateQueries({ queryKey: ["admin-producers"] });
+      qc.invalidateQueries({ queryKey: ["admin-users"] });
+      const { data: p } = await supabase.from("producers").select("*").eq("id", r.id).single();
+      onCreated(p);
+    } catch (e) { toast.error((e as Error).message); } finally { setBusy(false); }
+  }
+  const F = (k: keyof typeof f, label: string, opts: { type?: string; full?: boolean; ph?: string } = {}) => (
+    <div className={`space-y-1.5 ${opts.full ? "sm:col-span-2" : ""}`}>
+      <Label>{label}</Label>
+      <Input type={opts.type ?? "text"} value={f[k]} onChange={set(k)} placeholder={opts.ph} />
+    </div>
+  );
+  return (
+    <Dialog open onOpenChange={(o) => !o && onClose()}>
+      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
+        <DialogHeader><DialogTitle>Novo produtor</DialogTitle></DialogHeader>
+        <p className="text-sm font-semibold">Conta de acesso</p>
+        <div className="grid gap-3 sm:grid-cols-2">
+          {F("account_email", "E-mail de login", { type: "email" })}
+          {F("account_password", "Senha (só se a conta ainda não existir)", { ph: "mín. 6 caracteres" })}
+        </div>
+        <p className="pt-2 text-sm font-semibold">Dados do produtor (usados na carteira Asaas)</p>
+        <div className="grid gap-3 sm:grid-cols-2">
+          {F("company_name", "Nome / Razão social", { full: true })}
+          {F("document", "CPF ou CNPJ")}
+          {isCnpj ? (
+            <div className="space-y-1.5"><Label>Tipo de empresa</Label>
+              <Select value={f.company_type || "LIMITED"} onValueChange={(v) => setF({ ...f, company_type: v })}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="MEI">MEI</SelectItem><SelectItem value="LIMITED">Limitada</SelectItem>
+                  <SelectItem value="INDIVIDUAL">Individual</SelectItem><SelectItem value="ASSOCIATION">Associação</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          ) : F("birth_date", "Data de nascimento", { type: "date" })}
+          {F("email", "E-mail da carteira Asaas", { type: "email", ph: "diferente do e-mail da sua conta Asaas" })}
+          {F("phone", "Celular")}
+          {F("postal_code", "CEP")}
+          {F("province", "Bairro")}
+          {F("address", "Endereço")}
+          {F("address_number", "Número")}
+          {F("income_value", "Faturamento mensal (R$)", { type: "number" })}
+        </div>
+        <div className="flex items-center justify-between rounded-lg border px-3 py-2">
+          <span className="text-sm">Já aprovar este produtor</span>
+          <Switch checked={approve} onCheckedChange={setApprove} />
+        </div>
+        <div className="flex justify-end gap-2">
+          <Button variant="outline" onClick={onClose}>Cancelar</Button>
+          <Button variant="hero" disabled={busy || !f.account_email || !f.company_name || !f.document} onClick={submit}>{busy ? "Criando..." : "Criar produtor"}</Button>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }
 
@@ -272,6 +355,7 @@ function ProducerDialog({ p, onClose }: { p: any; onClose: () => void }) {
   const qc = useQueryClient();
   const upd = useServerFn(updateProducer);
   const mkWallet = useServerFn(createProducerWallet);
+  const del = useServerFn(deleteProducer);
   const [status, setStatus] = useState(p.status);
   const [pct, setPct] = useState(p.fee_percent ?? "");
   const [fix, setFix] = useState(p.fee_fixed ?? "");
@@ -297,6 +381,17 @@ function ProducerDialog({ p, onClose }: { p: any; onClose: () => void }) {
     } finally {
       setBusy(false);
     }
+  }
+  async function remove() {
+    if (!confirm(`Excluir o produtor ${p.company_name}? Os eventos dele sem inscrições também serão apagados.`)) return;
+    setBusy(true);
+    try {
+      await del({ data: { id: p.id } });
+      toast.success("Produtor excluído");
+      qc.invalidateQueries({ queryKey: ["admin-producers"] });
+      qc.invalidateQueries({ queryKey: ["admin-users"] });
+      onClose();
+    } catch (e) { toast.error((e as Error).message); } finally { setBusy(false); }
   }
   async function create() {
     setBusy(true);
@@ -337,6 +432,7 @@ function ProducerDialog({ p, onClose }: { p: any; onClose: () => void }) {
             <p className="text-xs text-muted-foreground">Crie uma subconta automaticamente ou informe a carteira de uma conta Asaas já existente do produtor.</p>
           </div>
           <Button variant="hero" className="w-full" onClick={save} disabled={busy}>Salvar</Button>
+          <Button variant="outline" className="w-full text-destructive" onClick={remove} disabled={busy}>Excluir produtor</Button>
         </div>
       </DialogContent>
     </Dialog>
