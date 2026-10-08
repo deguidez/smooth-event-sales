@@ -136,7 +136,7 @@ function AdminDashboard() {
   });
   const { data: events = [] } = useQuery({
     queryKey: ["admin-events"],
-    queryFn: async () => (await supabase.from("events").select("id, title, slug, status, featured, starts_at, producers(company_name)").order("created_at", { ascending: false })).data ?? [],
+    queryFn: async () => (await supabase.from("events").select("id, title, slug, status, featured, starts_at, fee_percent, fee_fixed, producers(company_name)").order("created_at", { ascending: false })).data ?? [],
   });
   const paid = orders.filter((o) => o.status === "pago");
   const sum = (k: "total" | "platform_amount" | "producer_amount") => paid.reduce((s, o) => s + Number(o[k]), 0);
