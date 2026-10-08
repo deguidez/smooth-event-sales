@@ -84,7 +84,7 @@ export function DescriptionEditor({ producerId, value, onChange }: { producerId:
         {tool("Lista", List, () => editor?.chain().focus().toggleBulletList().run(), editor?.isActive("bulletList"))}
         {tool("Lista numerada", ListOrdered, () => editor?.chain().focus().toggleOrderedList().run(), editor?.isActive("orderedList"))}
         {tool("Citação", Quote, () => editor?.chain().focus().toggleBlockquote().run(), editor?.isActive("blockquote"))}
-        {tool("Inserir link", LinkIcon, () => { if (!editor) return; savedSelection.current = editor.state.selection; setLinkValue(editor.getAttributes("link").href ?? ""); }, editor?.isActive("link"))}
+        {tool("Inserir link", LinkIcon, () => { if (!editor) return; savedSelection.current = editor.state.selection; setLinkValue(editor.getAttributes("link")["href"] ?? ""); }, editor?.isActive("link"))}
         {tool("Remover link", Unlink, () => editor?.chain().focus().unsetLink().run(), false, !editor?.isActive("link"))}
         {tool(busy ? "Enviando imagem" : "Inserir imagem", ImagePlus, () => file.current?.click())}
         {tool("Desfazer", Undo2, () => editor?.chain().focus().undo().run(), false, !editor?.can().undo())}

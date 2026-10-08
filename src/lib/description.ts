@@ -14,6 +14,7 @@ const filter = new FilterXSS({
       if (!valid) return "";
     }
     if (tag === "a" && name === "target") return 'target="_blank" rel="noopener noreferrer"';
+    return undefined;
   },
 });
 
