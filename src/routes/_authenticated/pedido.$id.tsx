@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { createReceiptPdf } from "@/lib/receipt-pdf";
+import { OrderQrDialog } from "@/components/order-qr";
 import { supabase } from "@/integrations/supabase/client";
 import { refreshOrder } from "@/lib/orders.functions";
 import { brl, fmtDate, METHOD_LABEL, ORDER_STATUS } from "@/lib/format";
@@ -69,6 +70,7 @@ function OrderPage() {
         <Button variant="outline" disabled={pdfBusy} onClick={() => receipt("registration", false)}><FileText /> Ver comprovante PDF</Button>
         <Button variant="outline" disabled={pdfBusy} onClick={() => receipt("registration", true)}><Download /> Baixar inscrição PDF</Button>
         <Button variant="hero" disabled={pdfBusy} onClick={() => receipt("kit", true)}><PackageCheck /> Comprovante de retirada de kit</Button>
+        <OrderQrDialog orderId={o.id} code={o.code} title={o.events?.title} />
       </div>}
       <Dialog open={!!pdf} onOpenChange={(open) => { if (!open) setPdf(null); }}>
         <DialogContent className="max-w-4xl"><DialogHeader><DialogTitle>Comprovante de inscrição</DialogTitle></DialogHeader>
