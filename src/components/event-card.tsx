@@ -12,12 +12,14 @@ export type EventCardData = {
   city: string | null;
   state: string | null;
   starts_at: string;
+  fee_fixed?: number | null;
   ticket_types?: { price: number; active: boolean }[] | null;
 };
 
 export function EventCard({ e }: { e: EventCardData }) {
   const prices = (e.ticket_types ?? []).filter((t) => t.active).map((t) => Number(t.price));
   const min = prices.length ? Math.min(...prices) : null;
+  const fee = Number(e.fee_fixed ?? 0);
   return (
     <Link
       to="/eventos/$slug"
