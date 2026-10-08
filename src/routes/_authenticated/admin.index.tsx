@@ -141,6 +141,15 @@ function UserDialog({ u, onClose, onSaved }: { u: any; onClose: () => void; onSa
       onSaved();
     } catch (e) { toast.error((e as Error).message); } finally { setBusy(false); }
   }
+  async function remove() {
+    if (!confirm(`Excluir o usuário ${u.email}? A conta, o perfil e os acessos serão apagados.`)) return;
+    setBusy(true);
+    try {
+      await del({ data: { userId: u.id } });
+      toast.success("Usuário excluído");
+      onSaved();
+    } catch (e) { toast.error((e as Error).message); } finally { setBusy(false); }
+  }
   const fields: [keyof typeof f, string, string?][] = [
     ["full_name", "Nome completo"], ["email", "E-mail", "email"], ["phone", "Telefone"], ["cpf", "CPF"],
     ["birth_date", "Nascimento", "date"], ["gender", "Gênero"], ["city", "Cidade"], ["state", "UF"],
