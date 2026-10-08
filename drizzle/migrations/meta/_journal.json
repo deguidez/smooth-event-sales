@@ -29,6 +29,13 @@
       "when": 1791479037712,
       "tag": "0003_kit_and_products",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1791480865972,
+      "tag": "0004_event_fees",
+      "breakpoints": true
     }
   ]
 }
