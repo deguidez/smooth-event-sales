@@ -16,7 +16,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { SalesChart, StatCard, toCsv } from "@/components/dash";
 import { supabase } from "@/integrations/supabase/client";
 import { AdminGate } from "@/components/admin-gate";
-import { createProducerWallet, listUsers, setUserRole, updateProducer, updateUser, adminCreateProducer, deleteProducer } from "@/lib/admin.functions";
+import { createProducerWallet, listUsers, setUserRole, updateProducer, updateUser, adminCreateProducer, deleteProducer, adminCreateUser, deleteUser } from "@/lib/admin.functions";
 
 function Finance({ orders }: { orders: any[] }) {
   const paid = orders.filter((o) => o.status === "pago");
