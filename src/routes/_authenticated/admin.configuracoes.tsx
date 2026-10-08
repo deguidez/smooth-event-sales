@@ -48,6 +48,7 @@ function SettingsPage() {
         data: {
           site_name: f.site_name,
           site_logo: f.site_logo || null,
+          site_favicon: f.site_favicon || null,
           home_images: f.home_images ?? {},
           asaas_env: f.asaas_env,
           platform_wallet_id: f.platform_wallet_id || null,
@@ -106,6 +107,20 @@ function SettingsPage() {
                     r.readAsDataURL(file);
                   }} />
                   {f.site_logo && <Button type="button" variant="outline" size="sm" onClick={() => setF({ ...f, site_logo: null })}>Remover</Button>}
+                </div>
+              </Field>
+              <Field l="Favicon do site (ícone da aba do navegador — PNG, ICO ou SVG quadrado, até 500 KB)">
+                <div className="flex items-center gap-3">
+                  {f.site_favicon && <img src={f.site_favicon} alt="Favicon" className="h-8 w-8 rounded border bg-background object-contain p-0.5" />}
+                  <Input type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml,image/x-icon,image/vnd.microsoft.icon" onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (!file) return;
+                    if (file.size > 500 * 1024) { toast.error("Favicon até 500 KB"); return; }
+                    const r = new FileReader();
+                    r.onload = () => setF({ ...f, site_favicon: String(r.result) });
+                    r.readAsDataURL(file);
+                  }} />
+                  {f.site_favicon && <Button type="button" variant="outline" size="sm" onClick={() => setF({ ...f, site_favicon: null })}>Remover</Button>}
                 </div>
               </Field>
               <Field l="Ambiente">

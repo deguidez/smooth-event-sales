@@ -500,6 +500,7 @@ export type Database = {
           max_installments: number
           platform_wallet_id: string | null
           site_domain: string | null
+          site_favicon: string | null
           site_logo: string | null
           site_name: string
           support_email: string | null
@@ -528,6 +529,7 @@ export type Database = {
           max_installments?: number
           platform_wallet_id?: string | null
           site_domain?: string | null
+          site_favicon?: string | null
           site_logo?: string | null
           site_name?: string
           support_email?: string | null
@@ -556,6 +558,7 @@ export type Database = {
           max_installments?: number
           platform_wallet_id?: string | null
           site_domain?: string | null
+          site_favicon?: string | null
           site_logo?: string | null
           site_name?: string
           support_email?: string | null

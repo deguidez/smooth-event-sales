@@ -38,6 +38,7 @@ export const getAdminSettings = createServerFn({ method: "GET" })
 const settingsSchema = z.object({
   site_name: z.string().trim().min(1).max(80).optional(),
   site_logo: z.string().max(700_000).regex(/^data:image\/(png|jpeg|webp|svg\+xml);base64,/).nullable().optional(),
+  site_favicon: z.string().max(700_000).regex(/^data:image\/(png|jpeg|webp|svg\+xml|x-icon|vnd\.microsoft\.icon);base64,/).nullable().optional(),
   home_images: z.object({
     banner: z.string().url().startsWith("https://").max(3000).nullable().optional(),
     esporte: z.string().url().startsWith("https://").max(3000).nullable().optional(),
