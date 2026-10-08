@@ -1,5 +1,4 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { applyOrderStatus, loadSettings, mapAsaasStatus } from "@/lib/asaas.server";
 
 function safeEqual(a: string, b: string) {
   if (a.length !== b.length) return false;
@@ -12,6 +11,7 @@ export const Route = createFileRoute("/api/public/asaas-webhook")({
   server: {
     handlers: {
       POST: async ({ request }) => {
+        const { applyOrderStatus, loadSettings, mapAsaasStatus } = await import("@/lib/asaas.server");
         const s = await loadSettings();
         const token = request.headers.get("asaas-access-token") ?? "";
         if (!s.asaas_webhook_token || !safeEqual(token, s.asaas_webhook_token)) {
