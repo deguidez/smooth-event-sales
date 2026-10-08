@@ -1,4 +1,5 @@
 import { template as orderStatus } from './order-status'
+import { template as withdrawalCode } from './withdrawal-code'
 import type { ComponentType } from 'react'
 
 export interface TemplateEntry {
@@ -20,6 +21,7 @@ export interface TemplateEntry {
  */
 export const TEMPLATES: Record<string, TemplateEntry> = {
   'order-status': orderStatus,
+  'withdrawal-code': withdrawalCode,
   // Add templates here as they are created, e.g.:
   // 'welcome': welcomeTemplate,
 }
