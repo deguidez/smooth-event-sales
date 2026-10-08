@@ -15,6 +15,7 @@ import { SalesChart, StatCard } from "@/components/dash";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { createProducerWallet } from "@/lib/admin.functions";
+import { loadFinancialOrders } from "@/lib/financial";
 import { brl, CATEGORIES, fmtDate, onlyDigits, ORDER_STATUS, slugify } from "@/lib/format";
 
 export const Route = createFileRoute("/_authenticated/produtor/")({
@@ -120,15 +121,8 @@ function ProducerDashboard({ producer }: { producer: any }) {
   });
   const { data: orders = [] } = useQuery({
     queryKey: ["producer-orders", producer.id],
-    queryFn: async () => {
-      const { data } = await supabase
-        .from("orders")
-        .select("id, code, status, total, producer_amount, created_at, participant_name, payment_method, events(title)")
-        .eq("producer_id", producer.id)
-        .order("created_at", { ascending: false })
-        .limit(500);
-      return data ?? [];
-    },
+    queryFn: () => loadFinancialOrders(producer.id),
+    refetchInterval: 30000,
   });
   const paid = orders.filter((o) => o.status === "pago");
   const revenue = paid.reduce((s, o) => s + Number(o.producer_amount), 0);
@@ -163,7 +157,7 @@ function ProducerDashboard({ producer }: { producer: any }) {
 
       <div className="grid gap-4 md:grid-cols-4">
         <StatCard icon={DollarSign} label="A receber (vendas pagas)" value={brl(revenue)} />
-        <StatCard icon={Ticket} label="Inscrições pagas" value={paid.length} />
+        <StatCard icon={Ticket} label="Inscrições confirmadas" value={paid.length} hint={`${paid.filter((o) => Number(o.total) > 0).length} pagas · ${paid.filter((o) => Number(o.total) === 0).length} gratuitas`} />
         <StatCard icon={Users} label="Pendentes" value={orders.filter((o) => o.status === "pendente").length} />
         <div className="rounded-2xl border bg-ink p-5 text-ink-foreground shadow-card">
           <div className="flex items-center gap-2 text-sm text-ink-muted"><Wallet className="h-4 w-4" /> Carteira Asaas</div>
