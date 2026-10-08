@@ -1,4 +1,5 @@
 // Server-only helpers for the Asaas API and platform settings.
+import { writeActivity } from "./activity.server";
 export async function getAdmin() {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   return supabaseAdmin;
@@ -41,7 +42,8 @@ export async function asaasFetch<T = any>(
   }
   if (!res.ok) {
     const msg = json?.errors?.map((e: any) => e.description).join("; ") || `Erro Asaas (${res.status})`;
-    console.error("Asaas error", path, res.status, text);
+    console.error("Asaas error", res.status);
+    await writeActivity({ source: "asaas", level: "error", action: "asaas_request_failed", details: { http_status: res.status, method: init.method ?? "GET" } });
     throw new Error(msg);
   }
   return json as T;

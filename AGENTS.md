@@ -10,6 +10,8 @@
 <!-- LOVABLE:END -->
 
 ## Architecture rules
+- Activity auditing combines transactional database triggers with authenticated action middleware and browser events; logs omit payloads, secrets and personal fields, and only super admins can read them.
+- Financial totals use an RLS-scoped SQL aggregate and paginated order reads; confirmed registrations include free orders while paid counts require a positive total.
 - Post-login navigation is resolved once on the auth page after roles finish loading, including OAuth returns, to avoid competing redirects.
 - The Hostinger mailbox uses fetch-only authenticated server functions with a super_admin role check on every operation; credentials and raw email HTML never enter the main page context.
 - Asaas credentials and fee config live in `platform_settings` (service-role only); read them only inside server functions via `src/lib/asaas.server.ts` — keeps the API key out of the browser.

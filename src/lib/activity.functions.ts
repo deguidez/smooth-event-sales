@@ -12,7 +12,7 @@ export const recordBrowserActivity = createServerFn({ method: "POST" }).middlewa
     // Area is a navigation label, not a permission. Roles are validated server-side.
     const allowedArea = area === "admin" && !roles?.some((r) => r.role === "super_admin") ? "atleta" : area === "produtor" && !roles?.some((r) => r.role === "producer" || r.role === "super_admin") ? "atleta" : area;
     await writeActivity({ actorId: context.userId, area: allowedArea, source: "browser", action: data.action,
-      level: data.action.endsWith("error") ? "error" : "info", path: data.path.split(/[?#]/)[0], details: { category: data.category ?? "application" } });
+      level: data.action.endsWith("error") ? "error" : "info", path: data.path.split(/[?#]/)[0] ?? "/", details: { category: data.category ?? "application" } });
     return { ok: true };
   });
 

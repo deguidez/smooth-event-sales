@@ -9,9 +9,8 @@ export function auditedAction(action: string) {
     const started = Date.now();
     try {
       const result = await next();
-      const failed = result.result && typeof result.result === "object" && "ok" in result.result && result.result.ok === false;
-      await writeActivity({ actorId: context.userId, area, source: "server", action, level: failed ? "error" : "info",
-        details: { outcome: failed ? "falha" : "sucesso", duration_ms: Date.now() - started } });
+      await writeActivity({ actorId: context.userId, area, source: "server", action,
+        details: { outcome: "concluido", duration_ms: Date.now() - started } });
       return result;
     } catch (error) {
       await writeActivity({ actorId: context.userId, area, source: "server", action, level: "error",
