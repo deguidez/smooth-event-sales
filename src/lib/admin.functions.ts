@@ -250,7 +250,7 @@ export const createProducerWallet = createServerFn({ method: "POST" })
     } catch (e) {
       let msg = (e as Error).message;
       if (/url informada/i.test(msg))
-        msg = "O Asaas recusou a criação: a conta principal do Asaas precisa ter o site cadastrado (Minha conta → Dados comerciais). Ou informe um walletId existente.";
+        msg = "O Asaas recusou criar a subconta (\"A url informada é inválida\"). Isso é uma configuração da sua conta Asaas: peça ao suporte do Asaas para liberar a criação de subcontas via API. Enquanto isso, informe o walletId de uma conta Asaas do produtor.";
       if (/já está em uso/i.test(msg)) msg += " Use outro e-mail no cadastro do produtor ou informe o walletId da conta Asaas dele.";
       return { ok: false as const, error: msg };
     }
