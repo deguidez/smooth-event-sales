@@ -233,7 +233,7 @@ function Attendees({ eventId, title }: { eventId: string; title: string }) {
             toCsv(
               list.map((r) => ({
                 codigo: r.code, nome: r.participant_name, email: r.participant_email, cpf: r.participant_cpf, telefone: r.participant_phone,
-                nascimento: r.participant_birth_date, sexo: r.participant_gender, camiseta: r.shirt_size, equipe: r.team,
+                nascimento: r.participant_birth_date, sexo: r.participant_gender, camiseta: r.shirt_size, equipe: r.team, produtos: (r.items ?? []).map((i: any) => `${i.qty}x ${i.name}${i.size ? ` (${i.size})` : ""}`).join("; "),
                 categoria: r.ticket_types?.name, status: r.status, pagamento: r.payment_method, total: r.total, voce_recebe: r.producer_amount, data: r.created_at,
               })),
               `inscritos-${title}.csv`,

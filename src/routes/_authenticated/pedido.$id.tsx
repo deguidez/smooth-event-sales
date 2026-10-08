@@ -109,7 +109,10 @@ function OrderPage() {
             <Item l="Categoria" v={o.ticket_types?.name} />
             <Item l="Participante" v={o.participant_name} />
             <Item l="CPF" v={o.participant_cpf.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4")} />
-            {o.shirt_size && <Item l="Camiseta" v={o.shirt_size} />}
+            {o.shirt_size && <Item l="Camisa do kit" v={o.shirt_size} />}
+            {Array.isArray((o as any).items) && (o as any).items.length > 0 && (
+              <Item l="Produtos" v={(o as any).items.map((i: any) => `${i.qty}x ${i.name}${i.size ? ` (${i.size})` : ""}`).join(", ")} />
+            )}
             {o.team && <Item l="Equipe" v={o.team} />}
             <Item l="Pagamento" v={METHOD_LABEL[o.payment_method]} />
             <Item l="Status" v={<Badge variant={st.variant}>{st.label}</Badge>} />
