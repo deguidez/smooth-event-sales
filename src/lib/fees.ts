@@ -25,9 +25,10 @@ export function computeFees(
   if (price <= 0) {
     return { serviceFee: 0, total: 0, producerAmount: 0, platformAmount: 0, asaasFee: 0 };
   }
-  // A comissão da plataforma sai sempre do valor do produtor; o comprador paga só o valor da inscrição + produtos.
-  const commission = r2((price * pct) / 100 + fixed);
-  const total = r2(price);
+  // Taxa fixa (R$) é paga pelo comprador, somada ao total; a comissão (%) sai do valor do produtor.
+  const serviceFee = r2(fixed);
+  const commission = r2((price * pct) / 100);
+  const total = r2(price + serviceFee);
   const asaasFee = r2(
     method === "PIX"
       ? Number(s.asaas_fee_pix)
@@ -38,5 +39,5 @@ export function computeFees(
   const producerPaysAsaas = s.asaas_fee_paid_by === "produtor";
   const producerAmount = Math.max(0, r2(price - commission - (producerPaysAsaas ? asaasFee : 0)));
   const platformAmount = r2(total - producerAmount - (producerPaysAsaas ? 0 : asaasFee));
-  return { serviceFee: 0, total, producerAmount, platformAmount, asaasFee };
+  return { serviceFee, total, producerAmount, platformAmount, asaasFee };
 }
