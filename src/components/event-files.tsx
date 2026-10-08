@@ -33,8 +33,8 @@ export function CoverUpload({ producerId, value, onChange }: { producerId: strin
   const [busy, setBusy] = useState(false);
   async function pick(file?: File) {
     if (!file) return;
-    if (!file.type.startsWith("image/")) return toast.error("Escolha uma imagem (JPG, PNG ou WEBP)");
-    if (file.size > 8 * 1024 * 1024) return toast.error("Imagem muito grande (máx. 8 MB)");
+    if (!file.type.startsWith("image/")) { toast.error("Escolha uma imagem (JPG, PNG ou WEBP)"); return; }
+    if (file.size > 8 * 1024 * 1024) { toast.error("Imagem muito grande (máx. 8 MB)"); return; }
     setBusy(true);
     try { onChange(await uploadEventFile(producerId, file)); toast.success("Imagem enviada — clique em Salvar"); }
     catch (e) { toast.error((e as Error).message); }
@@ -66,15 +66,15 @@ export function EventDocsEditor({ eventId, producerId }: { eventId: string; prod
   const fileRef = useRef<HTMLInputElement>(null);
 
   async function add(url: string, isFile: boolean) {
-    const { error } = await supabase.from("event_documents").insert({ event_id: eventId, title: title.trim() || DOC_KINDS[kind], kind, url, is_file: isFile, position: docs.length });
-    if (error) return toast.error(error.message);
+    const { error } = await supabase.from("event_documents").insert({ event_id: eventId, title: title.trim() || DOC_KINDS[kind] || "Documento", kind, url, is_file: isFile, position: docs.length });
+    if (error) { toast.error(error.message); return; }
     setTitle(""); setLink("");
     toast.success("Documento adicionado");
     qc.invalidateQueries({ queryKey: key });
   }
   async function addFile(file?: File) {
     if (!file) return;
-    if (file.type !== "application/pdf") return toast.error("Envie um arquivo PDF");
+    if (file.type !== "application/pdf") { toast.error("Envie um arquivo PDF"); return; }
     setBusy(true);
     try { await add(await uploadEventFile(producerId, file), true); }
     catch (e) { toast.error((e as Error).message); }
