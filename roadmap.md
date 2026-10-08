@@ -7,6 +7,6 @@
 - [x] Super admin (dashboard, produtores, eventos, inscrições, e-mails)
 - [x] Configurações: API Asaas, webhook, taxas/comissões, formas de pagamento, banco de dados
 - [ ] Envio real dos e-mails (pago / não pago) — bloqueado: usuário precisa configurar domínio de e-mail
-- [ ] Upload de imagem de capa (hoje é por link)
 - [ ] Cupons de desconto
 - [x] Upload de capa do evento + documentos (PDF/link: regulamento, resultado)
+- [x] Kit com camisa + produtos extras com foto no checkout

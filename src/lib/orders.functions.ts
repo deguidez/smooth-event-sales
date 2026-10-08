@@ -12,7 +12,7 @@ export const getCheckoutInfo = createServerFn({ method: "GET" })
     const admin = await getAdmin();
     const { data: tt } = await admin
       .from("ticket_types")
-      .select("*, events!inner(id, title, slug, category, cover_url, starts_at, city, state, venue, status, producer_id)")
+      .select("*, events!inner(id, title, slug, category, cover_url, starts_at, city, state, venue, status, producer_id, shirt_enabled, shirt_sizes)")
       .eq("id", data.ticketId)
       .single();
     if (!tt || tt.events.status !== "publicado" || !tt.active) throw new Error("Inscrição indisponível");
@@ -21,19 +21,29 @@ export const getCheckoutInfo = createServerFn({ method: "GET" })
       .select("fee_percent, fee_fixed, asaas_wallet_id, status")
       .eq("id", tt.events.producer_id)
       .single();
+    const { data: products } = await admin
+      .from("event_products")
+      .select("id, name, description, price, image_url, sizes, stock, sold")
+      .eq("event_id", tt.events.id)
+      .eq("active", true)
+      .order("position");
     const s = await loadSettings();
     const methods: Method[] = [];
     if (s.enable_pix) methods.push("PIX");
     if (s.enable_boleto) methods.push("BOLETO");
     if (s.enable_card) methods.push("CREDIT_CARD");
-    const quotes = Object.fromEntries(
-      methods.map((m) => [m, computeFees(Number(tt.price), m, s as any, producer ?? undefined)]),
-    ) as Record<Method, ReturnType<typeof computeFees>>;
     return {
       ticket: { id: tt.id, name: tt.name, description: tt.description, price: Number(tt.price), available: tt.quantity - tt.sold },
       event: tt.events,
+      products: (products ?? []).map((p) => ({ ...p, price: Number(p.price), available: p.stock == null ? 99 : Math.max(0, p.stock - p.sold) })),
       methods,
-      quotes,
+      feeSettings: {
+        fee_percent: Number(s.fee_percent), fee_fixed: Number(s.fee_fixed), fee_paid_by_buyer: s.fee_paid_by_buyer,
+        asaas_fee_pix: Number(s.asaas_fee_pix), asaas_fee_boleto: Number(s.asaas_fee_boleto),
+        asaas_fee_card_percent: Number(s.asaas_fee_card_percent), asaas_fee_card_fixed: Number(s.asaas_fee_card_fixed),
+        asaas_fee_paid_by: s.asaas_fee_paid_by,
+      },
+      feeOverride: { fee_percent: producer?.fee_percent ?? null, fee_fixed: producer?.fee_fixed ?? null },
       maxInstallments: s.max_installments,
       ready: !!s.asaas_api_key && !!producer?.asaas_wallet_id && producer?.status === "aprovado",
     };
@@ -43,6 +53,7 @@ const orderSchema = z.object({
   ticketId: z.string().uuid(),
   method: z.enum(["PIX", "BOLETO", "CREDIT_CARD"]),
   installments: z.number().int().min(1).max(21).default(1),
+  items: z.array(z.object({ productId: z.string().uuid(), qty: z.number().int().min(1).max(20), size: z.string().max(10).optional().nullable() })).max(30).default([]),
   participant: z.object({
     name: z.string().trim().min(3).max(120),
     email: z.string().trim().email().max(200),
@@ -63,13 +74,15 @@ export const createOrder = createServerFn({ method: "POST" })
     const s = await loadSettings();
     const { data: tt } = await admin
       .from("ticket_types")
-      .select("*, events!inner(id, title, status, producer_id, starts_at)")
+      .select("*, events!inner(id, title, status, producer_id, starts_at, shirt_enabled, shirt_sizes)")
       .eq("id", data.ticketId)
       .single();
     if (!tt || tt.events.status !== "publicado" || !tt.active) throw new Error("Inscrição indisponível");
     const now = Date.now();
     if (tt.sales_start && new Date(tt.sales_start).getTime() > now) throw new Error("Vendas ainda não começaram");
     if (tt.sales_end && new Date(tt.sales_end).getTime() < now) throw new Error("Vendas encerradas para este lote");
+    if (tt.events.shirt_enabled && !tt.events.shirt_sizes.includes(data.participant.shirt_size ?? ""))
+      throw new Error("Escolha o tamanho da camisa do kit");
     const { count: reserved } = await admin
       .from("orders")
       .select("id", { count: "exact", head: true })
@@ -80,7 +93,25 @@ export const createOrder = createServerFn({ method: "POST" })
     const { data: producer } = await admin.from("producers").select("*").eq("id", tt.events.producer_id).single();
     if (!producer) throw new Error("Produtor não encontrado");
 
-    const price = Number(tt.price);
+    // Produtos adicionais: preço sempre vem do banco
+    const items: { productId: string; name: string; qty: number; size: string | null; unit_price: number }[] = [];
+    if (data.items.length) {
+      const { data: prods } = await admin
+        .from("event_products")
+        .select("id, name, price, sizes, stock, sold, active")
+        .eq("event_id", tt.events.id)
+        .in("id", data.items.map((i) => i.productId));
+      for (const it of data.items) {
+        const pr = prods?.find((x) => x.id === it.productId);
+        if (!pr || !pr.active) throw new Error("Produto indisponível");
+        if (pr.sizes.length && !pr.sizes.includes(it.size ?? "")) throw new Error(`Escolha o tamanho de ${pr.name}`);
+        if (pr.stock != null && pr.sold + it.qty > pr.stock) throw new Error(`${pr.name} sem estoque suficiente`);
+        items.push({ productId: pr.id, name: pr.name, qty: it.qty, size: pr.sizes.length ? it.size ?? null : null, unit_price: Number(pr.price) });
+      }
+    }
+    const productsTotal = Math.round(items.reduce((s2, i) => s2 + i.unit_price * i.qty, 0) * 100) / 100;
+
+    const price = Number(tt.price) + productsTotal;
     const f = computeFees(price, data.method, s as any, producer);
     const p = data.participant;
     const base = {
@@ -96,7 +127,9 @@ export const createOrder = createServerFn({ method: "POST" })
       participant_gender: p.gender || null,
       shirt_size: p.shirt_size || null,
       team: p.team || null,
-      ticket_price: price,
+      ticket_price: Number(tt.price),
+      products_total: productsTotal,
+      items: items as any,
       service_fee: f.serviceFee,
       total: f.total,
       producer_amount: f.producerAmount,

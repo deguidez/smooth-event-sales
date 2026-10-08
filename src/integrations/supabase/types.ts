@@ -90,6 +90,59 @@ export type Database = {
           },
         ]
       }
+      event_products: {
+        Row: {
+          active: boolean
+          created_at: string
+          description: string | null
+          event_id: string
+          id: string
+          image_url: string | null
+          name: string
+          position: number
+          price: number
+          sizes: string[]
+          sold: number
+          stock: number | null
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          description?: string | null
+          event_id: string
+          id?: string
+          image_url?: string | null
+          name: string
+          position?: number
+          price?: number
+          sizes?: string[]
+          sold?: number
+          stock?: number | null
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          description?: string | null
+          event_id?: string
+          id?: string
+          image_url?: string | null
+          name?: string
+          position?: number
+          price?: number
+          sizes?: string[]
+          sold?: number
+          stock?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_products_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       events: {
         Row: {
           category: Database["public"]["Enums"]["event_category"]
@@ -101,6 +154,8 @@ export type Database = {
           featured: boolean
           id: string
           producer_id: string
+          shirt_enabled: boolean
+          shirt_sizes: string[]
           short_description: string | null
           slug: string
           starts_at: string
@@ -119,6 +174,8 @@ export type Database = {
           featured?: boolean
           id?: string
           producer_id: string
+          shirt_enabled?: boolean
+          shirt_sizes?: string[]
           short_description?: string | null
           slug: string
           starts_at: string
@@ -137,6 +194,8 @@ export type Database = {
           featured?: boolean
           id?: string
           producer_id?: string
+          shirt_enabled?: boolean
+          shirt_sizes?: string[]
           short_description?: string | null
           slug?: string
           starts_at?: string
@@ -166,6 +225,7 @@ export type Database = {
           event_id: string
           id: string
           invoice_url: string | null
+          items: Json
           paid_at: string | null
           participant_birth_date: string | null
           participant_cpf: string
@@ -179,6 +239,7 @@ export type Database = {
           platform_amount: number
           producer_amount: number
           producer_id: string
+          products_total: number
           receipt_url: string | null
           service_fee: number
           shirt_size: string | null
@@ -199,6 +260,7 @@ export type Database = {
           event_id: string
           id?: string
           invoice_url?: string | null
+          items?: Json
           paid_at?: string | null
           participant_birth_date?: string | null
           participant_cpf: string
@@ -212,6 +274,7 @@ export type Database = {
           platform_amount: number
           producer_amount: number
           producer_id: string
+          products_total?: number
           receipt_url?: string | null
           service_fee?: number
           shirt_size?: string | null
@@ -232,6 +295,7 @@ export type Database = {
           event_id?: string
           id?: string
           invoice_url?: string | null
+          items?: Json
           paid_at?: string | null
           participant_birth_date?: string | null
           participant_cpf?: string
@@ -245,6 +309,7 @@ export type Database = {
           platform_amount?: number
           producer_amount?: number
           producer_id?: string
+          products_total?: number
           receipt_url?: string | null
           service_fee?: number
           shirt_size?: string | null

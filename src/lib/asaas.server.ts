@@ -86,6 +86,10 @@ export async function applyOrderStatus(
   if (newStatus === "pago") {
     const { data: tt } = await admin.from("ticket_types").select("sold").eq("id", order.ticket_type_id).single();
     await admin.from("ticket_types").update({ sold: (tt?.sold ?? 0) + 1 }).eq("id", order.ticket_type_id);
+    for (const it of ((order as any).items ?? []) as { productId: string; qty: number }[]) {
+      const { data: p } = await admin.from("event_products").select("sold").eq("id", it.productId).maybeSingle();
+      if (p) await admin.from("event_products").update({ sold: p.sold + it.qty }).eq("id", it.productId);
+    }
   }
   const { notifyOrder } = await import("./notify.server");
   if (newStatus === "pago") await notifyOrder(orderId, "pagamento_confirmado");
