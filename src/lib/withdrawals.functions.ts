@@ -101,7 +101,7 @@ export const requestWithdrawal = createServerFn({ method: "POST" })
     if (amount > bal.available) throw new Error("Valor maior que o saldo disponível");
     // cancela pedidos antigos sem código confirmado
     await a.from("withdrawals").update({ status: "cancelado" }).eq("producer_id", p.id).eq("status", "aguardando_codigo");
-    const code = String(crypto.getRandomValues(new Uint32Array(1))[0] % 1_000_000).padStart(6, "0");
+    const code = String(crypto.getRandomValues(new Uint32Array(1))[0]! % 1_000_000).padStart(6, "0");
     const { data: w, error } = await a.from("withdrawals").insert({
       producer_id: p.id, amount, status: "aguardando_codigo",
       code_hash: await sha256(code), code_expires_at: new Date(Date.now() + 15 * 60000).toISOString(),
