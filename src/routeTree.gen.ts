@@ -15,6 +15,7 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedMinhaContaRouteImport } from './routes/_authenticated/minha-conta'
 import { Route as EventosIndexRouteImport } from './routes/eventos.index'
 import { Route as EventosSlugRouteImport } from './routes/eventos.$slug'
+import { Route as WebhookAsaasRouteImport } from './routes/webhook.asaas'
 import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin.index'
 import { Route as AuthenticatedAdminConfiguracoesRouteImport } from './routes/_authenticated/admin.configuracoes'
 import { Route as AuthenticatedAdminEmailRouteImport } from './routes/_authenticated/admin.email'
@@ -52,6 +53,11 @@ const EventosIndexRoute = EventosIndexRouteImport.update({
 const EventosSlugRoute = EventosSlugRouteImport.update({
   id: '/eventos/$slug',
   path: '/eventos/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const WebhookAsaasRoute = WebhookAsaasRouteImport.update({
+  id: '/webhook/asaas',
+  path: '/webhook/asaas',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedAdminIndexRoute = AuthenticatedAdminIndexRouteImport.update({
@@ -110,6 +116,7 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/minha-conta': typeof AuthenticatedMinhaContaRoute
   '/eventos/$slug': typeof EventosSlugRoute
+  '/webhook/asaas': typeof WebhookAsaasRoute
   '/eventos/': typeof EventosIndexRoute
   '/admin/configuracoes': typeof AuthenticatedAdminConfiguracoesRoute
   '/admin/email': typeof AuthenticatedAdminEmailRoute
@@ -126,6 +133,7 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/minha-conta': typeof AuthenticatedMinhaContaRoute
   '/eventos/$slug': typeof EventosSlugRoute
+  '/webhook/asaas': typeof WebhookAsaasRoute
   '/eventos': typeof EventosIndexRoute
   '/admin/configuracoes': typeof AuthenticatedAdminConfiguracoesRoute
   '/admin/email': typeof AuthenticatedAdminEmailRoute
@@ -144,6 +152,7 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/_authenticated/minha-conta': typeof AuthenticatedMinhaContaRoute
   '/eventos/$slug': typeof EventosSlugRoute
+  '/webhook/asaas': typeof WebhookAsaasRoute
   '/eventos/': typeof EventosIndexRoute
   '/_authenticated/admin/configuracoes': typeof AuthenticatedAdminConfiguracoesRoute
   '/_authenticated/admin/email': typeof AuthenticatedAdminEmailRoute
@@ -162,6 +171,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/minha-conta'
     | '/eventos/$slug'
+    | '/webhook/asaas'
     | '/eventos/'
     | '/admin/configuracoes'
     | '/admin/email'
@@ -178,6 +188,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/minha-conta'
     | '/eventos/$slug'
+    | '/webhook/asaas'
     | '/eventos'
     | '/admin/configuracoes'
     | '/admin/email'
@@ -195,6 +206,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/_authenticated/minha-conta'
     | '/eventos/$slug'
+    | '/webhook/asaas'
     | '/eventos/'
     | '/_authenticated/admin/configuracoes'
     | '/_authenticated/admin/email'
@@ -212,6 +224,7 @@ export interface RootRouteChildren {
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
   EventosSlugRoute: typeof EventosSlugRoute
+  WebhookAsaasRoute: typeof WebhookAsaasRoute
   EventosIndexRoute: typeof EventosIndexRoute
   ApiPublicAsaasWebhookRoute: typeof ApiPublicAsaasWebhookRoute
   LovableEmailTransactionalPreviewRoute: typeof LovableEmailTransactionalPreviewRoute
@@ -259,6 +272,13 @@ declare module '@tanstack/react-router' {
       path: '/eventos/$slug'
       fullPath: '/eventos/$slug'
       preLoaderRoute: typeof EventosSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/webhook/asaas': {
+      id: '/webhook/asaas'
+      path: '/webhook/asaas'
+      fullPath: '/webhook/asaas'
+      preLoaderRoute: typeof WebhookAsaasRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated/admin/': {
@@ -357,6 +377,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
   EventosSlugRoute: EventosSlugRoute,
+  WebhookAsaasRoute: WebhookAsaasRoute,
   EventosIndexRoute: EventosIndexRoute,
   ApiPublicAsaasWebhookRoute: ApiPublicAsaasWebhookRoute,
   LovableEmailTransactionalPreviewRoute: LovableEmailTransactionalPreviewRoute,
