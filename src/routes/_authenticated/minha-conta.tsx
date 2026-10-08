@@ -37,7 +37,7 @@ function AthleteArea() {
     <div className="mx-auto max-w-6xl px-4 py-10">
       <div className="mb-8 rounded-3xl bg-ink p-8 text-ink-foreground">
         <p className="text-sm text-ink-muted">Área do atleta</p>
-        <h1 className="text-3xl font-extrabold md:text-4xl">Olá{user?.user_metadata?.full_name ? `, ${String(user.user_metadata.full_name).split(" ")[0]}` : ""}!</h1>
+        <h1 className="text-3xl font-extrabold md:text-4xl">Olá{user?.user_metadata?.["full_name"] ? `, ${String(user.user_metadata["full_name"]).split(" ")[0]}` : ""}!</h1>
         <div className="mt-6 grid grid-cols-3 gap-4 md:max-w-lg">
           <Stat n={orders.length} l="Inscrições" />
           <Stat n={orders.filter((o) => o.status === "pago").length} l="Confirmadas" />

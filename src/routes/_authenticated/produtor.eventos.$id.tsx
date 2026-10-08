@@ -146,7 +146,7 @@ function Tickets({ eventId }: { eventId: string }) {
     setN({ name: "", price: "", quantity: "100", sales_end: "" });
     qc.invalidateQueries({ queryKey: key });
   }
-  async function patch(id: string, p: Record<string, unknown>) {
+  async function patch(id: string, p: any) {
     const { error } = await supabase.from("ticket_types").update(p).eq("id", id);
     if (error) toast.error(error.message);
     qc.invalidateQueries({ queryKey: key });
@@ -235,7 +235,7 @@ function Attendees({ eventId, title }: { eventId: string; title: string }) {
                 <TableCell><p className="font-medium">{r.participant_name}</p><p className="text-xs text-muted-foreground">{r.participant_email}</p></TableCell>
                 <TableCell>{r.ticket_types?.name}{r.shirt_size ? ` · ${r.shirt_size}` : ""}</TableCell>
                 <TableCell>{METHOD_LABEL[r.payment_method]}</TableCell>
-                <TableCell><Badge variant={ORDER_STATUS[r.status].variant}>{ORDER_STATUS[r.status].label}</Badge></TableCell>
+                <TableCell><Badge variant={ORDER_STATUS[r.status]!.variant}>{ORDER_STATUS[r.status]!.label}</Badge></TableCell>
                 <TableCell className="text-right">{brl(r.total)}</TableCell>
               </TableRow>
             ))}

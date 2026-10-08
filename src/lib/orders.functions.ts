@@ -160,7 +160,7 @@ export const createOrder = createServerFn({ method: "POST" })
           remoteIp: ip,
         },
       });
-      const patch: Record<string, unknown> = {
+      const patch: any = {
         asaas_payment_id: payment.id,
         invoice_url: payment.invoiceUrl,
         bank_slip_url: payment.bankSlipUrl ?? null,

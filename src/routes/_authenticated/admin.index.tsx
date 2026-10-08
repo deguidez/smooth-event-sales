@@ -190,7 +190,7 @@ function ProducerDialog({ p, onClose }: { p: any; onClose: () => void }) {
 
 function Events({ events }: { events: any[] }) {
   const qc = useQueryClient();
-  async function patch(id: string, p: Record<string, unknown>) {
+  async function patch(id: string, p: any) {
     const { error } = await supabase.from("events").update(p).eq("id", id);
     if (error) toast.error(error.message);
     qc.invalidateQueries({ queryKey: ["admin-events"] });
@@ -251,7 +251,7 @@ function Orders({ orders }: { orders: any[] }) {
                 <TableCell>{o.events?.title}</TableCell>
                 <TableCell>{o.participant_name}</TableCell>
                 <TableCell>{METHOD_LABEL[o.payment_method]}</TableCell>
-                <TableCell><Badge variant={ORDER_STATUS[o.status].variant}>{ORDER_STATUS[o.status].label}</Badge></TableCell>
+                <TableCell><Badge variant={ORDER_STATUS[o.status]!.variant}>{ORDER_STATUS[o.status]!.label}</Badge></TableCell>
                 <TableCell className="text-right">{brl(o.total)}</TableCell>
                 <TableCell className="text-right font-semibold text-success">{brl(o.platform_amount)}</TableCell>
               </TableRow>

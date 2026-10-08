@@ -223,7 +223,7 @@ function ProducerDashboard({ producer }: { producer: any }) {
                 <TableCell className="font-mono text-xs">{o.code}</TableCell>
                 <TableCell>{o.participant_name}</TableCell>
                 <TableCell>{o.events?.title}</TableCell>
-                <TableCell><Badge variant={ORDER_STATUS[o.status].variant}>{ORDER_STATUS[o.status].label}</Badge></TableCell>
+                <TableCell><Badge variant={ORDER_STATUS[o.status]!.variant}>{ORDER_STATUS[o.status]!.label}</Badge></TableCell>
                 <TableCell className="text-right font-semibold">{brl(o.producer_amount)}</TableCell>
               </TableRow>
             ))}
