@@ -62,7 +62,7 @@ export const listUsers = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     await assertAdmin(context);
-    const { data: profiles } = await context.supabase.from("profiles").select("id, full_name, email, phone, cpf, city, state, created_at").order("created_at", { ascending: false });
+    const { data: profiles } = await context.supabase.from("profiles").select("id, full_name, email, phone, cpf, birth_date, gender, city, state, created_at").order("created_at", { ascending: false });
     const { data: roles } = await context.supabase.from("user_roles").select("user_id, role");
     const { data: orders } = await context.supabase.from("orders").select("user_id, status, total");
     return (profiles ?? []).map((p: any) => {
@@ -254,4 +254,42 @@ export const createProducerWallet = createServerFn({ method: "POST" })
       if (/já está em uso/i.test(msg)) msg += " Use outro e-mail no cadastro do produtor ou informe o walletId da conta Asaas dele.";
       return { ok: false as const, error: msg };
     }
+  });
+
+export const updateUser = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) =>
+    z
+      .object({
+        userId: z.string().uuid(),
+        full_name: z.string().trim().max(150).nullable(),
+        email: z.string().trim().email().max(200),
+        phone: z.string().trim().max(30).nullable(),
+        cpf: z.string().trim().max(20).nullable(),
+        birth_date: z.string().max(10).nullable(),
+        gender: z.string().trim().max(30).nullable(),
+        city: z.string().trim().max(100).nullable(),
+        state: z.string().trim().max(2).nullable(),
+        password: z.string().min(6).max(72).optional(),
+        roles: z.array(z.enum(["super_admin", "producer", "athlete"])),
+      })
+      .parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context);
+    if (data.userId === context.userId && !data.roles.includes("super_admin"))
+      throw new Error("Você não pode remover seu próprio acesso de super admin");
+    const admin = await getAdmin();
+    const authPatch: any = { email: data.email, email_confirm: true, user_metadata: { full_name: data.full_name } };
+    if (data.password) authPatch.password = data.password;
+    const { error: aErr } = await admin.auth.admin.updateUserById(data.userId, authPatch);
+    if (aErr) throw new Error(aErr.message);
+    const { userId, password, roles, ...profile } = data;
+    const { error: pErr } = await admin.from("profiles").upsert({ id: userId, ...profile, birth_date: profile.birth_date || null, updated_at: new Date().toISOString() });
+    if (pErr) throw new Error(pErr.message);
+    let del = admin.from("user_roles").delete().eq("user_id", userId);
+    if (roles.length) del = del.not("role", "in", `(${roles.join(",")})`);
+    await del;
+    if (roles.length) await admin.from("user_roles").upsert(roles.map((role) => ({ user_id: userId, role })), { onConflict: "user_id,role" });
+    return { ok: true };
   });
