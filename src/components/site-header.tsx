@@ -1,5 +1,6 @@
 import { Link, useNavigate } from "@tanstack/react-router";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { getBranding } from "@/lib/public.functions";
 import { LogOut, Shield, Ticket, User, Briefcase } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -13,12 +14,19 @@ import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 
 export function Logo() {
+  const { data } = useQuery({ queryKey: ["branding"], queryFn: () => getBranding(), staleTime: 300_000 });
+  if (data?.logo)
+    return (
+      <Link to="/" className="flex items-center">
+        <img src={data.logo} alt={data.name} className="h-9 max-w-[180px] object-contain" />
+      </Link>
+    );
   return (
     <Link to="/" className="flex items-center gap-2">
       <span className="grid h-8 w-8 place-items-center rounded-lg bg-gradient-brand text-primary-foreground">
         <Ticket className="h-4 w-4" />
       </span>
-      <span className="font-display text-xl font-extrabold tracking-tight">Inscreva</span>
+      <span className="font-display text-xl font-extrabold tracking-tight">{data?.name ?? "Inscreva"}</span>
     </Link>
   );
 }

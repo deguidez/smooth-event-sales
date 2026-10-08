@@ -49,3 +49,10 @@ export const getPublicEvent = createServerFn({ method: "GET" })
       .maybeSingle();
     return ev ?? null;
   });
+
+export const getBranding = createServerFn({ method: "GET" }).handler(async () => {
+  const { getAdmin } = await import("@/lib/asaas.server");
+  const admin = await getAdmin();
+  const { data } = await admin.from("platform_settings").select("site_name, site_logo").eq("id", 1).maybeSingle();
+  return { name: data?.site_name ?? "Inscreva", logo: data?.site_logo ?? null };
+});
