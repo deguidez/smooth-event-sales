@@ -1,0 +1,1 @@
+ALTER TABLE public.events ADD COLUMN registrations_open_at timestamptz;

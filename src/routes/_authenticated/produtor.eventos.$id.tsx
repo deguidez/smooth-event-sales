@@ -43,7 +43,7 @@ function ManageEvent() {
   });
   const [f, setF] = useState<any>(null);
   useEffect(() => {
-    if (ev) setF({ ...ev, starts_at: toLocal(ev.starts_at), ends_at: toLocal(ev.ends_at), registration_ends_at: toLocal((ev as any).registration_ends_at), registration_limit: (ev as any).registration_limit ?? "" });
+    if (ev) setF({ ...ev, starts_at: toLocal(ev.starts_at), ends_at: toLocal(ev.ends_at), registration_ends_at: toLocal((ev as any).registration_ends_at), registrations_open_at: toLocal((ev as any).registrations_open_at), registration_limit: (ev as any).registration_limit ?? "" });
   }, [ev]);
   if (!ev || !f) return <div className="mx-auto max-w-6xl px-4 py-20 text-muted-foreground">Carregando...</div>;
 
@@ -71,6 +71,7 @@ function ManageEvent() {
         starts_at: new Date(f.starts_at).toISOString(),
         ends_at: f.ends_at ? new Date(f.ends_at).toISOString() : null,
         registration_ends_at: f.registration_ends_at ? new Date(f.registration_ends_at).toISOString() : null,
+        registrations_open_at: f.registrations_open_at ? new Date(f.registrations_open_at).toISOString() : null,
         registration_limit: f.registration_limit === "" || f.registration_limit == null ? null : Math.max(1, Number(f.registration_limit)),
         ...(status ? { status: status as any } : {}),
       })
@@ -125,6 +126,7 @@ function ManageEvent() {
             <CoverUpload producerId={ev.producer_id} value={f.cover_url} onChange={(url) => setF({ ...f, cover_url: url })} />
             <F l="Dia do evento (início)"><Input type="datetime-local" value={f.starts_at} onChange={set("starts_at")} /></F>
             <F l="Término do evento (opcional)"><Input type="datetime-local" value={f.ends_at ?? ""} onChange={set("ends_at")} /></F>
+            <F l="Abertura das inscrições (opcional)"><Input type="datetime-local" value={f.registrations_open_at ?? ""} onChange={set("registrations_open_at")} /></F>
             <F l="Fim das inscrições (opcional)"><Input type="datetime-local" value={f.registration_ends_at ?? ""} onChange={set("registration_ends_at")} /></F>
             <F l="Total de inscrições liberadas (vazio = sem limite)"><Input type="number" min="1" value={f.registration_limit} onChange={set("registration_limit")} placeholder="Ex.: 500 (somando todos os lotes)" /></F>
             <F l="Local"><Input value={f.venue ?? ""} onChange={set("venue")} /></F>
