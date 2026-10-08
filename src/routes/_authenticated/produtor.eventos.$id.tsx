@@ -16,6 +16,7 @@ import { toCsv } from "@/components/dash";
 import { supabase } from "@/integrations/supabase/client";
 import { brl, CATEGORIES, fmtDate, METHOD_LABEL, ORDER_STATUS } from "@/lib/format";
 import { CoverUpload, EventDocsEditor } from "@/components/event-files";
+import { ProductsEditor } from "@/components/products-editor";
 
 export const Route = createFileRoute("/_authenticated/produtor/eventos/$id")({
   head: () => ({ meta: [{ title: "Gerenciar evento — Inscreva" }, { name: "robots", content: "noindex" }] }),
@@ -53,6 +54,8 @@ function ManageEvent() {
         short_description: f.short_description,
         description: f.description,
         cover_url: f.cover_url || null,
+        shirt_enabled: !!f.shirt_enabled,
+        shirt_sizes: f.shirt_sizes?.length ? f.shirt_sizes : ["PP", "P", "M", "G", "GG", "XG"],
         venue: f.venue,
         city: f.city,
         state: f.state,
@@ -94,6 +97,7 @@ function ManageEvent() {
           <TabsTrigger value="dados">Dados do evento</TabsTrigger>
           <TabsTrigger value="docs">Documentos</TabsTrigger>
           <TabsTrigger value="lotes">Categorias e lotes</TabsTrigger>
+          <TabsTrigger value="produtos">Kit e produtos</TabsTrigger>
           <TabsTrigger value="inscritos">Inscritos</TabsTrigger>
         </TabsList>
         <TabsContent value="dados" className="mt-6">
@@ -119,6 +123,17 @@ function ManageEvent() {
           </div>
         </TabsContent>
         <TabsContent value="docs" className="mt-6"><EventDocsEditor eventId={id} producerId={ev.producer_id} /></TabsContent>
+        <TabsContent value="produtos" className="mt-6 space-y-6">
+          <div className="space-y-4 rounded-2xl border bg-card p-6 shadow-card">
+            <label className="flex items-center gap-3"><Switch checked={f.shirt_enabled} onCheckedChange={(v) => setF({ ...f, shirt_enabled: v })} /> <span className="font-semibold">A inscrição inclui kit com camisa</span></label>
+            {f.shirt_enabled && (
+              <F l="Tamanhos disponíveis (separe por vírgula)"><Input value={(f.shirt_sizes ?? []).join(", ")} onChange={(e) => setF({ ...f, shirt_sizes: e.target.value.split(",").map((x) => x.trim().toUpperCase()).filter(Boolean) })} /></F>
+            )}
+            <p className="text-sm text-muted-foreground">O atleta será obrigado a escolher o tamanho ao se inscrever. O tamanho aparece na lista de inscritos e na planilha.</p>
+            <Button variant="hero" onClick={() => save()}>Salvar kit</Button>
+          </div>
+          <ProductsEditor eventId={id} producerId={ev.producer_id} />
+        </TabsContent>
         <TabsContent value="lotes" className="mt-6"><Tickets eventId={id} /></TabsContent>
         <TabsContent value="inscritos" className="mt-6"><Attendees eventId={id} title={ev.title} /></TabsContent>
       </Tabs>
