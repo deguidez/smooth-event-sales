@@ -8,7 +8,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { createReceiptPdf } from "@/lib/receipt-pdf";
-import { OrderQrDialog } from "@/components/order-qr";
+import { OrderQrDialog, OrderQrImage, orderQrValue } from "@/components/order-qr";
+import { EventCalendarButton } from "@/components/event-calendar-button";
 import { supabase } from "@/integrations/supabase/client";
 import { refreshOrder } from "@/lib/orders.functions";
 import { brl, fmtDate, METHOD_LABEL, ORDER_STATUS } from "@/lib/format";
@@ -29,7 +30,7 @@ function OrderPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("orders")
-        .select("*, events(title, starts_at, venue, city, state, shirt_enabled), ticket_types(name)")
+        .select("*, events(title, starts_at, ends_at, venue, city, state, shirt_enabled), ticket_types(name)")
         .eq("id", id)
         .single();
       if (error) throw error;
@@ -90,6 +91,24 @@ function OrderPage() {
         </div>
 
         <div className="space-y-6 p-6">
+          {o.status === "pago" && (
+            <section aria-label="Ingresso da inscrição" className="grid min-w-0 gap-5 border-b border-dashed pb-6 sm:grid-cols-[1fr_auto] sm:items-center">
+              <div className="min-w-0 space-y-3">
+                <p className="text-xs font-bold uppercase text-success">Ingresso digital · Confirmado</p>
+                <h2 className="break-words text-2xl font-extrabold">{o.events?.title}</h2>
+                <p className="break-words text-sm text-muted-foreground">{fmtDate(o.events?.starts_at, true)} · {o.ticket_types?.name}</p>
+                <p className="break-words text-sm font-semibold">{o.participant_name}</p>
+                {o.events?.starts_at && <EventCalendarButton event={{ id: o.id, title: o.events.title,
+                  startsAt: o.events.starts_at, endsAt: o.events.ends_at,
+                  location: [o.events.venue, o.events.city, o.events.state].filter(Boolean).join(" · "),
+                  url: orderQrValue(o.id) }} />}
+              </div>
+              <div className="flex flex-col items-center gap-2 sm:border-l sm:border-dashed sm:pl-5">
+                <OrderQrImage orderId={o.id} size={176} />
+                <p className="font-display text-lg font-extrabold">#{o.code}</p>
+              </div>
+            </section>
+          )}
           {o.status === "pendente" && o.payment_method === "PIX" && o.pix_qr_image && (
             <div className="no-print flex flex-col items-center gap-4 rounded-2xl bg-muted p-6 text-center">
               <p className="font-semibold">Escaneie o QR Code para pagar com Pix</p>
@@ -160,7 +179,7 @@ function OrderPage() {
 
 function Item({ l, v }: { l: string; v: React.ReactNode }) {
   return (
-    <div>
+    <div className="min-w-0 break-words">
       <dt className="text-xs uppercase tracking-wide text-muted-foreground">{l}</dt>
       <dd className="mt-0.5 font-medium">{v}</dd>
     </div>
