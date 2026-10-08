@@ -1,0 +1,48 @@
+import * as React from 'react'
+import { Body, Button, Container, Head, Heading, Html, Preview, Text } from '@react-email/components'
+import type { TemplateEntry } from './registry'
+
+interface Props {
+  kind?: 'inscricao_criada' | 'pagamento_confirmado' | 'pagamento_vencido'
+  name?: string
+  eventTitle?: string
+  code?: string
+  total?: string
+  url?: string
+}
+
+const copy = {
+  inscricao_criada: { title: 'Inscrição recebida', text: 'Recebemos sua inscrição. Se ainda não pagou, finalize o pagamento para garantir sua vaga.', cta: 'Ver inscrição e pagar' },
+  pagamento_confirmado: { title: 'Inscrição confirmada!', text: 'Seu pagamento foi confirmado. Seu comprovante e o QR code estão disponíveis no link abaixo.', cta: 'Ver comprovante' },
+  pagamento_vencido: { title: 'Pagamento não identificado', text: 'O prazo de pagamento da sua inscrição venceu. Acesse para gerar um novo pagamento, se ainda houver vagas.', cta: 'Ver inscrição' },
+}
+
+function OrderStatusEmail({ kind = 'inscricao_criada', name = 'Atleta', eventTitle = 'seu evento', code = '', total = '', url = 'https://evenon.com.br' }: Props) {
+  const c = copy[kind] ?? copy.inscricao_criada
+  return (
+    <Html lang="pt-BR">
+      <Head />
+      <Preview>{c.title} — {eventTitle}</Preview>
+      <Body style={{ backgroundColor: '#ffffff', fontFamily: 'Manrope, Arial, sans-serif' }}>
+        <Container style={{ padding: '24px', maxWidth: '560px' }}>
+          <Heading style={{ color: '#1a1a1a', fontSize: '24px' }}>{c.title}</Heading>
+          <Text style={{ color: '#333', fontSize: '15px' }}>Olá, {name}!</Text>
+          <Text style={{ color: '#333', fontSize: '15px' }}>{c.text}</Text>
+          <Text style={{ color: '#333', fontSize: '15px' }}>
+            <b>Evento:</b> {eventTitle}<br />
+            {code && <><b>Código:</b> {code}<br /></>}
+            {total && <><b>Valor:</b> {total}</>}
+          </Text>
+          <Button href={url} style={{ backgroundColor: '#f97316', color: '#ffffff', padding: '12px 20px', borderRadius: '8px', fontWeight: 700 }}>{c.cta}</Button>
+        </Container>
+      </Body>
+    </Html>
+  )
+}
+
+export const template = {
+  component: OrderStatusEmail,
+  subject: (d) => `${(copy as any)[d.kind]?.title ?? 'Sua inscrição'} — ${d.eventTitle ?? 'Inscreva'}`,
+  displayName: 'Status da inscrição',
+  previewData: { kind: 'pagamento_confirmado', name: 'Maria', eventTitle: 'Open de Jiu-Jitsu', code: '55B7E3C5', total: 'R$ 80,00' },
+} satisfies TemplateEntry

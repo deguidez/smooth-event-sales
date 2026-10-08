@@ -192,7 +192,7 @@ function SettingsPage() {
               <Field l="E-mail remetente"><Input placeholder="nao-responda@seusite.com.br" value={f.email_from_address ?? ""} onChange={(e) => setF({ ...f, email_from_address: e.target.value })} /></Field>
               <Field l="E-mail de suporte"><Input placeholder="contato@seusite.com.br" value={f.support_email ?? ""} onChange={(e) => setF({ ...f, support_email: e.target.value })} /></Field>
             </div>
-            <p className="mt-4 text-sm text-muted-foreground">Para os e-mails serem enviados de verdade, o domínio também precisa ser verificado (peça no chat para configurar o domínio de e-mail).</p>
+            <p className="mt-4 text-sm text-muted-foreground">Os e-mails são enviados pelo domínio notify.evenon.com.br. O envio começa automaticamente assim que o domínio for verificado.</p>
             <Button className="mt-4" variant="hero" onClick={() => persist({ site_domain: f.site_domain || null, email_from_name: f.email_from_name || null, email_from_address: f.email_from_address || null, support_email: f.support_email || null })}>Salvar</Button>
           </Card>
         </TabsContent>
