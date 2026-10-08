@@ -1,0 +1,5 @@
+CREATE POLICY "superadmin products write" ON public.event_products FOR ALL TO authenticated USING (public.has_role(auth.uid(),'super_admin')) WITH CHECK (public.has_role(auth.uid(),'super_admin'));
+CREATE POLICY "superadmin tickets write" ON public.ticket_types FOR ALL TO authenticated USING (public.has_role(auth.uid(),'super_admin')) WITH CHECK (public.has_role(auth.uid(),'super_admin'));
+CREATE POLICY "superadmin docs write" ON public.event_documents FOR ALL TO authenticated USING (public.has_role(auth.uid(),'super_admin')) WITH CHECK (public.has_role(auth.uid(),'super_admin'));
+CREATE POLICY "superadmin upload event files" ON storage.objects FOR INSERT TO authenticated WITH CHECK (bucket_id='event-files' AND public.has_role(auth.uid(),'super_admin'));
+CREATE POLICY "superadmin delete event files" ON storage.objects FOR DELETE TO authenticated USING (bucket_id='event-files' AND public.has_role(auth.uid(),'super_admin'));
