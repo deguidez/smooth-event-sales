@@ -14,7 +14,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { getAdminSettings, getSystemStatus, registerAsaasWebhook, saveAdminSettings, testAsaasConnection } from "@/lib/admin.functions";
 import { computeFees } from "@/lib/fees";
 import { brl } from "@/lib/format";
-import { AdminGate } from "./admin.index";
+import { AdminGate } from "@/components/admin-gate";
 
 export const Route = createFileRoute("/_authenticated/admin/configuracoes")({
   head: () => ({ meta: [{ title: "Configurações — Super admin" }, { name: "robots", content: "noindex" }] }),

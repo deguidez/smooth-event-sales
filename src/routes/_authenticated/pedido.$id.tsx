@@ -40,7 +40,7 @@ function OrderPage() {
   }, [o?.status, o?.asaas_payment_id, id, refresh, refetch]);
 
   if (!o) return <div className="mx-auto max-w-3xl px-4 py-20 text-muted-foreground">Carregando...</div>;
-  const st = ORDER_STATUS[o.status];
+  const st = ORDER_STATUS[o.status]!;
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-10">

@@ -15,7 +15,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { SalesChart, StatCard, toCsv } from "@/components/dash";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/hooks/use-auth";
+import { AdminGate } from "@/components/admin-gate";
 import { createProducerWallet, updateProducer } from "@/lib/admin.functions";
 import { brl, fmtDate, METHOD_LABEL, ORDER_STATUS } from "@/lib/format";
 
@@ -23,13 +23,6 @@ export const Route = createFileRoute("/_authenticated/admin/")({
   head: () => ({ meta: [{ title: "Super admin — Inscreva" }, { name: "robots", content: "noindex" }] }),
   component: AdminPage,
 });
-
-export function AdminGate({ children }: { children: React.ReactNode }) {
-  const { isAdmin, roles } = useAuth();
-  if (!roles.length) return <div className="mx-auto max-w-6xl px-4 py-20 text-muted-foreground">Carregando...</div>;
-  if (!isAdmin) return <div className="mx-auto max-w-xl px-4 py-24 text-center"><h1 className="text-2xl font-bold">Acesso restrito</h1><p className="mt-2 text-muted-foreground">Esta área é exclusiva do super admin.</p></div>;
-  return <>{children}</>;
-}
 
 function AdminPage() {
   return (
@@ -197,7 +190,7 @@ function ProducerDialog({ p, onClose }: { p: any; onClose: () => void }) {
 
 function Events({ events }: { events: any[] }) {
   const qc = useQueryClient();
-  async function patch(id: string, p: Record<string, unknown>) {
+  async function patch(id: string, p: any) {
     const { error } = await supabase.from("events").update(p).eq("id", id);
     if (error) toast.error(error.message);
     qc.invalidateQueries({ queryKey: ["admin-events"] });
@@ -258,7 +251,7 @@ function Orders({ orders }: { orders: any[] }) {
                 <TableCell>{o.events?.title}</TableCell>
                 <TableCell>{o.participant_name}</TableCell>
                 <TableCell>{METHOD_LABEL[o.payment_method]}</TableCell>
-                <TableCell><Badge variant={ORDER_STATUS[o.status].variant}>{ORDER_STATUS[o.status].label}</Badge></TableCell>
+                <TableCell><Badge variant={ORDER_STATUS[o.status]!.variant}>{ORDER_STATUS[o.status]!.label}</Badge></TableCell>
                 <TableCell className="text-right">{brl(o.total)}</TableCell>
                 <TableCell className="text-right font-semibold text-success">{brl(o.platform_amount)}</TableCell>
               </TableRow>

@@ -37,7 +37,7 @@ function AthleteArea() {
     <div className="mx-auto max-w-6xl px-4 py-10">
       <div className="mb-8 rounded-3xl bg-ink p-8 text-ink-foreground">
         <p className="text-sm text-ink-muted">Área do atleta</p>
-        <h1 className="text-3xl font-extrabold md:text-4xl">Olá{user?.user_metadata?.full_name ? `, ${String(user.user_metadata.full_name).split(" ")[0]}` : ""}!</h1>
+        <h1 className="text-3xl font-extrabold md:text-4xl">Olá{user?.user_metadata?.["full_name"] ? `, ${String(user.user_metadata["full_name"]).split(" ")[0]}` : ""}!</h1>
         <div className="mt-6 grid grid-cols-3 gap-4 md:max-w-lg">
           <Stat n={orders.length} l="Inscrições" />
           <Stat n={orders.filter((o) => o.status === "pago").length} l="Confirmadas" />
@@ -59,7 +59,7 @@ function AthleteArea() {
           ) : (
             <div className="grid gap-4 md:grid-cols-2">
               {orders.map((o) => {
-                const st = ORDER_STATUS[o.status];
+                const st = ORDER_STATUS[o.status]!;
                 return (
                   <Link key={o.id} to="/pedido/$id" params={{ id: o.id }} className="flex gap-4 rounded-2xl border bg-card p-3 shadow-card transition hover:border-primary">
                     <img src={o.events?.cover_url || categoryCover(o.events?.category)} alt="" className="h-24 w-24 shrink-0 rounded-xl object-cover" />

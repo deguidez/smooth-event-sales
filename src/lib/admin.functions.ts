@@ -59,7 +59,7 @@ export const saveAdminSettings = createServerFn({ method: "POST" })
   .inputValidator((d) => settingsSchema.parse(d))
   .handler(async ({ data, context }) => {
     await assertAdmin(context);
-    const patch: Record<string, unknown> = { ...data, updated_at: new Date().toISOString() };
+    const patch: any = { ...data, updated_at: new Date().toISOString() };
     if (!data.asaas_api_key) delete patch.asaas_api_key;
     const admin = await getAdmin();
     const { error } = await admin.from("platform_settings").update(patch).eq("id", 1);
@@ -165,7 +165,7 @@ export const updateProducer = createServerFn({ method: "POST" })
     await assertAdmin(context);
     const admin = await getAdmin();
     const { id, ...patch } = data;
-    const { data: p, error } = await admin.from("producers").update(patch).eq("id", id).select("user_id, status").single();
+    const { data: p, error } = await admin.from("producers").update(patch as any).eq("id", id).select("user_id, status").single();
     if (error) throw new Error(error.message);
     if (p.status === "aprovado") {
       await admin.from("user_roles").upsert({ user_id: p.user_id, role: "producer" }, { onConflict: "user_id,role" });

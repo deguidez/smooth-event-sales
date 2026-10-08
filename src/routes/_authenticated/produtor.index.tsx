@@ -53,7 +53,7 @@ function ProducerSignup() {
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     const doc = onlyDigits(f.document);
-    if (doc.length !== 11 && doc.length !== 14) return toast.error("Informe um CPF ou CNPJ válido");
+    if (doc.length !== 11 && doc.length !== 14) { toast.error("Informe um CPF ou CNPJ válido"); return; }
     const { error } = await supabase.from("producers").insert({
       user_id: user!.id,
       company_name: f.company_name.trim(),
@@ -68,7 +68,7 @@ function ProducerSignup() {
       province: f.province,
       income_value: Number(f.income_value) || 5000,
     });
-    if (error) return toast.error(error.message);
+    if (error) { toast.error(error.message); return; }
     toast.success("Cadastro enviado! Aguarde a aprovação.");
     qc.invalidateQueries({ queryKey: ["my-producer"] });
   }
@@ -223,7 +223,7 @@ function ProducerDashboard({ producer }: { producer: any }) {
                 <TableCell className="font-mono text-xs">{o.code}</TableCell>
                 <TableCell>{o.participant_name}</TableCell>
                 <TableCell>{o.events?.title}</TableCell>
-                <TableCell><Badge variant={ORDER_STATUS[o.status].variant}>{ORDER_STATUS[o.status].label}</Badge></TableCell>
+                <TableCell><Badge variant={ORDER_STATUS[o.status]!.variant}>{ORDER_STATUS[o.status]!.label}</Badge></TableCell>
                 <TableCell className="text-right font-semibold">{brl(o.producer_amount)}</TableCell>
               </TableRow>
             ))}
@@ -249,7 +249,7 @@ function NewEventDialog({ producerId }: { producerId: string }) {
       .insert({ producer_id: producerId, title: title.trim(), category: category as any, starts_at: new Date(date).toISOString(), slug })
       .select("id")
       .single();
-    if (error) return toast.error(error.message);
+    if (error) { toast.error(error.message); return; }
     setOpen(false);
     navigate({ to: "/produtor/eventos/$id", params: { id: data.id } });
   }

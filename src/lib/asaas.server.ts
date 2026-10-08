@@ -30,7 +30,7 @@ export async function asaasFetch<T = any>(
       "User-Agent": "Inscreva",
       access_token: s.asaas_api_key,
     },
-    body: init.body ? JSON.stringify(init.body) : undefined,
+    body: init.body ? JSON.stringify(init.body) : null,
   });
   const text = await res.text();
   let json: any = null;
@@ -77,7 +77,7 @@ export async function applyOrderStatus(
   if (!order) return null;
   if (order.status === newStatus) return order;
   if (order.status === "pago" && newStatus === "vencido") return order;
-  const patch: Record<string, unknown> = { status: newStatus };
+  const patch: any = { status: newStatus };
   if (newStatus === "pago") {
     patch.paid_at = new Date().toISOString();
     if (extra.receipt_url) patch.receipt_url = extra.receipt_url;
