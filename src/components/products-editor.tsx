@@ -43,8 +43,8 @@ export function ProductsEditor({ eventId, producerId }: { eventId: string; produ
     if (error) { toast.error(error.message); return; }
     setF(empty); toast.success("Produto adicionado"); refresh();
   }
-  async function patch(id: string, p: any) { await supabase.from("event_products").update(p).eq("id", id); refresh(); }
-  async function remove(id: string) { await supabase.from("event_products").delete().eq("id", id); refresh(); }
+  async function patch(id: string, p: any) { const { error } = await supabase.from("event_products").update(p).eq("id", id); if (error) toast.error(error.message); refresh(); }
+  async function remove(id: string) { const { error } = await supabase.from("event_products").delete().eq("id", id); if (error) toast.error(error.message); else toast.success("Produto removido"); refresh(); }
 
   return (
     <div className="space-y-6">
