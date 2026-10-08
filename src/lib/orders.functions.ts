@@ -130,13 +130,15 @@ export const createOrder = createServerFn({ method: "POST" })
     const productsTotal = Math.round(items.reduce((s2, i) => s2 + i.unit_price * i.qty, 0) * 100) / 100;
 
     const subtotal = Number(tt.price) + productsTotal;
+    // Desconto vale apenas sobre o valor da inscrição; a taxa é calculada sobre o valor cheio.
     let coupon: { id: string; code: string; discount: number } | null = null;
     if (data.coupon) {
       const { evaluateCoupon } = await import("./coupons.server");
-      coupon = await evaluateCoupon(data.coupon, tt.events.id, subtotal);
+      coupon = await evaluateCoupon(data.coupon, tt.events.id, Number(tt.price));
     }
-    const price = Math.max(0, Math.round((subtotal - (coupon?.discount ?? 0)) * 100) / 100);
-    const f = computeFees(price, data.method, s as any, {
+    const discount = coupon?.discount ?? 0;
+    const price = Math.max(0, Math.round((subtotal - discount) * 100) / 100);
+    const f = computeFees(subtotal, data.method, s as any, {
       fee_percent: tt.events.fee_percent ?? producer.fee_percent,
       fee_fixed: tt.events.fee_fixed ?? producer.fee_fixed,
     });
@@ -160,8 +162,8 @@ export const createOrder = createServerFn({ method: "POST" })
       custom_answers: customAnswers as any,
       accepted_terms: acceptedTerms as any,
       service_fee: f.serviceFee,
-      total: f.total,
-      producer_amount: f.producerAmount,
+      total: Math.max(0, Math.round((f.total - discount) * 100) / 100),
+      producer_amount: Math.max(0, Math.round((f.producerAmount - discount) * 100) / 100),
       platform_amount: f.platformAmount,
       asaas_fee_estimate: f.asaasFee,
       payment_method: data.method,
