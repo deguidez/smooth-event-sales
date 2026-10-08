@@ -1,6 +1,6 @@
 # Roadmap
 
-- [ ] Caixa de e-mail Hostinger exclusiva do superadmin — leitura e resposta; validar acesso real da Hostinger
+- [x] Caixa de e-mail Hostinger exclusiva do superadmin — conexão, envio, leitura real e formulário de resposta verificados
 
 - [x] Trocar banner e imagens das modalidades nas configurações do super admin
 - [x] Contador regressivo na página do evento
