@@ -57,6 +57,13 @@
       "when": 1791486296717,
       "tag": "0007_site_logo",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1791486392045,
+      "tag": "0008_event_terms",
+      "breakpoints": true
     }
   ]
 }
