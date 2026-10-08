@@ -37,6 +37,12 @@ export const getAdminSettings = createServerFn({ method: "GET" })
 const settingsSchema = z.object({
   site_name: z.string().trim().min(1).max(80).optional(),
   site_logo: z.string().max(700_000).regex(/^data:image\/(png|jpeg|webp|svg\+xml);base64,/).nullable().optional(),
+  home_images: z.object({
+    banner: z.string().url().startsWith("https://").max(3000).nullable().optional(),
+    esporte: z.string().url().startsWith("https://").max(3000).nullable().optional(),
+    show: z.string().url().startsWith("https://").max(3000).nullable().optional(),
+    congresso: z.string().url().startsWith("https://").max(3000).nullable().optional(),
+  }).optional(),
   asaas_env: z.enum(["sandbox", "producao"]).optional(),
   asaas_api_key: z.string().trim().max(400).optional(),
   platform_wallet_id: z.string().trim().max(100).nullable().optional(),
@@ -105,6 +111,29 @@ export const saveAdminSettings = createServerFn({ method: "POST" })
     const { error } = await admin.from("platform_settings").update(patch).eq("id", 1);
     if (error) throw new Error(error.message);
     return { ok: true };
+  });
+
+export const prepareHomeImageUpload = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) => z.object({ extension: z.enum(["jpg", "png", "webp"]) }).parse(d))
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context);
+    const admin = await getAdmin();
+    const path = `homepage/${crypto.randomUUID()}.${data.extension}`;
+    const { data: upload, error } = await admin.storage.from("event-files").createSignedUploadUrl(path);
+    if (error || !upload) throw new Error("Não foi possível preparar o envio da imagem");
+    return { path, token: upload.token };
+  });
+
+export const resolveHomeImageUpload = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) => z.object({ path: z.string().regex(/^homepage\/[0-9a-f-]{36}\.(jpg|png|webp)$/) }).parse(d))
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context);
+    const admin = await getAdmin();
+    const { data: image, error } = await admin.storage.from("event-files").createSignedUrl(data.path, 60 * 60 * 24 * 365 * 10);
+    if (error || !image) throw new Error("Não foi possível abrir a imagem enviada");
+    return { url: image.signedUrl };
   });
 
 export const testAsaasConnection = createServerFn({ method: "POST" })

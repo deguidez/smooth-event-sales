@@ -18,7 +18,7 @@ import { createProducerWallet } from "@/lib/admin.functions";
 import { brl, CATEGORIES, fmtDate, onlyDigits, ORDER_STATUS, slugify } from "@/lib/format";
 
 export const Route = createFileRoute("/_authenticated/produtor/")({
-  head: () => ({ meta: [{ title: "Painel do produtor — Inscreva" }, { name: "robots", content: "noindex" }] }),
+  head: () => ({ meta: [{ title: "Painel do produtor — Inscreva" }, { name: "description", content: "Gerencie seus eventos e inscritos na Inscreva." }, { property: "og:title", content: "Painel do produtor — Inscreva" }, { property: "og:description", content: "Gerencie seus eventos e inscritos na Inscreva." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary_large_image" }, { name: "robots", content: "noindex" }] }),
   component: ProducerHome,
 });
 

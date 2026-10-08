@@ -384,6 +384,7 @@ export type Database = {
           fee_fixed: number
           fee_paid_by_buyer: boolean
           fee_percent: number
+          home_images: Json
           id: number
           max_installments: number
           platform_wallet_id: string | null
@@ -411,6 +412,7 @@ export type Database = {
           fee_fixed?: number
           fee_paid_by_buyer?: boolean
           fee_percent?: number
+          home_images?: Json
           id?: number
           max_installments?: number
           platform_wallet_id?: string | null
@@ -438,6 +440,7 @@ export type Database = {
           fee_fixed?: number
           fee_paid_by_buyer?: boolean
           fee_percent?: number
+          home_images?: Json
           id?: number
           max_installments?: number
           platform_wallet_id?: string | null

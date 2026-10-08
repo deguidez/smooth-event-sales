@@ -13,7 +13,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { brl, categoryCover, fmtDate, onlyDigits, ORDER_STATUS } from "@/lib/format";
 
 export const Route = createFileRoute("/_authenticated/minha-conta")({
-  head: () => ({ meta: [{ title: "Área do atleta — Inscreva" }, { name: "robots", content: "noindex" }] }),
+  head: () => ({ meta: [{ title: "Área do atleta — Inscreva" }, { name: "description", content: "Acompanhe suas inscrições e pagamentos na Inscreva." }, { property: "og:title", content: "Área do atleta — Inscreva" }, { property: "og:description", content: "Acompanhe suas inscrições e pagamentos na Inscreva." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary_large_image" }, { name: "robots", content: "noindex" }] }),
   component: AthleteArea,
 });
 

@@ -3,7 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { CheckCircle2, Copy, Database, Globe, KeyRound, Percent, Plug, XCircle } from "lucide-react";
+import { CheckCircle2, Copy, Database, Globe, Image, KeyRound, Percent, Plug, XCircle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,9 +15,10 @@ import { getAdminSettings, getSystemStatus, registerAsaasWebhook, saveAdminSetti
 import { computeFees } from "@/lib/fees";
 import { brl } from "@/lib/format";
 import { AdminGate } from "@/components/admin-gate";
+import { HomeImagesEditor } from "@/components/home-images-editor";
 
 export const Route = createFileRoute("/_authenticated/admin/configuracoes")({
-  head: () => ({ meta: [{ title: "Configurações — Super admin" }, { name: "robots", content: "noindex" }] }),
+  head: () => ({ meta: [{ title: "Configurações da plataforma — Inscreva" }, { name: "description", content: "Administre imagens, pagamentos e configurações da plataforma Inscreva." }, { property: "og:title", content: "Configurações da plataforma — Inscreva" }, { property: "og:description", content: "Configurações exclusivas do super admin da Inscreva." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary_large_image" }, { name: "robots", content: "noindex" }] }),
   component: () => (
     <AdminGate>
       <SettingsPage />
@@ -32,6 +33,8 @@ function SettingsPage() {
   const { data } = useQuery({ queryKey: ["admin-settings"], queryFn: () => load() });
   const [f, setF] = useState<any>(null);
   const [apiKey, setApiKey] = useState("");
+  const [uploads, setUploads] = useState(0);
+  const [saving, setSaving] = useState(false);
   useEffect(() => {
     if (data) setF(data);
   }, [data]);
@@ -39,11 +42,13 @@ function SettingsPage() {
 
   const num = (k: string) => (e: React.ChangeEvent<HTMLInputElement>) => setF({ ...f, [k]: e.target.value });
   async function persist(extra: Record<string, unknown> = {}) {
+    setSaving(true);
     try {
       await save({
         data: {
           site_name: f.site_name,
           site_logo: f.site_logo || null,
+          home_images: f.home_images ?? {},
           asaas_env: f.asaas_env,
           platform_wallet_id: f.platform_wallet_id || null,
           fee_percent: Number(f.fee_percent),
@@ -68,7 +73,7 @@ function SettingsPage() {
       qc.invalidateQueries({ queryKey: ["branding"] });
     } catch (e) {
       toast.error((e as Error).message);
-    }
+    } finally { setSaving(false); }
   }
 
   return (
@@ -81,6 +86,7 @@ function SettingsPage() {
           <TabsTrigger value="taxas"><Percent className="mr-1.5 h-4 w-4" /> Taxas e comissões</TabsTrigger>
           <TabsTrigger value="pagamentos"><KeyRound className="mr-1.5 h-4 w-4" /> Pagamentos</TabsTrigger>
           <TabsTrigger value="dominio"><Globe className="mr-1.5 h-4 w-4" /> Domínio e e-mail</TabsTrigger>
+          <TabsTrigger value="imagens"><Image className="mr-1.5 h-4 w-4" /> Página principal</TabsTrigger>
           <TabsTrigger value="banco"><Database className="mr-1.5 h-4 w-4" /> Banco de dados</TabsTrigger>
         </TabsList>
 
@@ -191,6 +197,11 @@ function SettingsPage() {
           </Card>
         </TabsContent>
 
+        <TabsContent value="imagens" className="mt-6 space-y-6">
+          <h2 className="text-xl font-bold">Imagens da página principal</h2>
+          <HomeImagesEditor value={f.home_images ?? {}} onChange={(key, url) => setF((current: any) => ({ ...current, home_images: { ...current.home_images, [key]: url } }))} onBusyChange={(busy) => setUploads((count) => count + (busy ? 1 : -1))} />
+          <Button variant="hero" disabled={uploads > 0 || saving} onClick={() => persist()}>{saving ? "Salvando..." : "Salvar imagens"}</Button>
+        </TabsContent>
         <TabsContent value="banco" className="mt-6"><DbStatus /></TabsContent>
       </Tabs>
     </div>

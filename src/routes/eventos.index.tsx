@@ -24,6 +24,8 @@ export const Route = createFileRoute("/eventos/")({
       { name: "description", content: "Todos os eventos com inscrições abertas: corridas, ciclismo, shows e congressos." },
       { property: "og:title", content: "Eventos com inscrições abertas — Inscreva" },
       { property: "og:description", content: "Encontre e garanta sua inscrição." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
   component: EventsPage,

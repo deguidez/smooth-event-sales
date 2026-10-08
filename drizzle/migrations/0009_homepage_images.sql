@@ -1,0 +1,1 @@
+ALTER TABLE public.platform_settings ADD COLUMN home_images jsonb NOT NULL DEFAULT '{}'::jsonb;

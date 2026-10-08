@@ -1,6 +1,7 @@
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getBranding } from "@/lib/public.functions";
+import { useEffect, useState } from "react";
 import { LogOut, Shield, Ticket, User, Briefcase } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -14,7 +15,10 @@ import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 
 export function Logo() {
+  const [hydrated, setHydrated] = useState(false);
+  useEffect(() => setHydrated(true), []);
   const { data } = useQuery({ queryKey: ["branding"], queryFn: () => getBranding(), staleTime: 300_000 });
+  if (!hydrated) return <Link to="/" aria-label="Página principal" className="block h-9 w-[180px]" />;
   if (data?.logo)
     return (
       <Link to="/" className="flex items-center">
