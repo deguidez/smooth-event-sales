@@ -59,7 +59,7 @@ function AthleteArea() {
           ) : (
             <div className="grid gap-4 md:grid-cols-2">
               {orders.map((o) => {
-                const st = ORDER_STATUS[o.status];
+                const st = ORDER_STATUS[o.status]!;
                 return (
                   <Link key={o.id} to="/pedido/$id" params={{ id: o.id }} className="flex gap-4 rounded-2xl border bg-card p-3 shadow-card transition hover:border-primary">
                     <img src={o.events?.cover_url || categoryCover(o.events?.category)} alt="" className="h-24 w-24 shrink-0 rounded-xl object-cover" />

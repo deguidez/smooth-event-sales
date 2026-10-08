@@ -60,7 +60,7 @@ function ManageEvent() {
         ...(status ? { status: status as any } : {}),
       })
       .eq("id", id);
-    if (error) return toast.error(error.message);
+    if (error) { toast.error(error.message); return; }
     toast.success(status === "publicado" ? "Evento publicado!" : "Salvo");
     qc.invalidateQueries({ queryKey: ["manage-event", id] });
   }
@@ -142,7 +142,7 @@ function Tickets({ eventId }: { eventId: string }) {
       sales_end: n.sales_end ? new Date(n.sales_end).toISOString() : null,
       position: tickets.length,
     });
-    if (error) return toast.error(error.message);
+    if (error) { toast.error(error.message); return; }
     setN({ name: "", price: "", quantity: "100", sales_end: "" });
     qc.invalidateQueries({ queryKey: key });
   }
