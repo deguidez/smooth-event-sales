@@ -14,6 +14,48 @@ export type Database = {
   }
   public: {
     Tables: {
+      activity_logs: {
+        Row: {
+          action: string
+          actor_id: string | null
+          area: string
+          created_at: string
+          details: Json
+          entity_id: string | null
+          entity_type: string | null
+          id: string
+          level: string
+          path: string | null
+          source: string
+        }
+        Insert: {
+          action: string
+          actor_id?: string | null
+          area?: string
+          created_at?: string
+          details?: Json
+          entity_id?: string | null
+          entity_type?: string | null
+          id?: string
+          level?: string
+          path?: string | null
+          source?: string
+        }
+        Update: {
+          action?: string
+          actor_id?: string | null
+          area?: string
+          created_at?: string
+          details?: Json
+          entity_id?: string | null
+          entity_type?: string | null
+          id?: string
+          level?: string
+          path?: string | null
+          source?: string
+        }
+        Relationships: []
+      }
       email_log: {
         Row: {
           created_at: string
@@ -648,6 +690,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      financial_summary: { Args: never; Returns: Json }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
