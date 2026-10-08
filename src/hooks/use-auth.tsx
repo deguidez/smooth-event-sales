@@ -35,11 +35,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const userId = session?.user.id;
-  const { data: roles = [] } = useQuery({
+  const { data: roles = [], isPending: rolesPending } = useQuery({
     queryKey: ["roles", userId],
     enabled: !!userId,
     queryFn: async () => {
-      const { data } = await supabase.from("user_roles").select("role").eq("user_id", userId!);
+      if (!userId) return [];
+      const { data, error } = await supabase.from("user_roles").select("role").eq("user_id", userId);
+      if (error) throw error;
       return (data ?? []).map((r) => r.role as string);
     },
   });
@@ -49,7 +51,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       value={{
         session,
         user: session?.user ?? null,
-        loading,
+        loading: loading || (!!userId && rolesPending),
         roles,
         isAdmin: roles.includes("super_admin"),
         isProducer: roles.includes("producer"),

@@ -2,7 +2,7 @@ import { Link, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getBranding } from "@/lib/public.functions";
 import { useEffect, useState } from "react";
-import { LogOut, Shield, Ticket, User, Briefcase } from "lucide-react";
+import { LogOut, Shield, Ticket, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -55,9 +55,6 @@ export function SiteHeader() {
           <Link to="/eventos" className="text-muted-foreground hover:text-foreground" activeProps={{ className: "text-foreground" }}>
             Eventos
           </Link>
-          <Link to="/produtor" className="text-muted-foreground hover:text-foreground" activeProps={{ className: "text-foreground" }}>
-            Para produtores
-          </Link>
         </nav>
         {user ? (
           <DropdownMenu>
@@ -70,9 +67,6 @@ export function SiteHeader() {
             <DropdownMenuContent align="end" className="w-56">
               <DropdownMenuItem onClick={() => navigate({ to: "/minha-conta" })}>
                 <Ticket /> Área do atleta
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => navigate({ to: "/produtor" })}>
-                <Briefcase /> Painel do produtor
               </DropdownMenuItem>
               {isAdmin && (
                 <DropdownMenuItem onClick={() => navigate({ to: "/admin" })}>

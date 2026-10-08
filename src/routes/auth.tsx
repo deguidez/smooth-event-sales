@@ -49,12 +49,19 @@ function AuthPage() {
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
   const [sent, setSent] = useState(false);
-  const { user } = useAuth();
+  const { user, loading, isProducer } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (user) navigate({ to: safeRedirect(redirect) as any, replace: true });
-  }, [user, redirect, navigate]);
+    if (!user || loading) return;
+    const storedRedirect = sessionStorage.getItem("post_auth");
+    sessionStorage.removeItem("post_auth");
+    if (isProducer) {
+      navigate({ to: "/produtor", replace: true });
+    } else {
+      navigate({ to: safeRedirect(storedRedirect || redirect) as any, replace: true });
+    }
+  }, [user, loading, isProducer, redirect, navigate]);
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -64,7 +71,7 @@ function AuthPage() {
         const { error } = await supabase.auth.signUp({
           email,
           password,
-          options: { emailRedirectTo: window.location.origin + safeRedirect(redirect), data: { full_name: name } },
+          options: { emailRedirectTo: window.location.origin + "/auth", data: { full_name: name } },
         });
         if (error) throw error;
         setSent(true);
@@ -84,16 +91,6 @@ function AuthPage() {
     const r = await lovable.auth.signInWithOAuth("google", { redirect_uri: window.location.origin + "/auth" });
     if (r.error) toast.error("Não foi possível entrar com o Google");
   }
-
-  useEffect(() => {
-    if (user) {
-      const p = sessionStorage.getItem("post_auth");
-      if (p) {
-        sessionStorage.removeItem("post_auth");
-        navigate({ to: p as any, replace: true });
-      }
-    }
-  }, [user, navigate]);
 
   return (
     <div className="mx-auto grid max-w-6xl gap-10 px-4 py-12 md:grid-cols-2 md:py-20">
