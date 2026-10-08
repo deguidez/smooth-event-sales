@@ -159,6 +159,7 @@ export type Database = {
           producer_id: string
           registration_ends_at: string | null
           registration_limit: number | null
+          registrations_open_at: string | null
           route_map_url: string | null
           shirt_enabled: boolean
           shirt_sizes: string[]
@@ -186,6 +187,7 @@ export type Database = {
           producer_id: string
           registration_ends_at?: string | null
           registration_limit?: number | null
+          registrations_open_at?: string | null
           route_map_url?: string | null
           shirt_enabled?: boolean
           shirt_sizes?: string[]
@@ -213,6 +215,7 @@ export type Database = {
           producer_id?: string
           registration_ends_at?: string | null
           registration_limit?: number | null
+          registrations_open_at?: string | null
           route_map_url?: string | null
           shirt_enabled?: boolean
           shirt_sizes?: string[]
