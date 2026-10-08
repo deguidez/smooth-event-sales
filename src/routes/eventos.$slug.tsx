@@ -1,3 +1,4 @@
+import { RichDescription, RouteMap } from "@/components/rich-description";
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { queryOptions, useSuspenseQuery } from "@tanstack/react-query";
 import { Calendar, FileText, MapPin, Users } from "lucide-react";
@@ -66,7 +67,8 @@ function EventPage() {
             )}
           </div>
           {ev.short_description && <p className="text-lg font-medium">{ev.short_description}</p>}
-          <div className="whitespace-pre-line leading-relaxed text-muted-foreground">{ev.description}</div>
+          <RichDescription text={ev.description} />
+          <RouteMap value={(ev as any).route_map_url} />
           {(ev as any).event_documents?.length > 0 && (
             <div className="rounded-2xl border bg-card p-5">
               <h2 className="text-xl font-bold">Documentos</h2>
