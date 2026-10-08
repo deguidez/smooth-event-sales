@@ -127,6 +127,13 @@
       "when": 1791500559499,
       "tag": "0017_withdrawals_column_grants",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1791501382355,
+      "tag": "0018_admin_withdrawals",
+      "breakpoints": true
     }
   ]
 }
