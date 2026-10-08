@@ -18,6 +18,7 @@ import { brl, CATEGORIES, fmtDate, METHOD_LABEL, ORDER_STATUS } from "@/lib/form
 import { CoverUpload, EventDocsEditor } from "@/components/event-files";
 import { ProductsEditor } from "@/components/products-editor";
 import { CustomFieldsEditor } from "@/components/custom-fields";
+import { DescriptionEditor, myMapsEmbed } from "@/components/rich-description";
 import { formatAnswer, parseFields } from "@/lib/custom-fields";
 
 export const Route = createFileRoute("/_authenticated/produtor/eventos/$id")({
@@ -55,6 +56,7 @@ function ManageEvent() {
         category: f.category,
         short_description: f.short_description,
         description: f.description,
+        route_map_url: f.route_map_url?.trim() || null,
         cover_url: f.cover_url || null,
         shirt_enabled: !!f.shirt_enabled,
         custom_fields: parseFields(f.custom_fields).map((x) => ({ ...x, label: x.label.trim() })) as any,
@@ -122,7 +124,12 @@ function ManageEvent() {
               <F l="UF"><Input value={f.state ?? ""} onChange={set("state")} maxLength={2} /></F>
             </div>
             <F l="Resumo" c="sm:col-span-2"><Input value={f.short_description ?? ""} onChange={set("short_description")} maxLength={200} /></F>
-            <F l="Descrição completa" c="sm:col-span-2"><Textarea rows={8} value={f.description ?? ""} onChange={set("description")} /></F>
+            <F l="Descrição completa" c="sm:col-span-2"><DescriptionEditor producerId={ev.producer_id} value={f.description ?? ""} onChange={(v) => setF({ ...f, description: v })} /></F>
+            <F l="Mapa do percurso (Google My Maps)" c="sm:col-span-2">
+              <Input value={f.route_map_url ?? ""} onChange={set("route_map_url")} placeholder="Cole o link ou o código de incorporação do My Maps" />
+              {f.route_map_url && !myMapsEmbed(f.route_map_url) && <p className="mt-1 text-xs text-destructive">Link não reconhecido. No My Maps use Compartilhar ou "Incorporar no meu site".</p>}
+              {myMapsEmbed(f.route_map_url) && <iframe src={myMapsEmbed(f.route_map_url)!} title="Mapa" className="mt-2 h-64 w-full rounded-lg border-0" />}
+            </F>
             <div><Button variant="hero" onClick={() => save()}>Salvar alterações</Button></div>
           </div>
         </TabsContent>
