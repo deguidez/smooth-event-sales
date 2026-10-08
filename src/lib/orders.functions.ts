@@ -12,7 +12,7 @@ export const getCheckoutInfo = createServerFn({ method: "GET" })
     const admin = await getAdmin();
     const { data: tt } = await admin
       .from("ticket_types")
-      .select("*, events!inner(id, title, slug, category, cover_url, starts_at, city, state, venue, status, producer_id, shirt_enabled, shirt_sizes)")
+      .select("*, events!inner(id, title, slug, category, cover_url, starts_at, city, state, venue, status, producer_id, shirt_enabled, shirt_sizes, fee_percent, fee_fixed)")
       .eq("id", data.ticketId)
       .single();
     if (!tt || tt.events.status !== "publicado" || !tt.active) throw new Error("Inscrição indisponível");
@@ -43,7 +43,7 @@ export const getCheckoutInfo = createServerFn({ method: "GET" })
         asaas_fee_card_percent: Number(s.asaas_fee_card_percent), asaas_fee_card_fixed: Number(s.asaas_fee_card_fixed),
         asaas_fee_paid_by: s.asaas_fee_paid_by,
       },
-      feeOverride: { fee_percent: producer?.fee_percent ?? null, fee_fixed: producer?.fee_fixed ?? null },
+      feeOverride: { fee_percent: tt.events.fee_percent ?? producer?.fee_percent ?? null, fee_fixed: tt.events.fee_fixed ?? producer?.fee_fixed ?? null },
       maxInstallments: s.max_installments,
       ready: !!s.asaas_api_key && !!producer?.asaas_wallet_id && producer?.status === "aprovado",
     };
@@ -74,7 +74,7 @@ export const createOrder = createServerFn({ method: "POST" })
     const s = await loadSettings();
     const { data: tt } = await admin
       .from("ticket_types")
-      .select("*, events!inner(id, title, status, producer_id, starts_at, shirt_enabled, shirt_sizes)")
+      .select("*, events!inner(id, title, status, producer_id, starts_at, shirt_enabled, shirt_sizes, fee_percent, fee_fixed)")
       .eq("id", data.ticketId)
       .single();
     if (!tt || tt.events.status !== "publicado" || !tt.active) throw new Error("Inscrição indisponível");
@@ -112,7 +112,10 @@ export const createOrder = createServerFn({ method: "POST" })
     const productsTotal = Math.round(items.reduce((s2, i) => s2 + i.unit_price * i.qty, 0) * 100) / 100;
 
     const price = Number(tt.price) + productsTotal;
-    const f = computeFees(price, data.method, s as any, producer);
+    const f = computeFees(price, data.method, s as any, {
+      fee_percent: tt.events.fee_percent ?? producer.fee_percent,
+      fee_fixed: tt.events.fee_fixed ?? producer.fee_fixed,
+    });
     const p = data.participant;
     const base = {
       user_id: context.userId,
