@@ -58,6 +58,7 @@ export function EventCard({ e }: { e: EventCardData }) {
           ) : (
             <>
               a partir de <span className="font-bold text-primary">{brl(min)}</span>
+              {fee > 0 && <span className="text-xs text-muted-foreground"> + taxa de {brl(fee)}</span>}
             </>
           )}
         </p>

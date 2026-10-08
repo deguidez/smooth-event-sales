@@ -113,7 +113,15 @@ function EventPage() {
                       <Users className="h-3 w-3" /> {Math.max(0, t.quantity - t.sold)} vagas
                     </p>
                   </div>
-                  <p className="shrink-0 whitespace-nowrap font-display text-xl font-extrabold text-primary">{Number(t.price) === 0 ? "Grátis" : brl(t.price)}</p>
+                  <div className="shrink-0 whitespace-nowrap text-right">
+                    <p className="font-display text-xl font-extrabold text-primary">{Number(t.price) === 0 ? "Grátis" : brl(t.price)}</p>
+                    {Number(t.price) > 0 && feeFixed > 0 && (
+                      <>
+                        <p className="text-xs text-muted-foreground">+ taxa de {brl(feeFixed)}</p>
+                        <p className="text-xs font-semibold">Total: {brl(Number(t.price) + feeFixed)}</p>
+                      </>
+                    )}
+                  </div>
                 </div>
                 <Button variant="hero" className="mt-3 w-full" disabled={disabled} asChild={!disabled}>
                   {disabled ? (
