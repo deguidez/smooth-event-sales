@@ -12,7 +12,7 @@ export const getCheckoutInfo = createServerFn({ method: "GET" })
     const admin = await getAdmin();
     const { data: tt } = await admin
       .from("ticket_types")
-      .select("*, events!inner(id, title, slug, category, cover_url, starts_at, city, state, venue, status, producer_id)")
+      .select("*, events!inner(id, title, slug, category, cover_url, starts_at, city, state, venue, status, producer_id, shirt_enabled, shirt_sizes)")
       .eq("id", data.ticketId)
       .single();
     if (!tt || tt.events.status !== "publicado" || !tt.active) throw new Error("Inscrição indisponível");
@@ -21,19 +21,29 @@ export const getCheckoutInfo = createServerFn({ method: "GET" })
       .select("fee_percent, fee_fixed, asaas_wallet_id, status")
       .eq("id", tt.events.producer_id)
       .single();
+    const { data: products } = await admin
+      .from("event_products")
+      .select("id, name, description, price, image_url, sizes, stock, sold")
+      .eq("event_id", tt.events.id)
+      .eq("active", true)
+      .order("position");
     const s = await loadSettings();
     const methods: Method[] = [];
     if (s.enable_pix) methods.push("PIX");
     if (s.enable_boleto) methods.push("BOLETO");
     if (s.enable_card) methods.push("CREDIT_CARD");
-    const quotes = Object.fromEntries(
-      methods.map((m) => [m, computeFees(Number(tt.price), m, s as any, producer ?? undefined)]),
-    ) as Record<Method, ReturnType<typeof computeFees>>;
     return {
       ticket: { id: tt.id, name: tt.name, description: tt.description, price: Number(tt.price), available: tt.quantity - tt.sold },
       event: tt.events,
+      products: (products ?? []).map((p) => ({ ...p, price: Number(p.price), available: p.stock == null ? 99 : Math.max(0, p.stock - p.sold) })),
       methods,
-      quotes,
+      feeSettings: {
+        fee_percent: Number(s.fee_percent), fee_fixed: Number(s.fee_fixed), fee_paid_by_buyer: s.fee_paid_by_buyer,
+        asaas_fee_pix: Number(s.asaas_fee_pix), asaas_fee_boleto: Number(s.asaas_fee_boleto),
+        asaas_fee_card_percent: Number(s.asaas_fee_card_percent), asaas_fee_card_fixed: Number(s.asaas_fee_card_fixed),
+        asaas_fee_paid_by: s.asaas_fee_paid_by,
+      },
+      feeOverride: { fee_percent: producer?.fee_percent ?? null, fee_fixed: producer?.fee_fixed ?? null },
       maxInstallments: s.max_installments,
       ready: !!s.asaas_api_key && !!producer?.asaas_wallet_id && producer?.status === "aprovado",
     };
@@ -43,6 +53,7 @@ const orderSchema = z.object({
   ticketId: z.string().uuid(),
   method: z.enum(["PIX", "BOLETO", "CREDIT_CARD"]),
   installments: z.number().int().min(1).max(21).default(1),
+  items: z.array(z.object({ productId: z.string().uuid(), qty: z.number().int().min(1).max(20), size: z.string().max(10).optional().nullable() })).max(30).default([]),
   participant: z.object({
     name: z.string().trim().min(3).max(120),
     email: z.string().trim().email().max(200),
