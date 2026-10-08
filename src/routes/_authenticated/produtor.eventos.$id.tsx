@@ -48,6 +48,7 @@ function ManageEvent() {
   if (!ev || !f) return <div className="mx-auto max-w-6xl px-4 py-20 text-muted-foreground">Carregando...</div>;
 
   const canPublish = ev.producers?.status === "aprovado";
+  const mapSrc = myMapsEmbed(f.route_map_url);
   const set = (k: string) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => setF({ ...f, [k]: e.target.value });
 
   async function save(status?: string) {
@@ -78,12 +79,12 @@ function ManageEvent() {
   }
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-10">
+    <div className="mx-auto min-w-0 max-w-6xl px-4 py-10">
       <Link to="/produtor" className="text-sm text-muted-foreground">← Painel</Link>
-      <div className="mt-2 flex flex-wrap items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <h1 className="text-3xl font-extrabold">{ev.title}</h1>
-          <Badge variant={ev.status === "publicado" ? "success" : "secondary"}>{ev.status}</Badge>
+      <div className="mt-2 grid min-w-0 gap-4 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
+        <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-3">
+          <h1 className="min-w-0 break-words text-3xl font-extrabold">{ev.title}</h1>
+          <Badge className="shrink-0" variant={ev.status === "publicado" ? "success" : "secondary"}>{ev.status}</Badge>
         </div>
         <div className="flex gap-2">
           {ev.status === "publicado" && (
@@ -101,7 +102,7 @@ function ManageEvent() {
       {!canPublish && <p className="mt-2 text-sm text-muted-foreground">Você poderá publicar assim que seu cadastro de produtor for aprovado.</p>}
 
       <Tabs defaultValue="dados" className="mt-8">
-        <TabsList>
+        <TabsList className="h-auto max-w-full flex-wrap justify-start gap-1">
           <TabsTrigger value="dados">Dados do evento</TabsTrigger>
           <TabsTrigger value="docs">Documentos</TabsTrigger>
           <TabsTrigger value="lotes">Categorias e lotes</TabsTrigger>
@@ -111,7 +112,7 @@ function ManageEvent() {
           <TabsTrigger value="inscritos">Inscritos</TabsTrigger>
         </TabsList>
         <TabsContent value="dados" className="mt-6">
-          <div className="grid gap-4 rounded-2xl border bg-card p-6 shadow-card sm:grid-cols-2">
+          <div className="grid min-w-0 grid-cols-[minmax(0,1fr)] gap-4 rounded-2xl border bg-card p-4 shadow-card sm:grid-cols-2 sm:p-6">
             <F l="Nome" c="sm:col-span-2"><Input value={f.title} onChange={set("title")} /></F>
             <F l="Tipo">
               <Select value={f.category} onValueChange={(v) => setF({ ...f, category: v })}>
@@ -132,7 +133,7 @@ function ManageEvent() {
             <F l="Mapa do percurso (Google My Maps)" c="sm:col-span-2">
               <Input value={f.route_map_url ?? ""} onChange={set("route_map_url")} placeholder="Cole o link ou o código de incorporação do My Maps" />
               {f.route_map_url && !myMapsEmbed(f.route_map_url) && <p className="mt-1 text-xs text-destructive">Link não reconhecido. No My Maps use Compartilhar ou "Incorporar no meu site".</p>}
-              {myMapsEmbed(f.route_map_url) && <iframe src={myMapsEmbed(f.route_map_url)!} title="Mapa" className="mt-2 h-64 w-full rounded-lg border-0" />}
+              {mapSrc && <iframe src={mapSrc} title="Mapa" className="mt-2 block h-56 w-full max-w-full rounded-lg border-0" loading="lazy" />}
             </F>
             <div><Button variant="hero" onClick={() => save()}>Salvar alterações</Button></div>
           </div>
@@ -302,5 +303,5 @@ function Attendees({ eventId, title, fields }: { eventId: string; title: string;
 }
 
 function F({ l, c, children }: { l: string; c?: string; children: React.ReactNode }) {
-  return <div className={`space-y-1.5 ${c ?? ""}`}><Label>{l}</Label>{children}</div>;
+  return <div className={`min-w-0 space-y-1.5 ${c ?? ""}`}><Label>{l}</Label>{children}</div>;
 }

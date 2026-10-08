@@ -56,16 +56,16 @@ function EventPage() {
         <div className="absolute inset-0 bg-gradient-hero" />
         <div className="absolute inset-x-0 bottom-0 mx-auto max-w-7xl px-4 pb-8">
           <Badge variant="lime">{CATEGORIES[ev.category as keyof typeof CATEGORIES]}</Badge>
-          <h1 className="mt-3 max-w-4xl text-4xl font-extrabold text-ink-foreground md:text-6xl">{ev.title}</h1>
+          <h1 className="mt-3 max-w-4xl break-words text-4xl font-extrabold text-ink-foreground md:text-6xl">{ev.title}</h1>
         </div>
       </div>
-      <div className="mx-auto grid max-w-7xl gap-10 px-4 py-10 lg:grid-cols-[1fr_400px]">
-        <div className="space-y-6">
+      <div className="mx-auto grid max-w-7xl grid-cols-[minmax(0,1fr)] gap-10 px-4 py-10 lg:grid-cols-[minmax(0,1fr)_400px]">
+        <div className="min-w-0 space-y-6">
           <div className="flex flex-wrap gap-6 text-sm">
             <span className="flex items-center gap-2"><Calendar className="h-5 w-5 text-primary" /> {fmtDate(ev.starts_at, true)}</span>
             {(ev.venue || ev.city) && (
-              <span className="flex items-center gap-2">
-                <MapPin className="h-5 w-5 text-primary" /> {[ev.venue, ev.city, ev.state].filter(Boolean).join(" · ")}
+              <span className="flex min-w-0 items-center gap-2 break-words">
+                <MapPin className="h-5 w-5 shrink-0 text-primary" /> {[ev.venue, ev.city, ev.state].filter(Boolean).join(" · ")}
               </span>
             )}
           </div>
@@ -81,7 +81,7 @@ function EventPage() {
                   <li key={d.id}>
                     <a href={d.url} target="_blank" rel="noreferrer" className="flex items-center gap-3 rounded-xl border p-3 transition hover:border-primary">
                       <FileText className="h-5 w-5 shrink-0 text-primary" />
-                      <span><span className="block font-semibold">{d.title}</span><span className="text-xs text-muted-foreground">{d.is_file ? "PDF" : "Link"} · abrir</span></span>
+                      <span className="min-w-0 break-words"><span className="block font-semibold">{d.title}</span><span className="text-xs text-muted-foreground">{d.is_file ? "PDF" : "Link"} · abrir</span></span>
                     </a>
                   </li>
                 ))}
@@ -89,7 +89,7 @@ function EventPage() {
             </div>
           )}
         </div>
-        <aside className="h-fit space-y-3 rounded-2xl border bg-card p-5 shadow-card lg:sticky lg:top-24">
+        <aside className="min-w-0 h-fit space-y-3 rounded-2xl border bg-card p-5 shadow-card lg:sticky lg:top-24">
           <h2 className="text-xl font-bold">Inscrições</h2>
           {tickets.length === 0 && <p className="text-sm text-muted-foreground">Nenhuma categoria disponível.</p>}
           {tickets.map((t) => {
@@ -99,15 +99,15 @@ function EventPage() {
             const disabled = closed || soldOut || !!notYet || !!ended;
             return (
               <div key={t.id} className="rounded-xl border p-4">
-                <div className="flex items-start justify-between gap-3">
-                  <div>
+                <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-3">
+                  <div className="min-w-0 break-words">
                     <p className="font-semibold">{t.name}</p>
                     {t.description && <p className="text-xs text-muted-foreground">{t.description}</p>}
                     <p className="mt-1 flex items-center gap-1 text-xs text-muted-foreground">
                       <Users className="h-3 w-3" /> {Math.max(0, t.quantity - t.sold)} vagas
                     </p>
                   </div>
-                  <p className="font-display text-xl font-extrabold text-primary">{Number(t.price) === 0 ? "Grátis" : brl(t.price)}</p>
+                  <p className="shrink-0 whitespace-nowrap font-display text-xl font-extrabold text-primary">{Number(t.price) === 0 ? "Grátis" : brl(t.price)}</p>
                 </div>
                 <Button variant="hero" className="mt-3 w-full" disabled={disabled} asChild={!disabled}>
                   {disabled ? (
