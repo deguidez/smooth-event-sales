@@ -1,3 +1,4 @@
+import { auditedAction } from "./activity-middleware";
 import { createServerFn } from "@tanstack/react-start";
 import { getRequest } from "@tanstack/react-start/server";
 import { z } from "zod";
@@ -8,7 +9,7 @@ import { cleanAnswers, parseFields } from "./custom-fields";
 import { activeTerms } from "./terms";
 
 export const getCheckoutInfo = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
+  .middleware([auditedAction("getCheckoutInfo")])
   .inputValidator((d) => z.object({ ticketId: z.string().uuid() }).parse(d))
   .handler(async ({ data }) => {
     const admin = await getAdmin();
@@ -71,7 +72,7 @@ const orderSchema = z.object({
 });
 
 export const createOrder = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([auditedAction("createOrder")])
   .inputValidator((d) => orderSchema.parse(d))
   .handler(async ({ data, context }) => {
     const admin = await getAdmin();
@@ -236,7 +237,7 @@ export const createOrder = createServerFn({ method: "POST" })
   });
 
 export const refreshOrder = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([auditedAction("refreshOrder")])
   .inputValidator((d) => z.object({ orderId: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
     // RLS garante que só o dono, o produtor ou o admin enxergam o pedido

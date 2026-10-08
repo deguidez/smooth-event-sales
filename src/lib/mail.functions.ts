@@ -1,3 +1,4 @@
+import { auditedAction } from "./activity-middleware";
 import { createServerFn } from '@tanstack/react-start';
 import { z } from 'zod';
 import { requireSupabaseAuth } from '@/integrations/supabase/auth-middleware';
@@ -29,25 +30,25 @@ const message = selection.extend({ uid: z.number().int().positive() });
 const base = (id: string) => `/mailboxes/${encodeURIComponent(id)}`;
 const folderPath = (id: string, folder: string) => `${base(id)}/folders/${encodeURIComponent(folder)}/messages`;
 
-export const getMailboxes = createServerFn({ method: 'GET' }).middleware([requireSupabaseAuth]).handler(async ({ context }) => {
+export const getMailboxes = createServerFn({ method: 'GET' }).middleware([auditedAction("getMailboxes")]).handler(async ({ context }) => {
   await authorize(context);
   return (await request<{ data: { mailboxes: Mailbox[] } }>('/me')).data.mailboxes;
 });
-export const getMailFolders = createServerFn({ method: 'GET' }).middleware([requireSupabaseAuth]).inputValidator(z.object({ mailbox })).handler(async ({ context, data }) => {
+export const getMailFolders = createServerFn({ method: 'GET' }).middleware([auditedAction("getMailFolders")]).inputValidator(z.object({ mailbox })).handler(async ({ context, data }) => {
   await authorize(context);
   return (await request<{ data: MailFolder[] }>(`${base(data.mailbox)}/folders?perPage=100`)).data;
 });
-export const getMailMessages = createServerFn({ method: 'GET' }).middleware([requireSupabaseAuth]).inputValidator(selection.extend({ page: z.number().int().positive() })).handler(async ({ context, data }) => {
+export const getMailMessages = createServerFn({ method: 'GET' }).middleware([auditedAction("getMailMessages")]).inputValidator(selection.extend({ page: z.number().int().positive() })).handler(async ({ context, data }) => {
   await authorize(context);
   return request<{ data: MailMessage[]; pagination: { totalPages: number; total: number } }>(`${folderPath(data.mailbox, data.folder)}?page=${data.page}&perPage=25`);
 });
-export const openMailMessage = createServerFn({ method: 'POST' }).middleware([requireSupabaseAuth]).inputValidator(message).handler(async ({ context, data }) => {
+export const openMailMessage = createServerFn({ method: 'POST' }).middleware([auditedAction("openMailMessage")]).inputValidator(message).handler(async ({ context, data }) => {
   await authorize(context);
   const path = `${folderPath(data.mailbox, data.folder)}/${data.uid}`;
   const [meta, body] = await Promise.all([request<{ data: MailMessage }>(path), request<{ data: { text: string; html: string } }>(`${path}/text`)]);
   return { ...meta.data, ...body.data };
 });
-export const sendMailMessage = createServerFn({ method: 'POST' }).middleware([requireSupabaseAuth]).inputValidator(z.object({
+export const sendMailMessage = createServerFn({ method: 'POST' }).middleware([auditedAction("sendMailMessage")]).inputValidator(z.object({
   mailbox, to: z.string().email(), subject: z.string().trim().min(1).max(998), text: z.string().trim().min(1).max(100000),
   reply: z.object({ uid: z.number().int().positive(), folder: z.string().min(1).max(255) }).optional(),
 })).handler(async ({ context, data }) => {
