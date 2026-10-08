@@ -56,6 +56,48 @@ export type Database = {
         }
         Relationships: []
       }
+      admin_bank_accounts: {
+        Row: {
+          account: string
+          account_digit: string | null
+          account_type: string
+          agency: string
+          agency_digit: string | null
+          bank_code: string
+          bank_name: string
+          owner_document: string
+          owner_name: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          account: string
+          account_digit?: string | null
+          account_type: string
+          agency: string
+          agency_digit?: string | null
+          bank_code: string
+          bank_name: string
+          owner_document: string
+          owner_name: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          account?: string
+          account_digit?: string | null
+          account_type?: string
+          agency?: string
+          agency_digit?: string | null
+          bank_code?: string
+          bank_name?: string
+          owner_document?: string
+          owner_name?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       coupons: {
         Row: {
           active: boolean
@@ -566,6 +608,54 @@ export type Database = {
           site_name?: string
           support_email?: string | null
           updated_at?: string
+        }
+        Relationships: []
+      }
+      platform_withdrawals: {
+        Row: {
+          amount: number
+          asaas_transfer_id: string | null
+          attempts: number
+          bank: Json
+          code_expires_at: string | null
+          code_hash: string | null
+          confirmed_at: string | null
+          created_at: string
+          error: string | null
+          id: string
+          processed_at: string | null
+          status: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          asaas_transfer_id?: string | null
+          attempts?: number
+          bank: Json
+          code_expires_at?: string | null
+          code_hash?: string | null
+          confirmed_at?: string | null
+          created_at?: string
+          error?: string | null
+          id?: string
+          processed_at?: string | null
+          status?: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          asaas_transfer_id?: string | null
+          attempts?: number
+          bank?: Json
+          code_expires_at?: string | null
+          code_hash?: string | null
+          confirmed_at?: string | null
+          created_at?: string
+          error?: string | null
+          id?: string
+          processed_at?: string | null
+          status?: string
+          user_id?: string
         }
         Relationships: []
       }

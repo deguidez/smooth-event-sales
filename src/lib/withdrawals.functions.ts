@@ -150,6 +150,140 @@ export const confirmWithdrawal = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
+// ---------- Super admin: saque da plataforma ----------
+
+/** Saldo da plataforma: comissões de pedidos pagos, cartão liberado após X dias. */
+async function computePlatformBalance() {
+  const a = await admin();
+  const { data: s } = await a.from("platform_settings").select("card_release_days").eq("id", 1).single();
+  const days = Number(s?.card_release_days ?? 4);
+  const cutoff = Date.now() - days * 86400000;
+  const { data: orders } = await a.from("orders").select("platform_amount, payment_method, paid_at, created_at")
+    .eq("status", "pago").limit(10000);
+  let released = 0, pending = 0, month = 0;
+  const monthStart = new Date(); monthStart.setDate(1); monthStart.setHours(0, 0, 0, 0);
+  for (const o of orders ?? []) {
+    const v = Number(o.platform_amount) || 0;
+    const paidAt = new Date(o.paid_at ?? o.created_at).getTime();
+    if (o.payment_method === "CREDIT_CARD" && paidAt > cutoff) pending += v; else released += v;
+    if (paidAt >= monthStart.getTime()) month += v;
+  }
+  const { data: ws } = await a.from("platform_withdrawals").select("amount, status").in("status", ACTIVE.filter((x) => x !== "aguardando_codigo"));
+  const withdrawn = (ws ?? []).reduce((t: number, w: any) => t + Number(w.amount), 0);
+  const available = Math.max(0, round(released - withdrawn));
+  return { available, pending: round(pending), total: round(available + pending), withdrawn: round(withdrawn), month: round(month), releaseDays: days };
+}
+
+export const getAdminFinance = createServerFn({ method: "GET" })
+  .middleware([auditedAction("getAdminFinance")])
+  .handler(async ({ context }) => {
+    await assertSuper(context);
+    const a = await admin();
+    const [balance, bank, list] = await Promise.all([
+      computePlatformBalance(),
+      a.from("admin_bank_accounts").select("*").eq("user_id", context.userId).maybeSingle(),
+      a.from("platform_withdrawals").select("id, amount, status, created_at, processed_at, error").eq("user_id", context.userId).order("created_at", { ascending: false }).limit(50),
+    ]);
+    return { balance, bank: bank.data ?? null, withdrawals: list.data ?? [] };
+  });
+
+export const saveAdminBankAccount = createServerFn({ method: "POST" })
+  .middleware([auditedAction("saveAdminBankAccount")])
+  .inputValidator((d) => bankSchema.parse(d))
+  .handler(async ({ data, context }) => {
+    await assertSuper(context);
+    const a = await admin();
+    const { error } = await a.from("admin_bank_accounts").upsert({ ...data, user_id: context.userId, updated_at: new Date().toISOString() });
+    if (error) throw new Error("Não foi possível salvar a conta");
+    return { ok: true };
+  });
+
+export const requestAdminWithdrawal = createServerFn({ method: "POST" })
+  .middleware([auditedAction("requestAdminWithdrawal")])
+  .inputValidator((d) => z.object({ amount: z.number().positive().max(10_000_000) }).parse(d))
+  .handler(async ({ data, context }) => {
+    await assertSuper(context);
+    const a = await admin();
+    const { data: bank } = await a.from("admin_bank_accounts").select("*").eq("user_id", context.userId).maybeSingle();
+    if (!bank) throw new Error("Cadastre sua conta bancária antes de sacar");
+    const bal = await computePlatformBalance();
+    const amount = round(data.amount);
+    if (amount > bal.available) throw new Error("Valor maior que o saldo disponível");
+    await a.from("platform_withdrawals").update({ status: "cancelado" }).eq("user_id", context.userId).eq("status", "aguardando_codigo");
+    const code = String(crypto.getRandomValues(new Uint32Array(1))[0]! % 1_000_000).padStart(6, "0");
+    const { data: w, error } = await a.from("platform_withdrawals").insert({
+      user_id: context.userId, amount, status: "aguardando_codigo",
+      code_hash: await sha256(code), code_expires_at: new Date(Date.now() + 15 * 60000).toISOString(),
+      bank: { bank_code: bank.bank_code, bank_name: bank.bank_name, agency: bank.agency, agency_digit: bank.agency_digit, account: bank.account, account_digit: bank.account_digit, account_type: bank.account_type, owner_name: bank.owner_name, owner_document: bank.owner_document },
+    }).select("id").single();
+    if (error || !w) throw new Error("Não foi possível iniciar o saque");
+    const { data: prof } = await a.from("profiles").select("email, full_name").eq("id", context.userId).maybeSingle();
+    const to = prof?.email;
+    if (!to) throw new Error("E-mail da conta não encontrado");
+    try {
+      const { sendTemplateEmail } = await import("./email-templates/send-email");
+      await sendTemplateEmail("withdrawal-code", to, {
+        templateData: { name: prof?.full_name || "Admin", code, amount: amount.toLocaleString("pt-BR", { style: "currency", currency: "BRL" }) },
+        idempotencyKey: `platform-withdrawal-code-${w.id}`,
+      });
+    } catch (e) {
+      console.error("platform withdrawal code email failed", e);
+      await a.from("platform_withdrawals").update({ status: "cancelado", error: "falha no envio do código" }).eq("id", w.id);
+      throw new Error("Não foi possível enviar o código por e-mail. Tente novamente mais tarde.");
+    }
+    return { id: w.id, email: to.replace(/^(.{2}).*(@.*)$/, "$1***$2") };
+  });
+
+export const confirmAdminWithdrawal = createServerFn({ method: "POST" })
+  .middleware([auditedAction("confirmAdminWithdrawal")])
+  .inputValidator((d) => z.object({ id: z.string().uuid(), code: z.string().regex(/^\d{6}$/) }).parse(d))
+  .handler(async ({ data, context }) => {
+    await assertSuper(context);
+    const a = await admin();
+    const { data: w } = await a.from("platform_withdrawals").select("*").eq("id", data.id).eq("user_id", context.userId).maybeSingle();
+    if (!w || w.status !== "aguardando_codigo") throw new Error("Pedido de saque não encontrado");
+    if (new Date(w.code_expires_at).getTime() < Date.now() || w.attempts >= 5) {
+      await a.from("platform_withdrawals").update({ status: "cancelado", error: "código expirado" }).eq("id", w.id);
+      throw new Error("Código expirado. Peça o saque novamente.");
+    }
+    if ((await sha256(data.code)) !== w.code_hash) {
+      await a.from("platform_withdrawals").update({ attempts: w.attempts + 1 }).eq("id", w.id);
+      throw new Error("Código incorreto");
+    }
+    const bal = await computePlatformBalance();
+    if (Number(w.amount) > bal.available) {
+      await a.from("platform_withdrawals").update({ status: "cancelado", error: "saldo insuficiente" }).eq("id", w.id);
+      throw new Error("Saldo insuficiente");
+    }
+    const { data: s } = await a.from("platform_settings").select("asaas_env, asaas_api_key").eq("id", 1).single();
+    if (!s?.asaas_api_key) throw new Error("Configure a chave da API Asaas nas Configurações");
+    const now = new Date().toISOString();
+    await a.from("platform_withdrawals").update({ status: "processando", code_hash: null, confirmed_at: now }).eq("id", w.id);
+    const { asaasFetch } = await import("./asaas.server");
+    const b = w.bank as any;
+    try {
+      const t: any = await asaasFetch({ asaas_env: s.asaas_env, asaas_api_key: s.asaas_api_key }, "/transfers", {
+        method: "POST",
+        body: {
+          value: Number(w.amount),
+          operationType: "PIX",
+          bankAccount: {
+            bank: { code: b.bank_code }, accountName: b.bank_name, ownerName: b.owner_name, cpfCnpj: b.owner_document,
+            agency: b.agency, agencyDigit: b.agency_digit || undefined, account: b.account, accountDigit: b.account_digit || "0",
+            bankAccountType: b.account_type,
+          },
+          description: `Saque plataforma ${w.id.slice(0, 8)}`,
+        },
+      });
+      const st = t?.status === "DONE" ? "pago" : t?.status === "FAILED" || t?.status === "CANCELLED" ? "falhou" : "processando";
+      await a.from("platform_withdrawals").update({ status: st, asaas_transfer_id: t?.id ?? null, processed_at: now, error: null }).eq("id", w.id);
+      return { status: st };
+    } catch (e) {
+      await a.from("platform_withdrawals").update({ status: "falhou", processed_at: now, error: e instanceof Error ? e.message.slice(0, 300) : "erro" }).eq("id", w.id);
+      throw e;
+    }
+  });
+
 // ---------- Super admin ----------
 
 export const listWithdrawals = createServerFn({ method: "GET" })

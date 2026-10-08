@@ -13,6 +13,7 @@ import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { ProducerKeyField, WithdrawalsAdmin } from "@/components/withdrawals-admin";
+import { AdminFinance } from "@/components/admin-finance";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { SalesChart, StatCard, toCsv } from "@/components/dash";
 import { supabase } from "@/integrations/supabase/client";
@@ -295,7 +296,7 @@ function AdminDashboard() {
           <TabsTrigger value="emails">E-mails</TabsTrigger>
           <TabsTrigger value="logs">Logs</TabsTrigger>
         </TabsList>
-        <TabsContent value="financeiro" className="mt-6"><Finance orders={orders} /></TabsContent>
+        <TabsContent value="financeiro" className="mt-6"><AdminFinance /><Finance orders={orders} /></TabsContent>
         <TabsContent value="produtores" className="mt-6"><Producers producers={producers} /></TabsContent>
         <TabsContent value="usuarios" className="mt-6"><Users /></TabsContent>
         <TabsContent value="eventos" className="mt-6"><Events events={events} /></TabsContent>
