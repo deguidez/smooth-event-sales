@@ -1,0 +1,110 @@
+import { Link, useNavigate } from "@tanstack/react-router";
+import { useQueryClient } from "@tanstack/react-query";
+import { LogOut, Shield, Ticket, User, Briefcase } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { useAuth } from "@/hooks/use-auth";
+import { supabase } from "@/integrations/supabase/client";
+
+export function Logo() {
+  return (
+    <Link to="/" className="flex items-center gap-2">
+      <span className="grid h-8 w-8 place-items-center rounded-lg bg-gradient-brand text-primary-foreground">
+        <Ticket className="h-4 w-4" />
+      </span>
+      <span className="font-display text-xl font-extrabold tracking-tight">Inscreva</span>
+    </Link>
+  );
+}
+
+export function SiteHeader() {
+  const { user, isAdmin } = useAuth();
+  const navigate = useNavigate();
+  const qc = useQueryClient();
+
+  async function signOut() {
+    await qc.cancelQueries();
+    qc.clear();
+    await supabase.auth.signOut();
+    navigate({ to: "/auth", replace: true });
+  }
+
+  return (
+    <header className="no-print sticky top-0 z-40 border-b bg-background/85 backdrop-blur">
+      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-4 px-4">
+        <Logo />
+        <nav className="hidden items-center gap-6 text-sm font-medium md:flex">
+          <Link to="/eventos" className="text-muted-foreground hover:text-foreground" activeProps={{ className: "text-foreground" }}>
+            Eventos
+          </Link>
+          <Link to="/produtor" className="text-muted-foreground hover:text-foreground" activeProps={{ className: "text-foreground" }}>
+            Para produtores
+          </Link>
+        </nav>
+        {user ? (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" className="gap-2">
+                <User />
+                <span className="hidden max-w-[140px] truncate sm:inline">{user.email}</span>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56">
+              <DropdownMenuItem onClick={() => navigate({ to: "/minha-conta" })}>
+                <Ticket /> Área do atleta
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => navigate({ to: "/produtor" })}>
+                <Briefcase /> Painel do produtor
+              </DropdownMenuItem>
+              {isAdmin && (
+                <DropdownMenuItem onClick={() => navigate({ to: "/admin" })}>
+                  <Shield /> Super admin
+                </DropdownMenuItem>
+              )}
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={signOut}>
+                <LogOut /> Sair
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        ) : (
+          <div className="flex items-center gap-2">
+            <Button variant="ghost" asChild>
+              <Link to="/auth">Entrar</Link>
+            </Button>
+            <Button variant="hero" asChild>
+              <Link to="/auth" search={{ mode: "signup" }}>Criar conta</Link>
+            </Button>
+          </div>
+        )}
+      </div>
+    </header>
+  );
+}
+
+export function SiteFooter() {
+  return (
+    <footer className="no-print mt-24 bg-ink text-ink-foreground">
+      <div className="mx-auto grid max-w-7xl gap-8 px-4 py-12 md:grid-cols-3">
+        <div className="space-y-3">
+          <Logo />
+          <p className="text-sm text-ink-muted">Inscrições para corridas, shows, congressos e qualquer evento — com pagamento seguro.</p>
+        </div>
+        <div className="text-sm text-ink-muted">
+          <p className="font-semibold text-ink-foreground">Pagamentos</p>
+          <p className="mt-2">Pix, boleto e cartão de crédito em até 12x.</p>
+        </div>
+        <div className="text-sm text-ink-muted">
+          <p className="font-semibold text-ink-foreground">Produtores</p>
+          <p className="mt-2">Receba direto na sua carteira, sem intermediários.</p>
+        </div>
+      </div>
+    </footer>
+  );
+}
