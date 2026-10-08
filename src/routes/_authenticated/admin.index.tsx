@@ -15,7 +15,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { SalesChart, StatCard, toCsv } from "@/components/dash";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/hooks/use-auth";
+import { AdminGate } from "@/components/admin-gate";
 import { createProducerWallet, updateProducer } from "@/lib/admin.functions";
 import { brl, fmtDate, METHOD_LABEL, ORDER_STATUS } from "@/lib/format";
 
@@ -23,13 +23,6 @@ export const Route = createFileRoute("/_authenticated/admin/")({
   head: () => ({ meta: [{ title: "Super admin — Inscreva" }, { name: "robots", content: "noindex" }] }),
   component: AdminPage,
 });
-
-export function AdminGate({ children }: { children: React.ReactNode }) {
-  const { isAdmin, roles } = useAuth();
-  if (!roles.length) return <div className="mx-auto max-w-6xl px-4 py-20 text-muted-foreground">Carregando...</div>;
-  if (!isAdmin) return <div className="mx-auto max-w-xl px-4 py-24 text-center"><h1 className="text-2xl font-bold">Acesso restrito</h1><p className="mt-2 text-muted-foreground">Esta área é exclusiva do super admin.</p></div>;
-  return <>{children}</>;
-}
 
 function AdminPage() {
   return (
