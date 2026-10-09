@@ -2,7 +2,7 @@ import { Link, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getBranding } from "@/lib/public.functions";
 import { useEffect, useState } from "react";
-import { LogOut, Shield, Store, Ticket, User } from "lucide-react";
+import { LogOut, Shield, Store, Ticket, User, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -68,6 +68,7 @@ export function SiteHeader() {
               <DropdownMenuItem onClick={() => navigate({ to: "/minha-conta" })}>
                 <Ticket /> Área do atleta
               </DropdownMenuItem>
+              <TeamMenuItem onGo={() => navigate({ to: "/equipe" })} userId={user.id} />
               {isProducer && (
                 <DropdownMenuItem onClick={() => navigate({ to: "/produtor" })}>
                   <Store /> Painel do produtor
@@ -97,6 +98,18 @@ export function SiteHeader() {
       </div>
     </header>
   );
+}
+
+function TeamMenuItem({ userId, onGo }: { userId: string; onGo: () => void }) {
+  const { data } = useQuery({
+    queryKey: ["is-team-manager", userId],
+    queryFn: async () => {
+      const { data } = await supabase.from("team_managers").select("status").eq("user_id", userId).maybeSingle();
+      return data?.status === "aprovado";
+    },
+  });
+  if (!data) return null;
+  return <DropdownMenuItem onClick={onGo}><Users /> Minha equipe</DropdownMenuItem>;
 }
 
 export function SiteFooter() {
