@@ -15,6 +15,20 @@ function cfg() {
 
 export const vpsEnabled = () => !!cfg();
 
+/** Diagnóstico (somente admin): testa listagem do bucket na VPS. */
+export async function vpsCheck() {
+  const c = cfg();
+  if (!c) return { enabled: false as const };
+  try {
+    const res = await c.client.fetch(`${c.endpoint}/${c.bucket}?list-type=2&max-keys=1`, { method: "GET" });
+    const body = await res.text();
+    if (!res.ok) return { enabled: true as const, ok: false as const, status: res.status, error: body.slice(0, 300) };
+    return { enabled: true as const, ok: true as const, bucket: c.bucket };
+  } catch (e) {
+    return { enabled: true as const, ok: false as const, status: 0, error: e instanceof Error ? e.message : String(e) };
+  }
+}
+
 const cloudBucket = (kind: Kind, isVideo: boolean) => (kind === "preview" || isVideo ? "media-previews" : "media-originals");
 /** Organização na VPS: <album>/originais|previas/<fotografo>/<arquivo> */
 export const vpsKey = (path: string, kind: Kind, isVideo: boolean) => {

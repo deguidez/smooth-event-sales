@@ -14,9 +14,31 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { toCsv } from "@/components/dash";
 import { brl, fmtDate } from "@/lib/format";
 import {
-  adminAlbumDashboard, adminPhotoOrderDownloads, adminPhotoOverview, inviteAlbumPhotographer,
+  adminAlbumDashboard, adminPhotoOrderDownloads, adminPhotoOverview, checkVpsStorage, inviteAlbumPhotographer,
   removeAlbumPhotographer, saveAlbum, setPhotographerStatus,
 } from "@/lib/photos.functions";
+
+function VpsTest() {
+  const run = useServerFn(checkVpsStorage);
+  const [busy, setBusy] = useState(false);
+  const [result, setResult] = useState<string | null>(null);
+  const test = async () => {
+    setBusy(true);
+    try {
+      const r: any = await run();
+      if (!r.enabled) setResult("Armazenamento da VPS não configurado — usando a nuvem.");
+      else if (r.ok) setResult(`Conectado com sucesso ao bucket "${r.bucket}" na VPS.`);
+      else setResult(`Falha na conexão (código ${r.status}): ${r.error ?? "verifique endereço e chaves"}`);
+    } catch (e: any) { setResult(`Erro: ${e.message}`); }
+    setBusy(false);
+  };
+  return (
+    <div className="flex items-center gap-3 rounded-xl border p-3 text-sm">
+      <Button size="sm" variant="outline" disabled={busy} onClick={test}>{busy ? "Testando..." : "Testar armazenamento da VPS"}</Button>
+      {result && <span className="text-muted-foreground">{result}</span>}
+    </div>
+  );
+}
 
 const num = (v: any) => (v === "" || v == null ? null : Number(v));
 
@@ -30,6 +52,7 @@ export function PhotosAdmin() {
 
   return (
     <div className="space-y-8">
+      <VpsTest />
       <section className="space-y-3">
         <div className="flex items-center justify-between">
           <h2 className="text-xl font-bold">Álbuns de fotos</h2>

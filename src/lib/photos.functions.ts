@@ -418,6 +418,14 @@ export const adminUpdatePhotographer = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
+export const checkVpsStorage = createServerFn({ method: "GET" })
+  .middleware([auditedAction("checkVpsStorage")])
+  .handler(async ({ context }) => {
+    await assertAdmin(context);
+    const { vpsCheck } = await import("./media-storage.server");
+    return vpsCheck();
+  });
+
 export const setPhotographerStatus = createServerFn({ method: "POST" })
   .middleware([auditedAction("setPhotographerStatus")])
   .inputValidator((d) => z.object({ userId: uuid, status: z.enum(["pendente", "aprovado", "suspenso"]) }).parse(d))
