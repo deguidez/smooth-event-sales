@@ -41,6 +41,16 @@ function OrderStatusEmail({ kind = 'inscricao_criada', name = 'Atleta', eventTit
             {code && <><b>Código:</b> {code}<br /></>}
             {total && <><b>Valor:</b> {total}</>}
           </Text>
+          {downloads.length > 0 && (
+            <>
+              <Text style={{ color: '#333', fontSize: '15px' }}><b>Baixe seus arquivos (links válidos por 7 dias):</b></Text>
+              {downloads.map((d) => (
+                <Text key={d.url} style={{ margin: '4px 0' }}>
+                  <a href={d.url} style={{ color: '#f97316', fontWeight: 700 }}>{d.label}</a>
+                </Text>
+              ))}
+            </>
+          )}
           <Button href={url} style={{ backgroundColor: '#f97316', color: '#ffffff', padding: '12px 20px', borderRadius: '8px', fontWeight: 700 }}>{c.cta}</Button>
         </Container>
       </Body>
