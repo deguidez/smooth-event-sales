@@ -79,7 +79,7 @@ export async function runAutomations() {
       if (!ids.length) continue;
       const sent = new Set<string>();
       for (let i = 0; i < ids.length; i += 200) {
-        const { data: logs } = await admin.from("email_log").select("order_id").eq("kind", "lembrete_evento").in("order_id", ids.slice(i, i + 200));
+        const { data: logs } = await admin.from("email_log").select("order_id").eq("kind", "lembrete_evento").in("status", ["enviado", "bloqueado"]).in("order_id", ids.slice(i, i + 200));
         (logs ?? []).forEach((l) => l.order_id && sent.add(l.order_id));
       }
       for (const id of ids.filter((x) => !sent.has(x)).slice(0, BATCH - result.reminders)) {

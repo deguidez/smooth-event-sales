@@ -24,6 +24,7 @@ import { Route as AuthenticatedPedidoIdRouteImport } from './routes/_authenticat
 import { Route as AuthenticatedProdutorIndexRouteImport } from './routes/_authenticated/produtor.index'
 import { Route as ApiPublicAsaasWebhookRouteImport } from './routes/api/public/asaas-webhook'
 import { Route as AuthenticatedProdutorEventosIdRouteImport } from './routes/_authenticated/produtor.eventos.$id'
+import { Route as ApiPublicCronAutomationsRouteImport } from './routes/api/public/cron/automations'
 import { Route as LovableEmailTransactionalPreviewRouteImport } from './routes/lovable/email/transactional/preview'
 
 const IndexRoute = IndexRouteImport.update({
@@ -104,6 +105,12 @@ const AuthenticatedProdutorEventosIdRoute =
     path: '/produtor/eventos/$id',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const ApiPublicCronAutomationsRoute =
+  ApiPublicCronAutomationsRouteImport.update({
+    id: '/api/public/cron/automations',
+    path: '/api/public/cron/automations',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const LovableEmailTransactionalPreviewRoute =
   LovableEmailTransactionalPreviewRouteImport.update({
     id: '/lovable/email/transactional/preview',
@@ -126,6 +133,7 @@ export interface FileRoutesByFullPath {
   '/admin/': typeof AuthenticatedAdminIndexRoute
   '/produtor/': typeof AuthenticatedProdutorIndexRoute
   '/produtor/eventos/$id': typeof AuthenticatedProdutorEventosIdRoute
+  '/api/public/cron/automations': typeof ApiPublicCronAutomationsRoute
   '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
 }
 export interface FileRoutesByTo {
@@ -143,6 +151,7 @@ export interface FileRoutesByTo {
   '/admin': typeof AuthenticatedAdminIndexRoute
   '/produtor': typeof AuthenticatedProdutorIndexRoute
   '/produtor/eventos/$id': typeof AuthenticatedProdutorEventosIdRoute
+  '/api/public/cron/automations': typeof ApiPublicCronAutomationsRoute
   '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
 }
 export interface FileRoutesById {
@@ -162,6 +171,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
   '/_authenticated/produtor/': typeof AuthenticatedProdutorIndexRoute
   '/_authenticated/produtor/eventos/$id': typeof AuthenticatedProdutorEventosIdRoute
+  '/api/public/cron/automations': typeof ApiPublicCronAutomationsRoute
   '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
 }
 export interface FileRouteTypes {
@@ -181,6 +191,7 @@ export interface FileRouteTypes {
     | '/admin/'
     | '/produtor/'
     | '/produtor/eventos/$id'
+    | '/api/public/cron/automations'
     | '/lovable/email/transactional/preview'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -198,6 +209,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/produtor'
     | '/produtor/eventos/$id'
+    | '/api/public/cron/automations'
     | '/lovable/email/transactional/preview'
   id:
     | '__root__'
@@ -216,6 +228,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/'
     | '/_authenticated/produtor/'
     | '/_authenticated/produtor/eventos/$id'
+    | '/api/public/cron/automations'
     | '/lovable/email/transactional/preview'
   fileRoutesById: FileRoutesById
 }
@@ -227,6 +240,7 @@ export interface RootRouteChildren {
   WebhookAsaasRoute: typeof WebhookAsaasRoute
   EventosIndexRoute: typeof EventosIndexRoute
   ApiPublicAsaasWebhookRoute: typeof ApiPublicAsaasWebhookRoute
+  ApiPublicCronAutomationsRoute: typeof ApiPublicCronAutomationsRoute
   LovableEmailTransactionalPreviewRoute: typeof LovableEmailTransactionalPreviewRoute
 }
 
@@ -337,6 +351,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedProdutorEventosIdRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/api/public/cron/automations': {
+      id: '/api/public/cron/automations'
+      path: '/api/public/cron/automations'
+      fullPath: '/api/public/cron/automations'
+      preLoaderRoute: typeof ApiPublicCronAutomationsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/lovable/email/transactional/preview': {
       id: '/lovable/email/transactional/preview'
       path: '/lovable/email/transactional/preview'
@@ -380,6 +401,7 @@ const rootRouteChildren: RootRouteChildren = {
   WebhookAsaasRoute: WebhookAsaasRoute,
   EventosIndexRoute: EventosIndexRoute,
   ApiPublicAsaasWebhookRoute: ApiPublicAsaasWebhookRoute,
+  ApiPublicCronAutomationsRoute: ApiPublicCronAutomationsRoute,
   LovableEmailTransactionalPreviewRoute: LovableEmailTransactionalPreviewRoute,
 }
 export const routeTree = rootRouteImport
