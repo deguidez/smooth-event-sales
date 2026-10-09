@@ -141,8 +141,15 @@ export const updateTeamAthlete = createServerFn({ method: "POST" })
     await assertManager(context.userId);
     const athleteId = await assertOwnAthlete(context.userId, data.memberId);
     const admin = await getAdmin();
-    const { memberId: _m, ...fields } = data;
-    const { error } = await admin.from("profiles").update({ ...fields, updated_at: new Date().toISOString() }).eq("id", athleteId);
+    const { memberId: _m, ...f } = data;
+    const { error } = await admin.from("profiles").update({
+      full_name: f.full_name, email: f.email,
+      phone: f.phone ?? null, birth_date: f.birth_date ?? null, gender: f.gender ?? null,
+      city: f.city ?? null, state: f.state ?? null,
+      emergency_contact_name: f.emergency_contact_name ?? null, emergency_contact_phone: f.emergency_contact_phone ?? null,
+      is_pcd: f.is_pcd, pcd_description: f.pcd_description ?? null,
+      updated_at: new Date().toISOString(),
+    }).eq("id", athleteId);
     if (error) throw new Error(error.message);
     return { ok: true };
   });
