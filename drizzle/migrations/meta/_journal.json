@@ -134,6 +134,13 @@
       "when": 1791501382355,
       "tag": "0018_admin_withdrawals",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1791507028786,
+      "tag": "0019_event_queue",
+      "breakpoints": true
     }
   ]
 }
