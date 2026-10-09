@@ -14,29 +14,88 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { toCsv } from "@/components/dash";
 import { brl, fmtDate } from "@/lib/format";
 import {
-  adminAlbumDashboard, adminPhotoOrderDownloads, adminPhotoOverview, checkVpsStorage, inviteAlbumPhotographer, inviteAlbumPhotographerByEmail,
-  removeAlbumPhotographer, saveAlbum, setPhotographerStatus,
+  adminAlbumDashboard, adminPhotoOrderDownloads, adminPhotoOverview, checkVpsStorage, getMediaStorageSettings, inviteAlbumPhotographer, inviteAlbumPhotographerByEmail,
+  removeAlbumPhotographer, saveAlbum, saveMediaStorageSettings, setPhotographerStatus,
 } from "@/lib/photos.functions";
 
-function VpsTest() {
+function MediaStorageCard() {
+  const qc = useQueryClient();
+  const load = useServerFn(getMediaStorageSettings);
+  const save = useServerFn(saveMediaStorageSettings);
   const run = useServerFn(checkVpsStorage);
+  const { data } = useQuery({ queryKey: ["media-storage-settings"], queryFn: () => load() });
+  const [storage, setStorage] = useState<"cloud" | "vps" | null>(null);
+  const [endpoint, setEndpoint] = useState<string | null>(null);
+  const [bucket, setBucket] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [result, setResult] = useState<string | null>(null);
-  const test = async () => {
+  if (!data) return null;
+  const cur = storage ?? data.storage;
+  const curEndpoint = endpoint ?? data.endpoint;
+  const curBucket = bucket ?? data.bucket;
+
+  const onSave = async () => {
     setBusy(true);
     try {
+      await save({ data: { storage: cur, endpoint: curEndpoint, bucket: curBucket } });
+      toast.success(cur === "vps" ? "Armazenamento da VPS ativado" : "Armazenamento em nuvem ativado");
+      qc.invalidateQueries({ queryKey: ["media-storage-settings"] });
+    } catch (e: any) { toast.error(e.message); }
+    setBusy(false);
+  };
+  const test = async () => {
+    setBusy(true);
+    setResult(null);
+    try {
       const r: any = await run();
-      if (!r.enabled) setResult("Armazenamento da VPS não configurado — usando a nuvem.");
+      if (!r.enabled) setResult("VPS não está ativa no momento — o sistema está usando a nuvem.");
       else if (r.ok) setResult(`Conectado com sucesso ao bucket "${r.bucket}" na VPS.`);
       else setResult(`Falha na conexão (código ${r.status}): ${r.error ?? "verifique endereço e chaves"}`);
     } catch (e: any) { setResult(`Erro: ${e.message}`); }
     setBusy(false);
   };
+
   return (
-    <div className="flex items-center gap-3 rounded-xl border p-3 text-sm">
-      <Button size="sm" variant="outline" disabled={busy} onClick={test}>{busy ? "Testando..." : "Testar armazenamento da VPS"}</Button>
-      {result && <span className="text-muted-foreground">{result}</span>}
-    </div>
+    <section className="space-y-3 rounded-xl border p-4">
+      <h3 className="font-semibold">Armazenamento de fotos e vídeos</h3>
+      <p className="text-sm text-muted-foreground">
+        Escolha onde os arquivos novos serão guardados. Arquivos já enviados continuam de onde estão.
+      </p>
+      <div className="grid gap-3 sm:grid-cols-3">
+        <div className="space-y-1">
+          <Label>Onde guardar</Label>
+          <Select value={cur} onValueChange={(v) => setStorage(v as "cloud" | "vps")}>
+            <SelectTrigger><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="cloud">Nuvem (Lovable)</SelectItem>
+              <SelectItem value="vps">VPS (MinIO)</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        {cur === "vps" && (
+          <>
+            <div className="space-y-1">
+              <Label>Endereço do MinIO (https)</Label>
+              <Input value={curEndpoint} onChange={(e) => setEndpoint(e.target.value)} placeholder="https://foto.evenon.com.br" />
+            </div>
+            <div className="space-y-1">
+              <Label>Bucket</Label>
+              <Input value={curBucket} onChange={(e) => setBucket(e.target.value)} placeholder="evenon-fotos" />
+            </div>
+          </>
+        )}
+      </div>
+      {cur === "vps" && (
+        <p className="text-xs text-muted-foreground">
+          As chaves de acesso da VPS já estão guardadas no servidor{data.keysConfigured ? "" : " — mas ainda não foram configuradas"}. Para o envio funcionar, o MinIO precisa liberar o acesso vindo do site (CORS).
+        </p>
+      )}
+      <div className="flex flex-wrap items-center gap-3">
+        <Button size="sm" variant="hero" disabled={busy} onClick={onSave}>{busy ? "Salvando..." : "Salvar"}</Button>
+        <Button size="sm" variant="outline" disabled={busy} onClick={test}>Testar conexão com a VPS</Button>
+        {result && <span className="text-sm text-muted-foreground">{result}</span>}
+      </div>
+    </section>
   );
 }
 
@@ -52,7 +111,7 @@ export function PhotosAdmin() {
 
   return (
     <div className="space-y-8">
-      <VpsTest />
+      <MediaStorageCard />
       <section className="space-y-3">
         <div className="flex items-center justify-between">
           <h2 className="text-xl font-bold">Álbuns de fotos</h2>

@@ -1095,6 +1095,9 @@ export type Database = {
           home_images: Json
           id: number
           max_installments: number
+          media_storage: string
+          media_vps_bucket: string | null
+          media_vps_endpoint: string | null
           platform_wallet_id: string | null
           reminder_days_before: number
           site_domain: string | null
@@ -1132,6 +1135,9 @@ export type Database = {
           home_images?: Json
           id?: number
           max_installments?: number
+          media_storage?: string
+          media_vps_bucket?: string | null
+          media_vps_endpoint?: string | null
           platform_wallet_id?: string | null
           reminder_days_before?: number
           site_domain?: string | null
@@ -1169,6 +1175,9 @@ export type Database = {
           home_images?: Json
           id?: number
           max_installments?: number
+          media_storage?: string
+          media_vps_bucket?: string | null
+          media_vps_endpoint?: string | null
           platform_wallet_id?: string | null
           reminder_days_before?: number
           site_domain?: string | null
