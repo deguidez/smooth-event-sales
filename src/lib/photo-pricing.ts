@@ -1,5 +1,5 @@
 // Single source of truth for photo/video pricing (client preview + server charge).
-export type Tier = { min_qty: number; photo_price?: number | null; video_price?: number | null };
+export type Tier = { min_qty: number; discount_percent?: number | null };
 export type AlbumPricing = {
   photo_price: number; video_price: number; tiers: Tier[];
   pkg_all_photos: number | null; pkg_all_videos: number | null; pkg_all: number | null;
