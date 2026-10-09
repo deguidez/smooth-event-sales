@@ -300,10 +300,16 @@ export const createPhotoOrder = createServerFn({ method: "POST" })
       const due = new Date(); due.setDate(due.getDate() + 1);
       let ip: string | undefined;
       try { ip = getRequest().headers.get("cf-connecting-ip") ?? undefined; } catch {}
+      // Asaas rejeita walletId duplicada no split: se a mesma pessoa acumula
+      // papéis (ex.: super admin que também é dono do evento e fotógrafo),
+      // somamos os valores por carteira só para a cobrança. O detalhamento
+      // por papel fica gravado em photo_orders.split.
+      const byWallet = new Map<string, number>();
+      for (const x of split) byWallet.set(x.walletId, r2((byWallet.get(x.walletId) ?? 0) + x.amount));
       const payment = await asaasFetch<any>(s, "/payments", { method: "POST", body: {
         customer: customer.id, billingType: data.method, dueDate: due.toISOString().slice(0, 10), value: total,
         description: `Fotos - ${(a as any).events.title} (#${order.code})`, externalReference: `photo_${order.id}`,
-        split: split.map((x) => ({ walletId: x.walletId, fixedValue: x.amount })), remoteIp: ip,
+        split: [...byWallet].map(([walletId, amount]) => ({ walletId, fixedValue: amount })), remoteIp: ip,
       } });
       const patch: any = { asaas_payment_id: payment.id, invoice_url: payment.invoiceUrl };
       if (data.method === "PIX") {
