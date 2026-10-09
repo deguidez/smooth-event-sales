@@ -26,10 +26,9 @@ export async function handleAsaasWebhook(request: Request) {
     const t = body.transfer ?? {};
     const value = Number(t.value);
     const { supabaseAdmin: a } = await import("@/integrations/supabase/client.server");
-    const since = new Date(Date.now() - 24 * 3600_000).toISOString();
     for (const table of ["withdrawals", "platform_withdrawals"] as const) {
       const { data } = await a.from(table).select("id, amount, asaas_transfer_id")
-        .eq("status", "processando").gte("confirmed_at", since);
+        .eq("status", "processando");
       const ok = (data ?? []).some((w: any) =>
         (t.id && w.asaas_transfer_id === t.id) ||
         (!w.asaas_transfer_id && Math.abs(Number(w.amount) - value) < 0.005));
