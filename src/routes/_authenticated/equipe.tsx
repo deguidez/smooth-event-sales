@@ -146,7 +146,8 @@ function AthleteDialog({ member, onClose }: { member: Member; onClose: () => voi
         is_pcd: !!p.is_pcd, pcd_description: p.pcd_description ?? "",
       });
     }).catch((e) => { toast.error((e as Error).message); onClose(); });
-  });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [member.id]);
 
   const set = (k: keyof AthleteForm, v: any) => setForm((f) => (f ? { ...f, [k]: v } : f));
 
