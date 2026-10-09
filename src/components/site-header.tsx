@@ -79,9 +79,11 @@ export function SiteHeader() {
               <DropdownMenuItem onClick={() => navigate({ to: "/minhas-fotos" })}>
                 <Ticket /> Minhas fotos
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => navigate({ to: "/fotografo" })}>
-                <Ticket /> Área do fotógrafo
-              </DropdownMenuItem>
+              {showPhotographer && (
+                <DropdownMenuItem onClick={() => navigate({ to: "/fotografo" })}>
+                  <Ticket /> Área do fotógrafo
+                </DropdownMenuItem>
+              )}
               <TeamMenuItem onGo={() => navigate({ to: "/equipe" })} userId={user.id} />
               {isProducer && (
                 <DropdownMenuItem onClick={() => navigate({ to: "/produtor" })}>
