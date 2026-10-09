@@ -9,13 +9,14 @@ export type Package = "fotos" | "videos" | "tudo" | null;
 const r2 = (n: number) => Math.round(n * 100) / 100;
 
 export function unitPrice(a: AlbumPricing, kind: "photo" | "video", qty: number) {
-  let price = Number(kind === "photo" ? a.photo_price : a.video_price);
+  const base = Number(kind === "photo" ? a.photo_price : a.video_price);
+  let pct = 0;
   const tiers = [...(a.tiers ?? [])].sort((x, y) => x.min_qty - y.min_qty);
   for (const t of tiers) {
-    const p = kind === "photo" ? t.photo_price : t.video_price;
-    if (qty >= t.min_qty && p != null && Number(p) > 0) price = Number(p);
+    const p = t.discount_percent;
+    if (qty >= t.min_qty && p != null && Number(p) > 0) pct = Math.min(100, Number(p));
   }
-  return price;
+  return r2(base * (1 - pct / 100));
 }
 
 /** Subtotal for a cart: package replaces the matching kind's per-item prices. */
