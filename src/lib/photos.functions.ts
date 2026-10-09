@@ -449,7 +449,13 @@ const money = z.number().min(0).max(100000);
 export const saveAlbum = createServerFn({ method: "POST" })
   .middleware([auditedAction("saveAlbum")])
   .inputValidator((d) => z.object({
-    id: uuid.optional(), event_id: uuid, active: z.boolean(),
+    id: uuid.optional(), event_id: uuid.optional(), active: z.boolean(),
+    new_event: z.object({
+      title: z.string().trim().min(3).max(120),
+      starts_at: z.string().min(10),
+      city: z.string().trim().max(80).default(""), state: z.string().trim().max(2).default(""),
+      category: z.enum(["esporte", "show", "congresso", "curso", "outro"]).default("outro"),
+    }).optional(),
     owner_percent: z.number().min(0).max(100), platform_percent: z.number().min(0).max(100), photographer_percent: z.number().min(0).max(100),
     photo_price: money, video_price: money, tiers: z.array(tierSchema).max(10),
     pkg_all_photos: money.nullable(), pkg_all_videos: money.nullable(), pkg_all: money.nullable(),
