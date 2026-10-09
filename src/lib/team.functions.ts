@@ -100,6 +100,60 @@ export const removeTeamMember = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
+async function assertOwnAthlete(managerId: string, memberId: string) {
+  const admin = await getAdmin();
+  const { data: m } = await admin.from("team_members").select("athlete_id, status").eq("id", memberId).eq("manager_id", managerId).maybeSingle();
+  if (!m || m.status !== "aceito") throw new Error("Atleta não encontrado na sua equipe");
+  return m.athlete_id as string;
+}
+
+export const getTeamAthlete = createServerFn({ method: "GET" })
+  .middleware([auditedAction("getTeamAthlete")])
+  .inputValidator((d) => z.object({ memberId: z.string().uuid() }).parse(d))
+  .handler(async ({ data, context }) => {
+    await assertManager(context.userId);
+    const athleteId = await assertOwnAthlete(context.userId, data.memberId);
+    const admin = await getAdmin();
+    const { data: p } = await admin.from("profiles").select("full_name, email, cpf, phone, birth_date, gender, city, state, emergency_contact_name, emergency_contact_phone, is_pcd, pcd_description").eq("id", athleteId).single();
+    if (!p) throw new Error("Cadastro do atleta não encontrado");
+    return p;
+  });
+
+const athleteSchema = z.object({
+  memberId: z.string().uuid(),
+  full_name: z.string().trim().min(3).max(120),
+  email: z.string().trim().email().max(200),
+  phone: z.string().trim().max(20).optional().nullable(),
+  birth_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional().nullable(),
+  gender: z.string().trim().max(20).optional().nullable(),
+  city: z.string().trim().max(80).optional().nullable(),
+  state: z.string().trim().max(2).optional().nullable(),
+  emergency_contact_name: z.string().trim().max(120).optional().nullable(),
+  emergency_contact_phone: z.string().trim().max(20).optional().nullable(),
+  is_pcd: z.boolean().default(false),
+  pcd_description: z.string().trim().max(300).optional().nullable(),
+});
+
+export const updateTeamAthlete = createServerFn({ method: "POST" })
+  .middleware([auditedAction("updateTeamAthlete")])
+  .inputValidator((d) => athleteSchema.parse(d))
+  .handler(async ({ data, context }) => {
+    await assertManager(context.userId);
+    const athleteId = await assertOwnAthlete(context.userId, data.memberId);
+    const admin = await getAdmin();
+    const { memberId: _m, ...f } = data;
+    const { error } = await admin.from("profiles").update({
+      full_name: f.full_name, email: f.email,
+      phone: f.phone ?? null, birth_date: f.birth_date ?? null, gender: f.gender ?? null,
+      city: f.city ?? null, state: f.state ?? null,
+      emergency_contact_name: f.emergency_contact_name ?? null, emergency_contact_phone: f.emergency_contact_phone ?? null,
+      is_pcd: f.is_pcd, pcd_description: f.pcd_description ?? null,
+      updated_at: new Date().toISOString(),
+    }).eq("id", athleteId);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
 export const respondTeamInvite = createServerFn({ method: "POST" })
   .middleware([auditedAction("respondTeamInvite")])
   .inputValidator((d) => z.object({ id: z.string().uuid(), accept: z.boolean() }).parse(d))

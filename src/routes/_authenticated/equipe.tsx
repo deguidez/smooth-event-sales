@@ -1,12 +1,13 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { Copy, RefreshCw, Trash2, UserPlus, Users, X } from "lucide-react";
+import { Copy, Pencil, RefreshCw, Trash2, UserPlus, Users, X } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -15,7 +16,7 @@ import { CustomFieldsForm } from "@/components/custom-fields";
 import { computeFees, type Method } from "@/lib/fees";
 import { brl, fmtDate, METHOD_LABEL, onlyDigits, ORDER_STATUS } from "@/lib/format";
 import {
-  cancelTeamOrders, createTeamOrders, getTeamState, inviteByCpf, listTeamEvents, listTeamOrders, refreshTeamOrders, removeTeamMember,
+  cancelTeamOrders, createTeamOrders, getTeamAthlete, getTeamState, inviteByCpf, listTeamEvents, listTeamOrders, refreshTeamOrders, removeTeamMember, updateTeamAthlete,
 } from "@/lib/team.functions";
 
 const TITLE = "Minha equipe — Evenon";
@@ -69,6 +70,7 @@ function Members({ members }: { members: Member[] }) {
   const qc = useQueryClient();
   const [cpf, setCpf] = useState("");
   const [busy, setBusy] = useState(false);
+  const [editing, setEditing] = useState<Member | null>(null);
   async function add(e: React.FormEvent) {
     e.preventDefault();
     setBusy(true);
@@ -103,7 +105,11 @@ function Members({ members }: { members: Member[] }) {
             </div>
             <div className="flex items-center gap-2">
               <Badge variant={st[m.status]?.v}>{st[m.status]?.l}</Badge>
+              {m.status === "aceito" && (
+                <Button size="icon" variant="ghost" aria-label="Editar atleta" onClick={() => setEditing(m)}><Pencil /></Button>
+              )}
               <Button size="icon" variant="ghost" aria-label="Remover" onClick={async () => {
+                if (!confirm(`Remover ${m.name} da equipe?`)) return;
                 await remove({ data: { id: m.id } });
                 qc.invalidateQueries({ queryKey: ["team-state"] });
               }}><Trash2 /></Button>
@@ -111,7 +117,96 @@ function Members({ members }: { members: Member[] }) {
           </div>
         ))}
       </div>
+      {editing && <AthleteDialog member={editing} onClose={() => setEditing(null)} />}
     </div>
+  );
+}
+
+type AthleteForm = {
+  full_name: string; email: string; phone: string; birth_date: string; gender: string;
+  city: string; state: string; emergency_contact_name: string; emergency_contact_phone: string;
+  is_pcd: boolean; pcd_description: string;
+};
+
+function AthleteDialog({ member, onClose }: { member: Member; onClose: () => void }) {
+  const get = useServerFn(getTeamAthlete);
+  const update = useServerFn(updateTeamAthlete);
+  const qc = useQueryClient();
+  const [form, setForm] = useState<AthleteForm | null>(null);
+  const [cpf, setCpf] = useState("");
+  const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    get({ data: { memberId: member.id } }).then((p: any) => {
+      setCpf(p.cpf ?? "");
+      setForm({
+        full_name: p.full_name ?? "", email: p.email ?? "", phone: p.phone ?? "",
+        birth_date: p.birth_date ?? "", gender: p.gender ?? "", city: p.city ?? "", state: p.state ?? "",
+        emergency_contact_name: p.emergency_contact_name ?? "", emergency_contact_phone: p.emergency_contact_phone ?? "",
+        is_pcd: !!p.is_pcd, pcd_description: p.pcd_description ?? "",
+      });
+    }).catch((e) => { toast.error((e as Error).message); onClose(); });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [member.id]);
+
+  const set = (k: keyof AthleteForm, v: any) => setForm((f) => (f ? { ...f, [k]: v } : f));
+
+  async function save(e: React.FormEvent) {
+    e.preventDefault();
+    if (!form) return;
+    setBusy(true);
+    try {
+      await update({ data: {
+        memberId: member.id,
+        full_name: form.full_name, email: form.email,
+        phone: form.phone || null, birth_date: form.birth_date || null, gender: form.gender || null,
+        city: form.city || null, state: form.state || null,
+        emergency_contact_name: form.emergency_contact_name || null, emergency_contact_phone: form.emergency_contact_phone || null,
+        is_pcd: form.is_pcd, pcd_description: form.is_pcd ? form.pcd_description || null : null,
+      } });
+      toast.success("Dados do atleta atualizados");
+      qc.invalidateQueries({ queryKey: ["team-state"] });
+      onClose();
+    } catch (err) { toast.error((err as Error).message); } finally { setBusy(false); }
+  }
+
+  return (
+    <Dialog open onOpenChange={(o) => !o && onClose()}>
+      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
+        <DialogHeader><DialogTitle>Editar atleta — {member.name}</DialogTitle></DialogHeader>
+        {!form ? <p className="text-sm text-muted-foreground">Carregando dados…</p> : (
+          <form onSubmit={save} className="grid gap-3 sm:grid-cols-2">
+            <div className="space-y-1.5 sm:col-span-2"><Label>Nome completo *</Label><Input value={form.full_name} onChange={(e) => set("full_name", e.target.value)} required /></div>
+            <div className="space-y-1.5"><Label>CPF</Label><Input value={cpf} disabled /></div>
+            <div className="space-y-1.5"><Label>E-mail *</Label><Input type="email" value={form.email} onChange={(e) => set("email", e.target.value)} required /></div>
+            <div className="space-y-1.5"><Label>Telefone</Label><Input value={form.phone} onChange={(e) => set("phone", e.target.value)} /></div>
+            <div className="space-y-1.5"><Label>Nascimento</Label><Input type="date" value={form.birth_date} onChange={(e) => set("birth_date", e.target.value)} /></div>
+            <div className="space-y-1.5"><Label>Sexo</Label>
+              <Select value={form.gender} onValueChange={(v) => set("gender", v)}>
+                <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="masculino">Masculino</SelectItem>
+                  <SelectItem value="feminino">Feminino</SelectItem>
+                  <SelectItem value="outro">Outro</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1.5"><Label>Cidade</Label><Input value={form.city} onChange={(e) => set("city", e.target.value)} /></div>
+            <div className="space-y-1.5"><Label>UF</Label><Input value={form.state} maxLength={2} onChange={(e) => set("state", e.target.value.toUpperCase())} /></div>
+            <div className="space-y-1.5"><Label>Contato de emergência</Label><Input value={form.emergency_contact_name} onChange={(e) => set("emergency_contact_name", e.target.value)} /></div>
+            <div className="space-y-1.5"><Label>Telefone de emergência</Label><Input value={form.emergency_contact_phone} onChange={(e) => set("emergency_contact_phone", e.target.value)} /></div>
+            <label className="flex items-center gap-2 text-sm sm:col-span-2">
+              <Checkbox checked={form.is_pcd} onCheckedChange={(c) => set("is_pcd", !!c)} /> Atleta PCD (pessoa com deficiência)
+            </label>
+            {form.is_pcd && <div className="space-y-1.5 sm:col-span-2"><Label>Qual deficiência?</Label><Input value={form.pcd_description} onChange={(e) => set("pcd_description", e.target.value)} /></div>}
+            <div className="flex justify-end gap-2 sm:col-span-2">
+              <Button type="button" variant="outline" onClick={onClose}>Cancelar</Button>
+              <Button type="submit" variant="hero" disabled={busy}>{busy ? "Salvando…" : "Salvar"}</Button>
+            </div>
+          </form>
+        )}
+      </DialogContent>
+    </Dialog>
   );
 }
 
