@@ -147,16 +147,15 @@ function AlbumDialog({ album, events, onClose }: { album: any; events: any[]; on
             <div><Label>Preço por vídeo (R$)</Label><Input type="number" step="0.01" value={f.video_price} onChange={setK("video_price")} /></div>
           </div>
           <div className="space-y-2">
-            <Label>Descontos progressivos (preço por unidade a partir da quantidade)</Label>
+            <Label>Descontos progressivos (porcentagem a partir da quantidade)</Label>
             {(f.tiers ?? []).map((t: any, i: number) => (
-              <div key={i} className="grid grid-cols-[1fr_1fr_1fr_auto] gap-2">
+              <div key={i} className="grid grid-cols-[1fr_1fr_auto] gap-2">
                 <Input type="number" placeholder="A partir de (qtd)" value={t.min_qty} onChange={(e) => { const tiers = [...f.tiers]; tiers[i] = { ...t, min_qty: e.target.value }; setF({ ...f, tiers }); }} />
-                <Input type="number" step="0.01" placeholder="R$ por foto" value={t.photo_price ?? ""} onChange={(e) => { const tiers = [...f.tiers]; tiers[i] = { ...t, photo_price: e.target.value }; setF({ ...f, tiers }); }} />
-                <Input type="number" step="0.01" placeholder="R$ por vídeo" value={t.video_price ?? ""} onChange={(e) => { const tiers = [...f.tiers]; tiers[i] = { ...t, video_price: e.target.value }; setF({ ...f, tiers }); }} />
+                <Input type="number" step="0.1" placeholder="% de desconto" value={t.discount_percent ?? ""} onChange={(e) => { const tiers = [...f.tiers]; tiers[i] = { ...t, discount_percent: e.target.value }; setF({ ...f, tiers }); }} />
                 <Button variant="ghost" size="icon" onClick={() => setF({ ...f, tiers: f.tiers.filter((_: any, k: number) => k !== i) })}><Trash2 /></Button>
               </div>
             ))}
-            <Button variant="outline" size="sm" onClick={() => setF({ ...f, tiers: [...(f.tiers ?? []), { min_qty: 5, photo_price: "", video_price: "" }] })}><Plus /> Faixa de desconto</Button>
+            <Button variant="outline" size="sm" onClick={() => setF({ ...f, tiers: [...(f.tiers ?? []), { min_qty: 5, discount_percent: "" }] })}><Plus /> Faixa de desconto</Button>
           </div>
           <div>
             <Label>Pacotes (vazio = sem pacote) — incluem tudo em que o cliente aparece</Label>
