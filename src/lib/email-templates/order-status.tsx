@@ -3,7 +3,7 @@ import { Body, Button, Container, Head, Heading, Html, Preview, Text } from '@re
 import type { TemplateEntry } from './registry'
 
 interface Props {
-  kind?: 'inscricao_criada' | 'pagamento_confirmado' | 'pagamento_vencido'
+  kind?: 'inscricao_criada' | 'pagamento_confirmado' | 'pagamento_vencido' | 'inscricao_cancelada' | 'checkout_abandonado' | 'lembrete_evento'
   name?: string
   eventTitle?: string
   code?: string
@@ -14,6 +14,9 @@ interface Props {
 const copy = {
   inscricao_criada: { title: 'Inscrição recebida', text: 'Recebemos sua inscrição. Se ainda não pagou, finalize o pagamento para garantir sua vaga.', cta: 'Ver inscrição e pagar' },
   pagamento_confirmado: { title: 'Inscrição confirmada!', text: 'Seu pagamento foi confirmado. Seu comprovante e o QR code estão disponíveis no link abaixo.', cta: 'Ver comprovante' },
+  inscricao_cancelada: { title: 'Sua inscrição foi cancelada', text: 'Não identificamos o pagamento no prazo, então a inscrição foi cancelada e a vaga liberada. Ainda dá tempo: faça uma nova inscrição enquanto houver vagas.', cta: 'Inscrever-me novamente' },
+  checkout_abandonado: { title: 'Falta pouco para garantir sua vaga', text: 'Você começou sua inscrição mas não finalizou. As vagas são limitadas — conclua agora.', cta: 'Finalizar inscrição' },
+  lembrete_evento: { title: 'Seu evento está chegando!', text: 'Faltam poucos dias. Leve o comprovante de inscrição (com QR code) para a retirada do kit.', cta: 'Ver comprovante de retirada' },
   pagamento_vencido: { title: 'Pagamento não identificado', text: 'O prazo de pagamento da sua inscrição venceu. Acesse para gerar um novo pagamento, se ainda houver vagas.', cta: 'Ver inscrição' },
 }
 

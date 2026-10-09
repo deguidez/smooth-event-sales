@@ -1,13 +1,13 @@
 // Notificações por e-mail das inscrições (envio pelo domínio de e-mail configurado).
-export type NotifyKind = "inscricao_criada" | "pagamento_confirmado" | "pagamento_vencido";
+export type NotifyKind = "inscricao_criada" | "pagamento_confirmado" | "pagamento_vencido" | "inscricao_cancelada" | "lembrete_evento";
 
-const SITE_URL = "https://smooth-event-sales.lovable.app";
+export const SITE_URL = "https://evenon.com.br";
 
 export async function notifyOrder(orderId: string, kind: NotifyKind) {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   const { data: order } = await supabaseAdmin
     .from("orders")
-    .select("id, code, total, participant_name, participant_email, events(title)")
+    .select("id, code, total, participant_name, participant_email, events(title, slug)")
     .eq("id", orderId)
     .single();
   if (!order) return;
@@ -23,7 +23,7 @@ export async function notifyOrder(orderId: string, kind: NotifyKind) {
         eventTitle: (order as any).events?.title,
         code: order.code,
         total: Number(order.total) > 0 ? Number(order.total).toLocaleString("pt-BR", { style: "currency", currency: "BRL" }) : "Inscrição gratuita",
-        url: `${SITE_URL}/pedido/${order.id}`,
+        url: kind === "inscricao_cancelada" ? `${SITE_URL}/eventos/${(order as any).events?.slug ?? ""}` : `${SITE_URL}/pedido/${order.id}`,
       },
       idempotencyKey: `order-${kind}-${order.id}`,
     });
