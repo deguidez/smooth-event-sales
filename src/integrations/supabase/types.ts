@@ -285,6 +285,9 @@ export type Database = {
           fee_percent: number | null
           id: string
           producer_id: string
+          queue_capacity: number
+          queue_enabled: boolean
+          queue_window_minutes: number
           registration_ends_at: string | null
           registration_limit: number | null
           registrations_open_at: string | null
@@ -313,6 +316,9 @@ export type Database = {
           fee_percent?: number | null
           id?: string
           producer_id: string
+          queue_capacity?: number
+          queue_enabled?: boolean
+          queue_window_minutes?: number
           registration_ends_at?: string | null
           registration_limit?: number | null
           registrations_open_at?: string | null
@@ -341,6 +347,9 @@ export type Database = {
           fee_percent?: number | null
           id?: string
           producer_id?: string
+          queue_capacity?: number
+          queue_enabled?: boolean
+          queue_window_minutes?: number
           registration_ends_at?: string | null
           registration_limit?: number | null
           registrations_open_at?: string | null
@@ -846,6 +855,44 @@ export type Database = {
         }
         Relationships: []
       }
+      queue_entries: {
+        Row: {
+          admitted_at: string | null
+          created_at: string
+          event_id: string
+          expires_at: string | null
+          id: string
+          status: string
+          user_id: string
+        }
+        Insert: {
+          admitted_at?: string | null
+          created_at?: string
+          event_id: string
+          expires_at?: string | null
+          id?: string
+          status?: string
+          user_id: string
+        }
+        Update: {
+          admitted_at?: string | null
+          created_at?: string
+          event_id?: string
+          expires_at?: string | null
+          id?: string
+          status?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "queue_entries_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ticket_types: {
         Row: {
           active: boolean
@@ -987,6 +1034,7 @@ export type Database = {
         Returns: boolean
       }
       my_producer_id: { Args: never; Returns: string }
+      queue_enter: { Args: { _event_id: string }; Returns: Json }
     }
     Enums: {
       app_role: "super_admin" | "producer" | "athlete"
