@@ -158,7 +158,7 @@ function Checkout() {
               <Checkbox checked={forOther} onCheckedChange={(c) => {
                 const on = !!c;
                 setForOther(on);
-                if (on) setF((p) => ({ ...p, name: "", email: "", cpf: "", phone: "", birth_date: "", gender: "", emergency_contact_name: "", emergency_contact_phone: "", is_pcd: false, pcd_description: "" }));
+                if (on) setF((p) => ({ ...p, name: "", email: "", cpf: "", phone: "", birth_date: "", gender: "", team: "", emergency_contact_name: "", emergency_contact_phone: "", is_pcd: false, pcd_description: "" }));
                 else if (own) setF((p) => ({ ...own, shirt_size: p.shirt_size, team: p.team }));
               }} />
               Inscrição para outra pessoa
