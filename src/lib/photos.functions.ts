@@ -89,7 +89,8 @@ export const getUploadTargets = createServerFn({ method: "POST" })
     for (const f of data.files) {
       const id = crypto.randomUUID();
       const base = `${data.albumId}/${context.userId}/${id}`;
-      const orig = await admin.storage.from("media-originals").createSignedUploadUrl(`${base}.${f.ext}`);
+      // Videos live only in media-previews (shown with a player overlay, downloaded after purchase).
+      const orig = await admin.storage.from(f.kind === "video" ? "media-previews" : "media-originals").createSignedUploadUrl(`${base}.${f.ext}`);
       const prev = f.kind === "photo" ? await admin.storage.from("media-previews").createSignedUploadUrl(`${base}.jpg`) : null;
       if (orig.error || prev?.error) throw new Error("Não foi possível preparar o envio");
       targets.push({ original: { path: orig.data.path, token: orig.data.token }, preview: prev ? { path: prev.data!.path, token: prev.data!.token } : null });
@@ -114,10 +115,6 @@ export const registerMedia = createServerFn({ method: "POST" })
       if (!it.original_path.startsWith(prefix) || (it.preview_path && !it.preview_path.startsWith(prefix))) throw new Error("Arquivo inválido");
       // Videos are previewed from the original with an overlay in the player.
       const preview = it.kind === "video" ? it.original_path : it.preview_path!;
-      if (it.kind === "video") {
-        const { data: copy } = await admin.storage.from("media-originals").download(it.original_path);
-        if (copy) await admin.storage.from("media-previews").upload(it.original_path, copy, { contentType: copy.type || "video/mp4", upsert: true });
-      }
       const { data: m, error } = await admin.from("media_items").insert({
         album_id: data.albumId, photographer_id: context.userId, kind: it.kind,
         original_path: it.original_path, preview_path: preview, width: it.width, height: it.height, faces: it.faces.length,
@@ -151,7 +148,7 @@ export const deleteMyMedia = createServerFn({ method: "POST" })
     if (count) throw new Error("Este arquivo já foi vendido e não pode ser removido");
     await admin.from("media_items").delete().eq("id", data.id);
     await admin.storage.from("media-originals").remove([m.original_path]);
-    await admin.storage.from("media-previews").remove([m.preview_path]);
+    await admin.storage.from("media-previews").remove([...new Set([m.preview_path, m.original_path])]);
     return { ok: true };
   });
 
@@ -238,11 +235,9 @@ export const createPhotoOrder = createServerFn({ method: "POST" })
     const { data: media } = await admin.from("media_items").select("id, kind, photographer_id").eq("album_id", a.id).in("id", ids);
     const items = media ?? [];
     if (!items.length) throw new Error("Itens não encontrados");
-    let photos = items.filter((m) => m.kind === "photo");
-    let videos = items.filter((m) => m.kind === "video");
+    const photos = items.filter((m) => m.kind === "photo");
+    const videos = items.filter((m) => m.kind === "video");
     const pkg = data.package;
-    if (pkg === "fotos") { /* videos selected individually stay per-item */ }
-    if (pkg === "videos") { /* photos selected individually stay per-item */ }
     const { subtotal, photoUnit, videoUnit } = cartTotal(a as unknown as AlbumPricing, photos.length, videos.length, pkg);
 
     let discount = 0;
@@ -333,6 +328,19 @@ export const myPhotoOrders = createServerFn({ method: "GET" })
     return data ?? [];
   });
 
+async function signOriginals(items: { kind: string; path: string }[]) {
+  const admin = await getAdmin();
+  const out: Record<string, string> = {};
+  for (const bucket of ["media-originals", "media-previews"] as const) {
+    const paths = items.filter((i) => (i.kind === "video") === (bucket === "media-previews")).map((i) => i.path);
+    for (let i = 0; i < paths.length; i += 500) {
+      const { data: s } = await admin.storage.from(bucket).createSignedUrls(paths.slice(i, i + 500), 60 * 60 * 24, { download: true });
+      for (const d of s ?? []) if (d.path && d.signedUrl) out[d.path] = d.signedUrl;
+    }
+  }
+  return out;
+}
+
 /** Signed original links — only for paid orders of the caller (or super admin). */
 export const photoOrderDownloads = createServerFn({ method: "POST" })
   .middleware([auditedAction("photoOrderDownloads")])
@@ -343,13 +351,8 @@ export const photoOrderDownloads = createServerFn({ method: "POST" })
     if (o.status !== "pago") throw new Error("Pagamento ainda não confirmado");
     const admin = await getAdmin();
     const { data: items } = await admin.from("photo_order_items").select("media_id, kind, media_items(original_path, preview_path)").eq("order_id", o.id);
-    const paths = (items ?? []).map((i: any) => i.media_items.original_path as string);
     const previews = await signPreviews((items ?? []).filter((i: any) => i.kind === "photo").map((i: any) => i.media_items.preview_path));
-    const urls: Record<string, string> = {};
-    for (let i = 0; i < paths.length; i += 500) {
-      const { data: s } = await admin.storage.from("media-originals").createSignedUrls(paths.slice(i, i + 500), 60 * 60 * 24, { download: true });
-      for (const d of s ?? []) if (d.path && d.signedUrl) urls[d.path] = d.signedUrl;
-    }
+    const urls = await signOriginals((items ?? []).map((i: any) => ({ kind: i.kind, path: i.media_items.original_path })));
     return (items ?? []).map((i: any) => ({ id: i.media_id, kind: i.kind, download: urls[i.media_items.original_path] ?? null, thumb: previews[i.media_items.preview_path] ?? null }));
   });
 
@@ -473,9 +476,8 @@ export const adminPhotoOrderDownloads = createServerFn({ method: "POST" })
     await assertAdmin(context);
     const admin = await getAdmin();
     const { data: items } = await admin.from("photo_order_items").select("media_id, kind, media_items(original_path)").eq("order_id", data.orderId);
-    const paths = (items ?? []).map((i: any) => i.media_items.original_path as string);
-    const { data: s } = paths.length ? await admin.storage.from("media-originals").createSignedUrls(paths, 60 * 60 * 24, { download: true }) : { data: [] as any[] };
-    return (items ?? []).map((i: any, k: number) => ({ id: i.media_id, kind: i.kind, url: s?.[k]?.signedUrl ?? null }));
+    const urls = await signOriginals((items ?? []).map((i: any) => ({ kind: i.kind, path: i.media_items.original_path })));
+    return (items ?? []).map((i: any) => ({ id: i.media_id, kind: i.kind, url: urls[i.media_items.original_path] ?? null }));
   });
 
 /* ------------------------------ Ganhos (fotógrafo / organizador) ------------------------------ */
