@@ -37,8 +37,16 @@ export async function handleAsaasWebhook(request: Request) {
     return Response.json({ status: "REFUSED", refuseReason: "Saque não solicitado pelo sistema" });
   }
   const payment = body?.payment;
-  const orderId = typeof payment?.externalReference === "string" ? payment.externalReference : null;
-  if (!orderId || !/^[0-9a-f-]{36}$/i.test(orderId)) return Response.json({ ignored: true });
+  const ref = typeof payment?.externalReference === "string" ? payment.externalReference : "";
+  const groupId = /^grp_[0-9a-f-]{36}$/i.test(ref) ? ref.slice(4) : null;
+  const orderId = /^[0-9a-f-]{36}$/i.test(ref) ? ref : null;
+  if (!orderId && !groupId) return Response.json({ ignored: true });
+  let orderIds: string[] = orderId ? [orderId] : [];
+  if (groupId) {
+    const { supabaseAdmin: a } = await import("@/integrations/supabase/client.server");
+    const { data } = await a.from("orders").select("id").eq("payment_group_id", groupId);
+    orderIds = (data ?? []).map((o) => o.id);
+  }
 
   const eventMap: Record<string, string> = {
     PAYMENT_CONFIRMED: "CONFIRMED",
