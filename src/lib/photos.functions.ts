@@ -61,7 +61,7 @@ export const savePhotographer = createServerFn({ method: "POST" })
   .middleware([auditedAction("savePhotographer")])
   .inputValidator((d) => z.object({
     name: z.string().trim().min(3).max(120), document: z.string().regex(/^\d{11}$|^\d{14}$/, "CPF/CNPJ inválido"),
-    phone: z.string().trim().min(10).max(20), asaas_wallet_id: z.string().trim().uuid("Carteira Asaas (walletId) inválida"), bank: bankSchema,
+    phone: z.string().trim().min(10).max(20), asaas_wallet_id: z.union([z.literal(""), z.string().trim().uuid("Carteira Asaas (walletId) inválida")]).optional().transform((v) => v || null), bank: bankSchema,
   }).parse(d))
   .handler(async ({ data, context }) => {
     const admin = await getAdmin();
@@ -410,7 +410,7 @@ export const adminUpdatePhotographer = createServerFn({ method: "POST" })
   .inputValidator((d) => z.object({
     userId: uuid,
     name: z.string().trim().min(3).max(120), document: z.string().regex(/^\d{11}$|^\d{14}$/, "CPF/CNPJ inválido"),
-    phone: z.string().trim().min(10).max(20), asaas_wallet_id: z.string().trim().uuid("Carteira Asaas (walletId) inválida"),
+    phone: z.string().trim().min(10).max(20), asaas_wallet_id: z.union([z.literal(""), z.string().trim().uuid("Carteira Asaas (walletId) inválida")]).optional().transform((v) => v || null),
     status: z.enum(["pendente", "aprovado", "suspenso"]), bank: bankSchema,
   }).parse(d))
   .handler(async ({ data, context }) => {
@@ -527,6 +527,44 @@ export const inviteAlbumPhotographer = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { ok: true };
   });
+
+export const inviteAlbumPhotographerByEmail = createServerFn({ method: "POST" })
+  .middleware([auditedAction("inviteAlbumPhotographerByEmail")])
+  .inputValidator((d) => z.object({ albumId: uuid, email: z.string().trim().toLowerCase().email().max(255), name: z.string().trim().max(120).optional() }).parse(d))
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context);
+    const admin = await getAdmin();
+    let created = false;
+    const { data: prof } = await admin.from("profiles").select("id, full_name, cpf, phone").ilike("email", data.email).maybeSingle();
+    let userId = prof?.id as string | undefined;
+    if (!userId) {
+      const req = getRequest();
+      const url = req ? new URL(req.url) : null;
+      const host = url?.hostname === "localhost" ? req?.headers.get("x-forwarded-host") : null;
+      const origin = host ? `https://${host}` : url?.origin;
+      const { data: inv, error } = await admin.auth.admin.inviteUserByEmail(data.email, {
+        data: { full_name: data.name || "" },
+        ...(origin ? { redirectTo: `${origin}/fotografo` } : {}),
+      });
+      if (error || !inv?.user) throw new Error("Não foi possível convidar: " + (error?.message ?? "erro"));
+      userId = inv.user.id;
+      created = true;
+    }
+    const { data: ph } = await admin.from("photographers").select("status").eq("user_id", userId).maybeSingle();
+    if (!ph) {
+      const { error } = await admin.from("photographers").insert({
+        user_id: userId!, name: data.name || prof?.full_name || (data.email.split("@")[0] ?? data.email),
+        document: (prof?.cpf ?? "").replace(/\D/g, ""), phone: prof?.phone ?? null, status: "aprovado",
+      });
+      if (error) throw new Error(error.message);
+    } else if (ph.status !== "aprovado") {
+      await admin.from("photographers").update({ status: "aprovado" }).eq("user_id", userId);
+    }
+    const { error } = await admin.from("album_photographers").upsert({ album_id: data.albumId, user_id: userId!, status: "convidado" }, { onConflict: "album_id,user_id", ignoreDuplicates: true });
+    if (error) throw new Error(error.message);
+    return { ok: true, created };
+  });
+
 
 export const removeAlbumPhotographer = createServerFn({ method: "POST" })
   .middleware([auditedAction("removeAlbumPhotographer")])
