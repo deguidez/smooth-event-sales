@@ -300,6 +300,7 @@ function Checkout() {
         </p>
       </aside>
     </form>
+    </QueueGate>
   );
 }
 
