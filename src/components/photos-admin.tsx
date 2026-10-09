@@ -112,7 +112,7 @@ function AlbumDialog({ album, events, onClose }: { album: any; events: any[]; on
         ...(f.id ? { id: f.id } : {}), event_id: f.event_id, active: !!f.active,
         owner_percent: Number(f.owner_percent), platform_percent: Number(f.platform_percent), photographer_percent: Number(f.photographer_percent),
         photo_price: Number(f.photo_price), video_price: Number(f.video_price),
-        tiers: (f.tiers ?? []).map((t: any) => ({ min_qty: Number(t.min_qty), photo_price: num(t.photo_price), video_price: num(t.video_price) })),
+        tiers: (f.tiers ?? []).map((t: any) => ({ min_qty: Number(t.min_qty), discount_percent: num(t.discount_percent) })),
         pkg_all_photos: num(f.pkg_all_photos), pkg_all_videos: num(f.pkg_all_videos), pkg_all: num(f.pkg_all),
         watermark_photo_url: f.watermark_photo_url ?? null, watermark_video_url: f.watermark_video_url ?? null, owner_sees_total: !!f.owner_sees_total,
       } });
