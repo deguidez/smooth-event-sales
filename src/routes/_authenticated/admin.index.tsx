@@ -21,6 +21,7 @@ import { SalesChart, StatCard, toCsv } from "@/components/dash";
 import { supabase } from "@/integrations/supabase/client";
 import { AdminGate } from "@/components/admin-gate";
 import { createProducerWallet, listUsers, setUserRole, updateProducer, updateUser, adminCreateProducer, deleteProducer, adminCreateUser, deleteUser } from "@/lib/admin.functions";
+import { adminGetPhotographer, adminUpdatePhotographer } from "@/lib/photos.functions";
 import { CouponsAdmin } from "@/components/coupons-admin";
 import { ActivityLogView } from "@/components/activity-log-view";
 import { loadFinancialOrders, loadFinancialSummary } from "@/lib/financial";
@@ -129,7 +130,19 @@ export const Route = createFileRoute("/_authenticated/admin/")({
 function UserDialog({ u, onClose, onSaved }: { u: any; onClose: () => void; onSaved: () => void }) {
   const save = useServerFn(updateUser);
   const del = useServerFn(deleteUser);
+  const loadPh = useServerFn(adminGetPhotographer);
+  const savePh = useServerFn(adminUpdatePhotographer);
   const [busy, setBusy] = useState(false);
+  const { data: phData } = useQuery({ queryKey: ["admin-photographer", u.id], queryFn: () => loadPh({ data: { userId: u.id } }) });
+  const ph = phData?.photographer;
+  const [pf, setPf] = useState<any>(null);
+  const photographer = pf ?? (ph ? {
+    name: ph.name ?? "", document: ph.document ?? "", phone: ph.phone ?? "",
+    asaas_wallet_id: ph.asaas_wallet_id ?? "", status: ph.status ?? "pendente",
+    bank_name: (ph.bank as any)?.bank_name ?? "", agency: (ph.bank as any)?.agency ?? "", account: (ph.bank as any)?.account ?? "",
+    account_type: (ph.bank as any)?.account_type ?? "CONTA_CORRENTE", pix_key: (ph.bank as any)?.pix_key ?? "",
+  } : null);
+  const setP = (k: string) => (e: React.ChangeEvent<HTMLInputElement>) => setPf({ ...(photographer ?? {}), [k]: e.target.value });
   const [f, setF] = useState({
     full_name: u.full_name ?? "", email: u.email ?? "", phone: u.phone ?? "", cpf: u.cpf ?? "",
     birth_date: u.birth_date ?? "", gender: u.gender ?? "", city: u.city ?? "", state: u.state ?? "", password: "",
@@ -145,6 +158,13 @@ function UserDialog({ u, onClose, onSaved }: { u: any; onClose: () => void; onSa
         birth_date: n(f.birth_date), gender: n(f.gender), city: n(f.city), state: n(f.state)?.toUpperCase() ?? null,
         password: f.password ? f.password : undefined, roles: roles as any,
       } });
+      if (photographer) {
+        await savePh({ data: {
+          userId: u.id, name: photographer.name.trim(), document: photographer.document.replace(/\D/g, ""),
+          phone: photographer.phone.trim(), asaas_wallet_id: photographer.asaas_wallet_id.trim(), status: photographer.status,
+          bank: { bank_name: photographer.bank_name.trim(), agency: photographer.agency.trim(), account: photographer.account.trim(), account_type: photographer.account_type, pix_key: photographer.pix_key.trim() },
+        } });
+      }
       toast.success("Usuário atualizado");
       onSaved();
     } catch (e) { toast.error((e as Error).message); } finally { setBusy(false); }
@@ -186,6 +206,32 @@ function UserDialog({ u, onClose, onSaved }: { u: any; onClose: () => void; onSa
               </div>
             ))}
           </div>
+          {photographer && (
+            <div className="sm:col-span-2 space-y-3 rounded-xl border p-3">
+              <div className="flex items-center justify-between">
+                <Label>Dados de fotógrafo</Label>
+                <Select value={photographer.status} onValueChange={(v) => setPf({ ...photographer, status: v })}>
+                  <SelectTrigger className="w-36"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="pendente">Pendente</SelectItem>
+                    <SelectItem value="aprovado">Aprovado</SelectItem>
+                    <SelectItem value="suspenso">Suspenso</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div><Label>Nome</Label><Input value={photographer.name} onChange={setP("name")} /></div>
+                <div><Label>CPF/CNPJ</Label><Input value={photographer.document} onChange={setP("document")} /></div>
+                <div><Label>Telefone</Label><Input value={photographer.phone} onChange={setP("phone")} /></div>
+                <div><Label>Carteira Asaas (walletId)</Label><Input value={photographer.asaas_wallet_id} onChange={setP("asaas_wallet_id")} /></div>
+                <div><Label>Banco</Label><Input value={photographer.bank_name} onChange={setP("bank_name")} /></div>
+                <div><Label>Agência</Label><Input value={photographer.agency} onChange={setP("agency")} /></div>
+                <div><Label>Conta</Label><Input value={photographer.account} onChange={setP("account")} /></div>
+                <div><Label>Tipo de conta</Label><Input value={photographer.account_type} onChange={setP("account_type")} /></div>
+                <div className="sm:col-span-2"><Label>Chave Pix</Label><Input value={photographer.pix_key} onChange={setP("pix_key")} /></div>
+              </div>
+            </div>
+          )}
         </div>
         <div className="flex justify-end gap-2 pt-2">
           <Button variant="outline" className="mr-auto text-destructive" disabled={busy} onClick={remove}>Excluir usuário</Button>
