@@ -467,7 +467,30 @@ export const saveAlbum = createServerFn({ method: "POST" })
     await assertAdmin(context);
     if (Math.abs(data.owner_percent + data.platform_percent + data.photographer_percent - 100) > 0.001) throw new Error("As comissões precisam somar 100%");
     const admin = await getAdmin();
-    const { id, ...row } = data;
+    const { id, new_event, ...row } = data;
+    if (!id && new_event) {
+      // Evento só de fotos (sem venda de inscrições): cria o evento em rascunho
+      // vinculado ao produtor do admin (criado sob demanda se não existir).
+      let { data: prod } = await admin.from("producers").select("id").eq("user_id", context.userId).maybeSingle();
+      if (!prod) {
+        const { data: prof } = await admin.from("profiles").select("full_name, email, cpf").eq("id", context.userId).maybeSingle();
+        const { data: created, error: pErr } = await admin.from("producers").insert({
+          user_id: context.userId, company_name: prof?.full_name || "Plataforma", document: (prof?.cpf || "00000000000").replace(/\D/g, ""),
+          email: prof?.email || "", status: "aprovado",
+        }).select("id").single();
+        if (pErr) throw new Error("Não foi possível criar o organizador: " + pErr.message);
+        prod = created;
+      }
+      const slug = new_event.title.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 60) + "-" + crypto.randomUUID().slice(0, 8);
+      const { data: ev, error: eErr } = await admin.from("events").insert({
+        producer_id: prod.id, title: new_event.title, slug, category: new_event.category,
+        city: new_event.city || null, state: new_event.state ? new_event.state.toUpperCase() : null,
+        starts_at: new Date(new_event.starts_at).toISOString(), status: "rascunho",
+      }).select("id").single();
+      if (eErr) throw new Error("Não foi possível criar o evento: " + eErr.message);
+      row.event_id = ev.id;
+    }
+    if (!row.event_id) throw new Error("Escolha um evento ou crie um novo");
     const q = id ? admin.from("photo_albums").update(row as any).eq("id", id) : admin.from("photo_albums").insert(row as any);
     const { error } = await q;
     if (error) throw new Error(error.code === "23505" ? "Este evento já tem um álbum de fotos" : error.message);
