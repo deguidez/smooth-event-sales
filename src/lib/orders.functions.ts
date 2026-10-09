@@ -11,7 +11,7 @@ import { activeTerms } from "./terms";
 export const getCheckoutInfo = createServerFn({ method: "GET" })
   .middleware([auditedAction("getCheckoutInfo")])
   .inputValidator((d) => z.object({ ticketId: z.string().uuid() }).parse(d))
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
     const admin = await getAdmin();
     const { data: tt } = await admin
       .from("ticket_types")
@@ -19,6 +19,14 @@ export const getCheckoutInfo = createServerFn({ method: "GET" })
       .eq("id", data.ticketId)
       .single();
     if (!tt || tt.events.status !== "publicado" || !tt.active) throw new Error("Inscrição indisponível");
+    const email = (context as any).claims?.email as string | undefined;
+    if (email) {
+      // Registra o início da inscrição para o lembrete de "não finalizou".
+      await admin.from("checkout_starts").upsert(
+        { event_id: tt.events.id, ticket_type_id: tt.id, user_id: context.userId, email },
+        { onConflict: "event_id,user_id", ignoreDuplicates: true },
+      );
+    }
     const { data: producer } = await admin
       .from("producers")
       .select("fee_percent, fee_fixed, asaas_wallet_id, status")

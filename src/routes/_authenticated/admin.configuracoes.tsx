@@ -3,7 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { CheckCircle2, Copy, Database, Globe, Image, KeyRound, Percent, Plug, XCircle } from "lucide-react";
+import { CheckCircle2, Copy, Database, Globe, Image, KeyRound, Percent, Plug, XCircle, Clock } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -63,6 +63,13 @@ function SettingsPage() {
           max_installments: Number(f.max_installments),
           boleto_due_days: Number(f.boleto_due_days),
           card_release_days: Number(f.card_release_days ?? 4),
+          auto_cancel_enabled: f.auto_cancel_enabled ?? true,
+          auto_cancel_minutes: Number(f.auto_cancel_minutes ?? 30),
+          email_cancelled_enabled: f.email_cancelled_enabled ?? true,
+          email_abandoned_enabled: f.email_abandoned_enabled ?? true,
+          abandoned_minutes: Number(f.abandoned_minutes ?? 30),
+          email_event_reminder_enabled: f.email_event_reminder_enabled ?? true,
+          reminder_days_before: Number(f.reminder_days_before ?? 2),
           enable_pix: f.enable_pix,
           enable_boleto: f.enable_boleto,
           enable_card: f.enable_card,
@@ -88,6 +95,7 @@ function SettingsPage() {
           <TabsTrigger value="taxas"><Percent className="mr-1.5 h-4 w-4" /> Taxas e comissões</TabsTrigger>
           <TabsTrigger value="pagamentos"><KeyRound className="mr-1.5 h-4 w-4" /> Pagamentos</TabsTrigger>
           <TabsTrigger value="dominio"><Globe className="mr-1.5 h-4 w-4" /> Domínio e e-mail</TabsTrigger>
+          <TabsTrigger value="automacoes"><Clock className="mr-1.5 h-4 w-4" /> Automações e e-mails</TabsTrigger>
           <TabsTrigger value="imagens"><Image className="mr-1.5 h-4 w-4" /> Página principal</TabsTrigger>
           <TabsTrigger value="banco"><Database className="mr-1.5 h-4 w-4" /> Banco de dados</TabsTrigger>
         </TabsList>
@@ -190,6 +198,30 @@ function SettingsPage() {
               <Button variant="hero" onClick={() => persist()}>Salvar</Button>
             </div>
           </Card>
+        </TabsContent>
+
+        <TabsContent value="automacoes" className="mt-6 space-y-6">
+          <Card title="Cancelamento automático" desc="Inscrição não paga no prazo é cancelada e a vaga volta para o evento.">
+            <div className="space-y-4">
+              <Toggle l="Cancelar inscrições não pagas" v={f.auto_cancel_enabled ?? true} on={(v) => setF({ ...f, auto_cancel_enabled: v })} />
+              <Field l="Cancelar após (minutos sem pagamento)"><Input type="number" min={10} value={f.auto_cancel_minutes ?? 30} onChange={num("auto_cancel_minutes")} /></Field>
+              <Toggle l="Enviar e-mail convidando a se inscrever de novo após o cancelamento" v={f.email_cancelled_enabled ?? true} on={(v) => setF({ ...f, email_cancelled_enabled: v })} />
+            </div>
+          </Card>
+          <Card title="Inscrição não finalizada" desc="Para quem abriu a página de inscrição e não concluiu.">
+            <div className="space-y-4">
+              <Toggle l="Enviar e-mail lembrando de finalizar" v={f.email_abandoned_enabled ?? true} on={(v) => setF({ ...f, email_abandoned_enabled: v })} />
+              <Field l="Enviar após (minutos)"><Input type="number" min={10} value={f.abandoned_minutes ?? 30} onChange={num("abandoned_minutes")} /></Field>
+            </div>
+          </Card>
+          <Card title="Lembrete antes do evento" desc="Envia aos inscritos confirmados o link do comprovante para retirada do kit.">
+            <div className="space-y-4">
+              <Toggle l="Enviar lembrete antes do evento" v={f.email_event_reminder_enabled ?? true} on={(v) => setF({ ...f, email_event_reminder_enabled: v })} />
+              <Field l="Quantos dias antes"><Input type="number" min={1} max={30} value={f.reminder_days_before ?? 2} onChange={num("reminder_days_before")} /></Field>
+            </div>
+          </Card>
+          <p className="text-sm text-muted-foreground">O sistema verifica a cada 5 minutos. Os e-mails só são enviados depois que o domínio de e-mail estiver verificado.</p>
+          <Button variant="hero" onClick={() => persist()}>Salvar automações</Button>
         </TabsContent>
 
         <TabsContent value="dominio" className="mt-6">
