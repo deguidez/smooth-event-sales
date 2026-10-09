@@ -19,11 +19,11 @@ export async function notifyPhotoOrder(orderId: string, kind: Kind) {
   let downloads: { label: string; url: string }[] = [];
   if (kind === "fotos_pagas") {
     const { data: items } = await supabaseAdmin.from("photo_order_items").select("kind, media_items(storage, original_path)").eq("order_id", orderId);
-    const rows = (items ?? []).map((it: any) => it.media_items).filter(Boolean);
+    const rows = (items ?? []).filter((it: any) => it.media_items);
     if (rows.length) {
       const { signMany } = await import("./media-storage.server");
-      const signed = await signMany(rows.map((m: any) => ({ storage: m.storage ?? "cloud", path: m.original_path, kind: "original" as const, isVideo: false })), 7 * 86400, true);
-      downloads = rows.map((m: any, i: number) => ({ label: `Arquivo ${i + 1} (${(items as any[])[i]?.kind === "video" ? "vídeo" : "foto"})`, url: signed[m.original_path] })).filter((d) => d.url);
+      const signed = await signMany(rows.map((it: any) => ({ storage: it.media_items.storage ?? "cloud", path: it.media_items.original_path, kind: "original" as const, isVideo: it.kind === "video" })), 7 * 86400, true);
+      downloads = rows.map((it: any, i: number) => ({ label: `Arquivo ${i + 1} (${it.kind === "video" ? "vídeo" : "foto"})`, url: signed[it.media_items.original_path] })).filter((d) => d.url);
     }
   }
   let status = "enviado";
