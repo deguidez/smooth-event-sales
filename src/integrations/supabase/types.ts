@@ -98,6 +98,38 @@ export type Database = {
         }
         Relationships: []
       }
+      album_photographers: {
+        Row: {
+          album_id: string
+          created_at: string
+          id: string
+          status: string
+          user_id: string
+        }
+        Insert: {
+          album_id: string
+          created_at?: string
+          id?: string
+          status?: string
+          user_id: string
+        }
+        Update: {
+          album_id?: string
+          created_at?: string
+          id?: string
+          status?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "album_photographers_album_id_fkey"
+            columns: ["album_id"]
+            isOneToOne: false
+            referencedRelation: "photo_albums"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       checkout_starts: {
         Row: {
           created_at: string
@@ -511,6 +543,89 @@ export type Database = {
           },
         ]
       }
+      media_faces: {
+        Row: {
+          album_id: string
+          embedding: string
+          id: string
+          media_id: string
+        }
+        Insert: {
+          album_id: string
+          embedding: string
+          id?: string
+          media_id: string
+        }
+        Update: {
+          album_id?: string
+          embedding?: string
+          id?: string
+          media_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "media_faces_album_id_fkey"
+            columns: ["album_id"]
+            isOneToOne: false
+            referencedRelation: "photo_albums"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "media_faces_media_id_fkey"
+            columns: ["media_id"]
+            isOneToOne: false
+            referencedRelation: "media_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      media_items: {
+        Row: {
+          album_id: string
+          created_at: string
+          faces: number
+          height: number | null
+          id: string
+          kind: string
+          original_path: string
+          photographer_id: string
+          preview_path: string
+          width: number | null
+        }
+        Insert: {
+          album_id: string
+          created_at?: string
+          faces?: number
+          height?: number | null
+          id?: string
+          kind?: string
+          original_path: string
+          photographer_id: string
+          preview_path: string
+          width?: number | null
+        }
+        Update: {
+          album_id?: string
+          created_at?: string
+          faces?: number
+          height?: number | null
+          id?: string
+          kind?: string
+          original_path?: string
+          photographer_id?: string
+          preview_path?: string
+          width?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "media_items_album_id_fkey"
+            columns: ["album_id"]
+            isOneToOne: false
+            referencedRelation: "photo_albums"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       orders: {
         Row: {
           accepted_terms: Json
@@ -668,6 +783,238 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      photo_albums: {
+        Row: {
+          active: boolean
+          created_at: string
+          event_id: string
+          id: string
+          owner_percent: number
+          owner_sees_total: boolean
+          photo_price: number
+          photographer_percent: number
+          pkg_all: number | null
+          pkg_all_photos: number | null
+          pkg_all_videos: number | null
+          platform_percent: number
+          tiers: Json
+          video_price: number
+          watermark_photo_url: string | null
+          watermark_video_url: string | null
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          event_id: string
+          id?: string
+          owner_percent?: number
+          owner_sees_total?: boolean
+          photo_price?: number
+          photographer_percent?: number
+          pkg_all?: number | null
+          pkg_all_photos?: number | null
+          pkg_all_videos?: number | null
+          platform_percent?: number
+          tiers?: Json
+          video_price?: number
+          watermark_photo_url?: string | null
+          watermark_video_url?: string | null
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          event_id?: string
+          id?: string
+          owner_percent?: number
+          owner_sees_total?: boolean
+          photo_price?: number
+          photographer_percent?: number
+          pkg_all?: number | null
+          pkg_all_photos?: number | null
+          pkg_all_videos?: number | null
+          platform_percent?: number
+          tiers?: Json
+          video_price?: number
+          watermark_photo_url?: string | null
+          watermark_video_url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "photo_albums_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: true
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      photo_order_items: {
+        Row: {
+          id: string
+          kind: string
+          media_id: string
+          order_id: string
+          photographer_id: string
+          price: number
+        }
+        Insert: {
+          id?: string
+          kind: string
+          media_id: string
+          order_id: string
+          photographer_id: string
+          price: number
+        }
+        Update: {
+          id?: string
+          kind?: string
+          media_id?: string
+          order_id?: string
+          photographer_id?: string
+          price?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "photo_order_items_media_id_fkey"
+            columns: ["media_id"]
+            isOneToOne: false
+            referencedRelation: "media_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "photo_order_items_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "photo_orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      photo_orders: {
+        Row: {
+          album_id: string
+          asaas_payment_id: string | null
+          code: string
+          coupon_code: string | null
+          created_at: string
+          customer_cpf: string
+          customer_email: string
+          customer_name: string
+          customer_phone: string | null
+          discount: number
+          id: string
+          invoice_url: string | null
+          owner_amount: number
+          package: string | null
+          paid_at: string | null
+          payment_method: string
+          photographers_amount: number
+          pix_payload: string | null
+          pix_qr_image: string | null
+          platform_amount: number
+          split: Json
+          status: string
+          subtotal: number
+          total: number
+          user_id: string
+        }
+        Insert: {
+          album_id: string
+          asaas_payment_id?: string | null
+          code?: string
+          coupon_code?: string | null
+          created_at?: string
+          customer_cpf: string
+          customer_email: string
+          customer_name: string
+          customer_phone?: string | null
+          discount?: number
+          id?: string
+          invoice_url?: string | null
+          owner_amount?: number
+          package?: string | null
+          paid_at?: string | null
+          payment_method: string
+          photographers_amount?: number
+          pix_payload?: string | null
+          pix_qr_image?: string | null
+          platform_amount?: number
+          split?: Json
+          status?: string
+          subtotal: number
+          total: number
+          user_id: string
+        }
+        Update: {
+          album_id?: string
+          asaas_payment_id?: string | null
+          code?: string
+          coupon_code?: string | null
+          created_at?: string
+          customer_cpf?: string
+          customer_email?: string
+          customer_name?: string
+          customer_phone?: string | null
+          discount?: number
+          id?: string
+          invoice_url?: string | null
+          owner_amount?: number
+          package?: string | null
+          paid_at?: string | null
+          payment_method?: string
+          photographers_amount?: number
+          pix_payload?: string | null
+          pix_qr_image?: string | null
+          platform_amount?: number
+          split?: Json
+          status?: string
+          subtotal?: number
+          total?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "photo_orders_album_id_fkey"
+            columns: ["album_id"]
+            isOneToOne: false
+            referencedRelation: "photo_albums"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      photographers: {
+        Row: {
+          asaas_wallet_id: string | null
+          bank: Json
+          created_at: string
+          document: string
+          name: string
+          phone: string | null
+          status: string
+          user_id: string
+        }
+        Insert: {
+          asaas_wallet_id?: string | null
+          bank?: Json
+          created_at?: string
+          document: string
+          name: string
+          phone?: string | null
+          status?: string
+          user_id: string
+        }
+        Update: {
+          asaas_wallet_id?: string | null
+          bank?: Json
+          created_at?: string
+          document?: string
+          name?: string
+          phone?: string | null
+          status?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       platform_settings: {
         Row: {
@@ -1258,6 +1605,18 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      match_faces: {
+        Args: {
+          _album_id: string
+          _embedding: string
+          _limit?: number
+          _threshold?: number
+        }
+        Returns: {
+          distance: number
+          media_id: string
+        }[]
       }
       my_producer_id: { Args: never; Returns: string }
       queue_enter: { Args: { _event_id: string }; Returns: Json }
