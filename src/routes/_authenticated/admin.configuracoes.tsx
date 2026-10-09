@@ -241,8 +241,11 @@ function TestButton() {
 
 function WebhookCard({ url, configured }: { url: string; configured: boolean }) {
   const reg = useServerFn(registerAsaasWebhook);
+  const save = useServerFn(saveAdminSettings);
   const qc = useQueryClient();
   const [busy, setBusy] = useState(false);
+  const [token, setToken] = useState("");
+  const [savingToken, setSavingToken] = useState(false);
   return (
     <Card title="Confirmação automática de pagamentos (webhook)" desc="O Asaas avisa este site sempre que um pagamento é confirmado, vence ou é estornado.">
       <div className="flex items-center gap-2">
@@ -253,22 +256,52 @@ function WebhookCard({ url, configured }: { url: string; configured: boolean }) 
         <Button variant="outline" size="icon" onClick={() => { navigator.clipboard.writeText(url); toast.success("Copiado"); }}><Copy /></Button>
       </div>
       <p className="mt-2 text-xs text-muted-foreground">Use o endereço do site publicado. No modo de pré-visualização, o status também é verificado automaticamente na página do pedido.</p>
-      <Button
-        className="mt-4"
-        variant="ink"
-        disabled={busy}
-        onClick={async () => {
-          setBusy(true);
-          const r = await reg().catch((e) => ({ ok: false as const, error: e.message }));
-          setBusy(false);
-          if (r.ok) {
-            toast.success("Webhook registrado no Asaas");
-            qc.invalidateQueries({ queryKey: ["admin-settings"] });
-          } else toast.error(r.error);
-        }}
-      >
-        {busy ? "Registrando..." : "Registrar webhook no Asaas"}
-      </Button>
+      <Field l="Token de segurança do webhook" c="mt-4">
+        <Input
+          type="password"
+          value={token}
+          onChange={(e) => setToken(e.target.value)}
+          placeholder={configured ? "Já existe um token salvo — preencha só para trocar" : "Cole aqui o mesmo token configurado no Asaas"}
+          autoComplete="off"
+        />
+      </Field>
+      <p className="mt-1 text-xs text-muted-foreground">Este token precisa ser exatamente igual ao configurado no painel do Asaas (Webhooks → Token de autenticação). Sem ele, o site recusa os avisos de pagamento e as autorizações de saque.</p>
+      <div className="mt-4 flex flex-wrap gap-2">
+        <Button
+          variant="hero"
+          disabled={savingToken || token.trim().length < 8}
+          onClick={async () => {
+            setSavingToken(true);
+            try {
+              await save({ data: { asaas_webhook_token: token.trim() } });
+              toast.success("Token salvo");
+              setToken("");
+              qc.invalidateQueries({ queryKey: ["admin-settings"] });
+            } catch (e) {
+              toast.error((e as Error).message);
+            } finally {
+              setSavingToken(false);
+            }
+          }}
+        >
+          {savingToken ? "Salvando..." : "Salvar token"}
+        </Button>
+        <Button
+          variant="ink"
+          disabled={busy}
+          onClick={async () => {
+            setBusy(true);
+            const r = await reg().catch((e) => ({ ok: false as const, error: e.message }));
+            setBusy(false);
+            if (r.ok) {
+              toast.success("Webhook registrado no Asaas");
+              qc.invalidateQueries({ queryKey: ["admin-settings"] });
+            } else toast.error(r.error);
+          }}
+        >
+          {busy ? "Registrando..." : "Registrar webhook no Asaas"}
+        </Button>
+      </div>
     </Card>
   );
 }
