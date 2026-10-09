@@ -58,8 +58,10 @@ export async function handleAsaasWebhook(request: Request) {
   };
   const asaasStatus = eventMap[body.event] ?? payment.status;
   if (!asaasStatus) return Response.json({ ignored: true });
-  await applyOrderStatus(orderId, mapAsaasStatus(asaasStatus), {
-    receipt_url: payment.transactionReceiptUrl ?? null,
-  });
+  for (const id of orderIds) {
+    await applyOrderStatus(id, mapAsaasStatus(asaasStatus), {
+      receipt_url: payment.transactionReceiptUrl ?? null,
+    });
+  }
   return Response.json({ received: true });
 }
