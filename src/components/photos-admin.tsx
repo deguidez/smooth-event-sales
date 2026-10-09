@@ -14,7 +14,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { toCsv } from "@/components/dash";
 import { brl, fmtDate } from "@/lib/format";
 import {
-  adminAlbumDashboard, adminPhotoOrderDownloads, adminPhotoOverview, checkVpsStorage, inviteAlbumPhotographer,
+  adminAlbumDashboard, adminPhotoOrderDownloads, adminPhotoOverview, checkVpsStorage, inviteAlbumPhotographer, inviteAlbumPhotographerByEmail,
   removeAlbumPhotographer, saveAlbum, setPhotographerStatus,
 } from "@/lib/photos.functions";
 
