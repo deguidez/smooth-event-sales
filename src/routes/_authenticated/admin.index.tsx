@@ -258,6 +258,9 @@ function UserDialog({ u, onClose, onSaved }: { u: any; onClose: () => void; onSa
                 <div><Label>Tipo de conta</Label><Input value={photographer.account_type} onChange={setP("account_type")} /></div>
                 <div className="sm:col-span-2"><Label>Chave Pix</Label><Input value={photographer.pix_key} onChange={setP("pix_key")} /></div>
               </div>
+              <Button type="button" variant="outline" className="text-destructive" disabled={busy} onClick={removePhotographer}>
+                Deixar de ser fotógrafo
+              </Button>
             </div>
           )}
         </div>
