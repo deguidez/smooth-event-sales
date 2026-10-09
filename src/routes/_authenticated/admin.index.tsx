@@ -119,7 +119,7 @@ function Users() {
 import { brl, fmtDate, METHOD_LABEL, ORDER_STATUS } from "@/lib/format";
 
 export const Route = createFileRoute("/_authenticated/admin/")({
-  validateSearch: (search: Record<string, unknown>) => ({ tab: typeof search.tab === "string" ? search.tab : undefined }),
+  validateSearch: (search: Record<string, unknown>): { tab?: string } => ({ tab: typeof search['tab'] === "string" ? search['tab'] : undefined }),
   head: () => ({ meta: [{ title: "Super admin — Inscreva" }, { name: "description", content: "Administre usuários, eventos e o financeiro da Inscreva." }, { property: "og:title", content: "Super admin — Inscreva" }, { property: "og:description", content: "Administre usuários, eventos e o financeiro da Inscreva." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary_large_image" }, { name: "robots", content: "noindex" }] }),
   component: AdminPage,
 });
