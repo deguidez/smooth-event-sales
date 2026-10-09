@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { getRequest } from "@tanstack/react-start/server";
 import { z } from "zod";
 import { auditedAction } from "./activity-middleware";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { asaasFetch, getAdmin, loadSettings } from "./asaas.server";
 import { cartTotal, splitAmounts, type AlbumPricing } from "./photo-pricing";
 
@@ -46,6 +47,17 @@ export const getPhotographerMe = createServerFn({ method: "GET" })
     const { data: me } = await admin.from("photographers").select("*").eq("user_id", context.userId).maybeSingle();
     const { data: invites } = await admin.from("album_photographers").select("id, status, album_id, photo_albums(id, active, events(title, starts_at, city, state))").eq("user_id", context.userId).order("created_at", { ascending: false });
     return { me, invites: invites ?? [] };
+  });
+
+export const getPhotographerMenuAccess = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const admin = await getAdmin();
+    const [{ data: ph }, { data: inv }] = await Promise.all([
+      admin.from("photographers").select("id").eq("user_id", context.userId).limit(1),
+      admin.from("album_photographers").select("id").eq("user_id", context.userId).limit(1),
+    ]);
+    return { allowed: !!ph?.length || !!inv?.length };
   });
 
 export const savePhotographer = createServerFn({ method: "POST" })
