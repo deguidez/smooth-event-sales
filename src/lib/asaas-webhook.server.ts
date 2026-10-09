@@ -38,6 +38,15 @@ export async function handleAsaasWebhook(request: Request) {
   }
   const payment = body?.payment;
   const ref = typeof payment?.externalReference === "string" ? payment.externalReference : "";
+  if (/^photo_[0-9a-f-]{36}$/i.test(ref)) {
+    const map: Record<string, string> = { PAYMENT_CONFIRMED: "CONFIRMED", PAYMENT_RECEIVED: "RECEIVED", PAYMENT_OVERDUE: "OVERDUE", PAYMENT_REFUNDED: "REFUNDED", PAYMENT_DELETED: "DELETED", PAYMENT_CHARGEBACK_REQUESTED: "CHARGEBACK_REQUESTED" };
+    const st = map[body.event] ?? payment.status;
+    if (st) {
+      const { applyPhotoOrderStatus } = await import("@/lib/photos.functions");
+      await applyPhotoOrderStatus(ref.slice(6), mapAsaasStatus(st));
+    }
+    return Response.json({ received: true });
+  }
   const groupId = /^grp_[0-9a-f-]{36}$/i.test(ref) ? ref.slice(4) : null;
   const orderId = /^[0-9a-f-]{36}$/i.test(ref) ? ref : null;
   if (!orderId && !groupId) return Response.json({ ignored: true });

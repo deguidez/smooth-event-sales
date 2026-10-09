@@ -55,6 +55,9 @@ export function SiteHeader() {
           <Link to="/eventos" className="text-muted-foreground hover:text-foreground" activeProps={{ className: "text-foreground" }}>
             Eventos
           </Link>
+          <Link to="/fotos" className="text-muted-foreground hover:text-foreground" activeProps={{ className: "text-foreground" }}>
+            Fotos
+          </Link>
         </nav>
         {user ? (
           <DropdownMenu>
@@ -67,6 +70,12 @@ export function SiteHeader() {
             <DropdownMenuContent align="end" className="w-56">
               <DropdownMenuItem onClick={() => navigate({ to: "/minha-conta" })}>
                 <Ticket /> Área do atleta
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => navigate({ to: "/minhas-fotos" })}>
+                <Ticket /> Minhas fotos
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => navigate({ to: "/fotografo" })}>
+                <Ticket /> Área do fotógrafo
               </DropdownMenuItem>
               <TeamMenuItem onGo={() => navigate({ to: "/equipe" })} userId={user.id} />
               {isProducer && (

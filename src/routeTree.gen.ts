@@ -13,10 +13,14 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedEquipeRouteImport } from './routes/_authenticated/equipe'
+import { Route as AuthenticatedFotografoRouteImport } from './routes/_authenticated/fotografo'
 import { Route as AuthenticatedMinhaContaRouteImport } from './routes/_authenticated/minha-conta'
+import { Route as AuthenticatedMinhasFotosRouteImport } from './routes/_authenticated/minhas-fotos'
 import { Route as EntregaKitTokenRouteImport } from './routes/entrega-kit.$token'
 import { Route as EventosIndexRouteImport } from './routes/eventos.index'
 import { Route as EventosSlugRouteImport } from './routes/eventos.$slug'
+import { Route as FotosIndexRouteImport } from './routes/fotos.index'
+import { Route as FotosAlbumIdRouteImport } from './routes/fotos.$albumId'
 import { Route as WebhookAsaasRouteImport } from './routes/webhook.asaas'
 import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin.index'
 import { Route as AuthenticatedAdminConfiguracoesRouteImport } from './routes/_authenticated/admin.configuracoes'
@@ -48,11 +52,22 @@ const AuthenticatedEquipeRoute = AuthenticatedEquipeRouteImport.update({
   path: '/equipe',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedFotografoRoute = AuthenticatedFotografoRouteImport.update({
+  id: '/fotografo',
+  path: '/fotografo',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedMinhaContaRoute = AuthenticatedMinhaContaRouteImport.update({
   id: '/minha-conta',
   path: '/minha-conta',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedMinhasFotosRoute =
+  AuthenticatedMinhasFotosRouteImport.update({
+    id: '/minhas-fotos',
+    path: '/minhas-fotos',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const EntregaKitTokenRoute = EntregaKitTokenRouteImport.update({
   id: '/entrega-kit/$token',
   path: '/entrega-kit/$token',
@@ -66,6 +81,16 @@ const EventosIndexRoute = EventosIndexRouteImport.update({
 const EventosSlugRoute = EventosSlugRouteImport.update({
   id: '/eventos/$slug',
   path: '/eventos/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FotosIndexRoute = FotosIndexRouteImport.update({
+  id: '/fotos/',
+  path: '/fotos/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FotosAlbumIdRoute = FotosAlbumIdRouteImport.update({
+  id: '/fotos/$albumId',
+  path: '/fotos/$albumId',
   getParentRoute: () => rootRouteImport,
 } as any)
 const WebhookAsaasRoute = WebhookAsaasRouteImport.update({
@@ -134,11 +159,15 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/equipe': typeof AuthenticatedEquipeRoute
+  '/fotografo': typeof AuthenticatedFotografoRoute
   '/minha-conta': typeof AuthenticatedMinhaContaRoute
+  '/minhas-fotos': typeof AuthenticatedMinhasFotosRoute
   '/entrega-kit/$token': typeof EntregaKitTokenRoute
   '/eventos/$slug': typeof EventosSlugRoute
+  '/fotos/$albumId': typeof FotosAlbumIdRoute
   '/webhook/asaas': typeof WebhookAsaasRoute
   '/eventos/': typeof EventosIndexRoute
+  '/fotos/': typeof FotosIndexRoute
   '/admin/configuracoes': typeof AuthenticatedAdminConfiguracoesRoute
   '/admin/email': typeof AuthenticatedAdminEmailRoute
   '/checkout/$ticketId': typeof AuthenticatedCheckoutTicketIdRoute
@@ -154,11 +183,15 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/equipe': typeof AuthenticatedEquipeRoute
+  '/fotografo': typeof AuthenticatedFotografoRoute
   '/minha-conta': typeof AuthenticatedMinhaContaRoute
+  '/minhas-fotos': typeof AuthenticatedMinhasFotosRoute
   '/entrega-kit/$token': typeof EntregaKitTokenRoute
   '/eventos/$slug': typeof EventosSlugRoute
+  '/fotos/$albumId': typeof FotosAlbumIdRoute
   '/webhook/asaas': typeof WebhookAsaasRoute
   '/eventos': typeof EventosIndexRoute
+  '/fotos': typeof FotosIndexRoute
   '/admin/configuracoes': typeof AuthenticatedAdminConfiguracoesRoute
   '/admin/email': typeof AuthenticatedAdminEmailRoute
   '/checkout/$ticketId': typeof AuthenticatedCheckoutTicketIdRoute
@@ -176,11 +209,15 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
   '/_authenticated/equipe': typeof AuthenticatedEquipeRoute
+  '/_authenticated/fotografo': typeof AuthenticatedFotografoRoute
   '/_authenticated/minha-conta': typeof AuthenticatedMinhaContaRoute
+  '/_authenticated/minhas-fotos': typeof AuthenticatedMinhasFotosRoute
   '/entrega-kit/$token': typeof EntregaKitTokenRoute
   '/eventos/$slug': typeof EventosSlugRoute
+  '/fotos/$albumId': typeof FotosAlbumIdRoute
   '/webhook/asaas': typeof WebhookAsaasRoute
   '/eventos/': typeof EventosIndexRoute
+  '/fotos/': typeof FotosIndexRoute
   '/_authenticated/admin/configuracoes': typeof AuthenticatedAdminConfiguracoesRoute
   '/_authenticated/admin/email': typeof AuthenticatedAdminEmailRoute
   '/_authenticated/checkout/$ticketId': typeof AuthenticatedCheckoutTicketIdRoute
@@ -198,11 +235,15 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/equipe'
+    | '/fotografo'
     | '/minha-conta'
+    | '/minhas-fotos'
     | '/entrega-kit/$token'
     | '/eventos/$slug'
+    | '/fotos/$albumId'
     | '/webhook/asaas'
     | '/eventos/'
+    | '/fotos/'
     | '/admin/configuracoes'
     | '/admin/email'
     | '/checkout/$ticketId'
@@ -218,11 +259,15 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/equipe'
+    | '/fotografo'
     | '/minha-conta'
+    | '/minhas-fotos'
     | '/entrega-kit/$token'
     | '/eventos/$slug'
+    | '/fotos/$albumId'
     | '/webhook/asaas'
     | '/eventos'
+    | '/fotos'
     | '/admin/configuracoes'
     | '/admin/email'
     | '/checkout/$ticketId'
@@ -239,11 +284,15 @@ export interface FileRouteTypes {
     | '/_authenticated'
     | '/auth'
     | '/_authenticated/equipe'
+    | '/_authenticated/fotografo'
     | '/_authenticated/minha-conta'
+    | '/_authenticated/minhas-fotos'
     | '/entrega-kit/$token'
     | '/eventos/$slug'
+    | '/fotos/$albumId'
     | '/webhook/asaas'
     | '/eventos/'
+    | '/fotos/'
     | '/_authenticated/admin/configuracoes'
     | '/_authenticated/admin/email'
     | '/_authenticated/checkout/$ticketId'
@@ -262,8 +311,10 @@ export interface RootRouteChildren {
   AuthRoute: typeof AuthRoute
   EntregaKitTokenRoute: typeof EntregaKitTokenRoute
   EventosSlugRoute: typeof EventosSlugRoute
+  FotosAlbumIdRoute: typeof FotosAlbumIdRoute
   WebhookAsaasRoute: typeof WebhookAsaasRoute
   EventosIndexRoute: typeof EventosIndexRoute
+  FotosIndexRoute: typeof FotosIndexRoute
   ApiPublicAsaasWebhookRoute: typeof ApiPublicAsaasWebhookRoute
   ApiPublicCronAutomationsRoute: typeof ApiPublicCronAutomationsRoute
   LovableEmailTransactionalPreviewRoute: typeof LovableEmailTransactionalPreviewRoute
@@ -299,11 +350,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedEquipeRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/fotografo': {
+      id: '/_authenticated/fotografo'
+      path: '/fotografo'
+      fullPath: '/fotografo'
+      preLoaderRoute: typeof AuthenticatedFotografoRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/minha-conta': {
       id: '/_authenticated/minha-conta'
       path: '/minha-conta'
       fullPath: '/minha-conta'
       preLoaderRoute: typeof AuthenticatedMinhaContaRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/minhas-fotos': {
+      id: '/_authenticated/minhas-fotos'
+      path: '/minhas-fotos'
+      fullPath: '/minhas-fotos'
+      preLoaderRoute: typeof AuthenticatedMinhasFotosRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/entrega-kit/$token': {
@@ -325,6 +390,20 @@ declare module '@tanstack/react-router' {
       path: '/eventos/$slug'
       fullPath: '/eventos/$slug'
       preLoaderRoute: typeof EventosSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/fotos/': {
+      id: '/fotos/'
+      path: '/fotos'
+      fullPath: '/fotos/'
+      preLoaderRoute: typeof FotosIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/fotos/$albumId': {
+      id: '/fotos/$albumId'
+      path: '/fotos/$albumId'
+      fullPath: '/fotos/$albumId'
+      preLoaderRoute: typeof FotosAlbumIdRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/webhook/asaas': {
@@ -409,7 +488,9 @@ declare module '@tanstack/react-router' {
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedEquipeRoute: typeof AuthenticatedEquipeRoute
+  AuthenticatedFotografoRoute: typeof AuthenticatedFotografoRoute
   AuthenticatedMinhaContaRoute: typeof AuthenticatedMinhaContaRoute
+  AuthenticatedMinhasFotosRoute: typeof AuthenticatedMinhasFotosRoute
   AuthenticatedAdminConfiguracoesRoute: typeof AuthenticatedAdminConfiguracoesRoute
   AuthenticatedAdminEmailRoute: typeof AuthenticatedAdminEmailRoute
   AuthenticatedCheckoutTicketIdRoute: typeof AuthenticatedCheckoutTicketIdRoute
@@ -421,7 +502,9 @@ interface AuthenticatedRouteRouteChildren {
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedEquipeRoute: AuthenticatedEquipeRoute,
+  AuthenticatedFotografoRoute: AuthenticatedFotografoRoute,
   AuthenticatedMinhaContaRoute: AuthenticatedMinhaContaRoute,
+  AuthenticatedMinhasFotosRoute: AuthenticatedMinhasFotosRoute,
   AuthenticatedAdminConfiguracoesRoute: AuthenticatedAdminConfiguracoesRoute,
   AuthenticatedAdminEmailRoute: AuthenticatedAdminEmailRoute,
   AuthenticatedCheckoutTicketIdRoute: AuthenticatedCheckoutTicketIdRoute,
@@ -440,8 +523,10 @@ const rootRouteChildren: RootRouteChildren = {
   AuthRoute: AuthRoute,
   EntregaKitTokenRoute: EntregaKitTokenRoute,
   EventosSlugRoute: EventosSlugRoute,
+  FotosAlbumIdRoute: FotosAlbumIdRoute,
   WebhookAsaasRoute: WebhookAsaasRoute,
   EventosIndexRoute: EventosIndexRoute,
+  FotosIndexRoute: FotosIndexRoute,
   ApiPublicAsaasWebhookRoute: ApiPublicAsaasWebhookRoute,
   ApiPublicCronAutomationsRoute: ApiPublicCronAutomationsRoute,
   LovableEmailTransactionalPreviewRoute: LovableEmailTransactionalPreviewRoute,

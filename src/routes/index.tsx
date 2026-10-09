@@ -5,6 +5,7 @@ import { ArrowRight, CreditCard, QrCode, Receipt, Search, Wallet } from "lucide-
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { EventCard } from "@/components/event-card";
+import { AlbumGrid } from "@/components/album-grid";
 import { getBranding, listPublicEvents } from "@/lib/public.functions";
 import { HOME_IMAGES } from "@/lib/home-images";
 
@@ -105,6 +106,17 @@ function Home() {
             {events.slice(0, 8).map((e) => <EventCard key={e.id} e={e as any} />)}
           </div>
         )}
+      </section>
+
+      <section className="mx-auto mt-24 max-w-7xl px-4">
+        <div className="mb-6 flex items-end justify-between gap-4">
+          <div>
+            <h2 className="text-3xl font-extrabold">Fotos dos eventos</h2>
+            <p className="text-muted-foreground">Tire uma selfie e encontre suas fotos em segundos.</p>
+          </div>
+          <Button variant="outline" asChild><Link to="/fotos">Ver todas <ArrowRight /></Link></Button>
+        </div>
+        <AlbumGrid limit={3} />
       </section>
 
       <section className="mx-auto mt-24 max-w-7xl px-4">

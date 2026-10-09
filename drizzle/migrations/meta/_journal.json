@@ -183,6 +183,13 @@
       "when": 1791511192996,
       "tag": "0025_kit_delivery",
       "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "7",
+      "when": 1791512486669,
+      "tag": "0026_photo_sales_base",
+      "breakpoints": true
     }
   ]
 }
