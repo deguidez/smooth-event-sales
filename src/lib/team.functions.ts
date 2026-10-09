@@ -172,7 +172,7 @@ export const createTeamOrders = createServerFn({ method: "POST" })
     const admin = await getAdmin();
     const s = await loadSettings();
     const { data: tt } = await admin.from("ticket_types")
-      .select("*, events!inner(id, title, status, producer_id, shirt_enabled, shirt_sizes, fee_percent, fee_fixed, custom_fields, terms, registration_ends_at, registrations_open_at, registration_limit, queue_enabled)")
+      .select("*, events!inner(id, title, status, producer_id, shirt_enabled, shirt_sizes, fee_percent, fee_fixed, custom_fields, terms, registration_ends_at, registrations_open_at, registration_limit, queue_enabled, allow_third_party_free)")
       .eq("id", data.ticketId).single();
     if (!tt || tt.events.status !== "publicado" || !tt.active) throw new Error("Inscrição indisponível");
     const ev: any = tt.events;
@@ -196,10 +196,11 @@ export const createTeamOrders = createServerFn({ method: "POST" })
     const { data: mem } = await admin.from("team_members").select("athlete_id").eq("manager_id", context.userId).eq("status", "aceito").in("athlete_id", ids);
     if ((mem ?? []).length !== ids.length) throw new Error("Algum atleta ainda não aceitou participar da equipe");
     const { data: profs } = await admin.from("profiles").select("*").in("id", ids);
-    const { data: dup } = await admin.from("orders").select("user_id").eq("event_id", ev.id).in("status", ["pago", "pendente"]).in("user_id", ids);
+    const cpfs = (profs ?? []).map((p) => p.cpf).filter(Boolean) as string[];
+    const { data: dup } = cpfs.length ? await admin.from("orders").select("participant_cpf").eq("event_id", ev.id).in("status", ["pago", "pendente"]).in("participant_cpf", cpfs) : { data: [] as any[] };
     if (dup?.length) {
-      const n = (profs ?? []).find((p) => p.id === dup[0]!.user_id)?.full_name;
-      throw new Error(`${n ?? "Um atleta"} já tem inscrição neste evento`);
+      const n = (profs ?? []).find((p) => p.cpf === dup[0]!.participant_cpf)?.full_name;
+      throw new Error(`${n ?? "Um atleta"} já tem inscrição neste evento (um CPF por evento)`);
     }
     const { count: reserved } = await admin.from("orders").select("id", { count: "exact", head: true }).eq("ticket_type_id", tt.id).in("status", ["pago", "pendente"]);
     if ((reserved ?? 0) + ids.length > tt.quantity) throw new Error(`Restam só ${Math.max(0, tt.quantity - (reserved ?? 0))} vagas neste lote`);
@@ -233,6 +234,7 @@ export const createTeamOrders = createServerFn({ method: "POST" })
     });
 
     if (price <= 0) {
+      if (!ev.allow_third_party_free) throw new Error("Este evento gratuito não permite inscrição feita por terceiros");
       const { data: ins, error } = await admin.from("orders").insert(rows.map((r) => ({ ...r, status: "pendente" as const }))).select("id");
       if (error) throw new Error(error.message);
       for (const o of ins ?? []) await applyOrderStatus(o.id, "pago");
@@ -391,4 +393,21 @@ export const setTeamManagerStatus = createServerFn({ method: "POST" })
     const admin = await getAdmin();
     await admin.from("team_managers").update({ status: data.status }).eq("user_id", data.userId);
     return { ok: true };
+  });
+
+export const createTeamManager = createServerFn({ method: "POST" })
+  .middleware([auditedAction("createTeamManager")])
+  .inputValidator((d) => z.object({ identifier: z.string().trim().min(3).max(200), teamName: z.string().trim().min(2).max(80) }).parse(d))
+  .handler(async ({ data, context }) => {
+    if (!(await isSuper(context))) throw new Error("Acesso restrito ao super admin");
+    const admin = await getAdmin();
+    const digits = data.identifier.replace(/\D/g, "");
+    const q = admin.from("profiles").select("id, full_name");
+    const { data: p } = data.identifier.includes("@")
+      ? await q.ilike("email", data.identifier).maybeSingle()
+      : await q.eq("cpf", digits).maybeSingle();
+    if (!p) throw new Error("Nenhum usuário cadastrado com esse e-mail ou CPF");
+    const { error } = await admin.from("team_managers").upsert({ user_id: p.id, team_name: data.teamName, status: "aprovado" }, { onConflict: "user_id" });
+    if (error) throw new Error(error.message);
+    return { name: p.full_name ?? "Usuário" };
   });
