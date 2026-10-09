@@ -24,3 +24,4 @@
 - [x] Upload de capa do evento + documentos (PDF/link: regulamento, resultado)
 - [x] Kit com camisa + produtos extras com foto no checkout
 - [x] Enviar fotos/vídeos ao cliente assim que pagar: e-mail "fotos_pagas" inclui links de download direto dos originais (sem marca d'água), válidos por 7 dias
+- [x] Carteira Asaas opcional no cadastro do fotógrafo
