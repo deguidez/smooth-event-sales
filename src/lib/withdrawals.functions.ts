@@ -86,6 +86,7 @@ export const getMyFinance = createServerFn({ method: "GET" })
   .handler(async ({ context }) => {
     const p = await myProducer(context.userId);
     const a = await admin();
+    await reconcileProcessing("withdrawals", { column: "producer_id", value: p.id });
     const [balance, bank, list] = await Promise.all([
       computeBalance(p.id),
       a.from("producer_bank_accounts").select("*").eq("producer_id", p.id).maybeSingle(),
@@ -210,6 +211,7 @@ export const getAdminFinance = createServerFn({ method: "GET" })
   .handler(async ({ context }) => {
     await assertSuper(context);
     const a = await admin();
+    await reconcileProcessing("platform_withdrawals", { column: "user_id", value: context.userId });
     const [balance, bank, list] = await Promise.all([
       computePlatformBalance(),
       a.from("admin_bank_accounts").select("*").eq("user_id", context.userId).maybeSingle(),
@@ -322,6 +324,7 @@ export const listWithdrawals = createServerFn({ method: "GET" })
   .handler(async ({ context }) => {
     await assertSuper(context);
     const a = await admin();
+    await reconcileProcessing("withdrawals");
     const { data } = await a.from("withdrawals").select("id, amount, status, bank, created_at, confirmed_at, processed_at, error, asaas_transfer_id, producer_id, producers(company_name, email)")
       .neq("status", "aguardando_codigo").neq("status", "cancelado").order("created_at", { ascending: false }).limit(200);
     const { data: secrets } = await a.from("producer_secrets").select("producer_id, asaas_api_key");
