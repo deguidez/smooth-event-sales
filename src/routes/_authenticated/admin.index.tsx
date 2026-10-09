@@ -206,6 +206,32 @@ function UserDialog({ u, onClose, onSaved }: { u: any; onClose: () => void; onSa
               </div>
             ))}
           </div>
+          {photographer && (
+            <div className="sm:col-span-2 space-y-3 rounded-xl border p-3">
+              <div className="flex items-center justify-between">
+                <Label>Dados de fotógrafo</Label>
+                <Select value={photographer.status} onValueChange={(v) => setPf({ ...photographer, status: v })}>
+                  <SelectTrigger className="w-36"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="pendente">Pendente</SelectItem>
+                    <SelectItem value="aprovado">Aprovado</SelectItem>
+                    <SelectItem value="suspenso">Suspenso</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div><Label>Nome</Label><Input value={photographer.name} onChange={setP("name")} /></div>
+                <div><Label>CPF/CNPJ</Label><Input value={photographer.document} onChange={setP("document")} /></div>
+                <div><Label>Telefone</Label><Input value={photographer.phone} onChange={setP("phone")} /></div>
+                <div><Label>Carteira Asaas (walletId)</Label><Input value={photographer.asaas_wallet_id} onChange={setP("asaas_wallet_id")} /></div>
+                <div><Label>Banco</Label><Input value={photographer.bank_name} onChange={setP("bank_name")} /></div>
+                <div><Label>Agência</Label><Input value={photographer.agency} onChange={setP("agency")} /></div>
+                <div><Label>Conta</Label><Input value={photographer.account} onChange={setP("account")} /></div>
+                <div><Label>Tipo de conta</Label><Input value={photographer.account_type} onChange={setP("account_type")} /></div>
+                <div className="sm:col-span-2"><Label>Chave Pix</Label><Input value={photographer.pix_key} onChange={setP("pix_key")} /></div>
+              </div>
+            </div>
+          )}
         </div>
         <div className="flex justify-end gap-2 pt-2">
           <Button variant="outline" className="mr-auto text-destructive" disabled={busy} onClick={remove}>Excluir usuário</Button>
