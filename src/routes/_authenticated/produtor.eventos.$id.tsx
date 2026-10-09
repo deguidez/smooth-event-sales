@@ -25,7 +25,7 @@ import { formatAnswer, parseFields } from "@/lib/custom-fields";
 import { useAuth } from "@/hooks/use-auth";
 
 export const Route = createFileRoute("/_authenticated/produtor/eventos/$id")({
-  validateSearch: (search: Record<string, unknown>): { tab?: string } => ({ tab: typeof search['tab'] === "string" ? search['tab'] : undefined }),
+  validateSearch: (search: Record<string, unknown>): { tab?: string } => typeof search['tab'] === "string" ? { tab: search['tab'] } : {},
   head: () => ({ meta: [{ title: "Gerenciar evento — Inscreva" }, { name: "description", content: "Gerencie inscrições, kits e informações do evento na Inscreva." }, { property: "og:title", content: "Gerenciar evento — Inscreva" }, { property: "og:description", content: "Gerencie inscrições, kits e informações do evento na Inscreva." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary_large_image" }, { name: "robots", content: "noindex" }] }),
   component: ManageEvent,
 });
