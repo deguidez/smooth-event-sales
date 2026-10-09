@@ -151,7 +151,7 @@ function OrderCard({ o, fields, delivery, token, operator, onDone }: any) {
       </div>
       {answers.length > 0 && (
         <dl className="mt-3 grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-sm">
-          {answers.map(([k, v]: any) => <><dt key={`k${k}`} className="text-muted-foreground">{k}</dt><dd key={`v${k}`}>{v}</dd></>)}
+          {answers.flatMap(([k, v]: any) => [<dt key={`k${k}`} className="text-muted-foreground">{k}</dt>, <dd key={`v${k}`}>{v}</dd>])}
         </dl>
       )}
 
