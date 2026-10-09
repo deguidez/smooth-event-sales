@@ -45,7 +45,7 @@ function Checkout() {
   const [method, setMethod] = useState<"PIX" | "BOLETO" | "CREDIT_CARD">("PIX");
   const [installments, setInstallments] = useState(1);
   const [busy, setBusy] = useState(false);
-  const [f, setF] = useState({ name: "", email: "", cpf: "", phone: "", birth_date: "", gender: "", shirt_size: "", team: "" });
+  const [f, setF] = useState({ name: "", email: "", cpf: "", phone: "", birth_date: "", gender: "", shirt_size: "", team: "", emergency_contact_name: "", emergency_contact_phone: "", is_pcd: false, pcd_description: "" });
   const [answers, setAnswers] = useState<Record<string, any>>({});
   const [accepted, setAccepted] = useState<string[]>([]);
   const applyCoupon = useServerFn(checkCoupon);
@@ -69,6 +69,10 @@ function Checkout() {
           phone: data?.phone ?? "",
           birth_date: data?.birth_date ?? "",
           gender: data?.gender ?? "",
+          emergency_contact_name: data?.emergency_contact_name ?? "",
+          emergency_contact_phone: data?.emergency_contact_phone ?? "",
+          is_pcd: data?.is_pcd ?? false,
+          pcd_description: data?.pcd_description ?? "",
         }));
       });
   }, [user]);
