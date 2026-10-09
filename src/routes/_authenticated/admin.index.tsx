@@ -3,7 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
 import { toast } from "sonner";
-import { Briefcase, CalendarDays, DollarSign, Landmark, Settings, Ticket } from "lucide-react";
+import { Briefcase, CalendarDays, DollarSign, Landmark, Settings, Ticket, Pencil, ListOrdered } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -119,6 +119,7 @@ function Users() {
 import { brl, fmtDate, METHOD_LABEL, ORDER_STATUS } from "@/lib/format";
 
 export const Route = createFileRoute("/_authenticated/admin/")({
+  validateSearch: (search: Record<string, unknown>): { tab?: string } => typeof search['tab'] === "string" ? { tab: search['tab'] } : {},
   head: () => ({ meta: [{ title: "Super admin — Inscreva" }, { name: "description", content: "Administre usuários, eventos e o financeiro da Inscreva." }, { property: "og:title", content: "Super admin — Inscreva" }, { property: "og:description", content: "Administre usuários, eventos e o financeiro da Inscreva." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary_large_image" }, { name: "robots", content: "noindex" }] }),
   component: AdminPage,
 });
@@ -250,6 +251,8 @@ function AdminPage() {
 }
 
 function AdminDashboard() {
+  const { tab } = Route.useSearch();
+  const navigate = Route.useNavigate();
   const { data: orders = [] } = useQuery({
     queryKey: ["admin-orders"],
     queryFn: () => loadFinancialOrders(),
@@ -262,13 +265,25 @@ function AdminDashboard() {
   });
   const { data: events = [] } = useQuery({
     queryKey: ["admin-events"],
-    queryFn: async () => (await supabase.from("events").select("id, title, slug, status, featured, starts_at, fee_percent, fee_fixed, producers(company_name)").order("created_at", { ascending: false })).data ?? [],
+    queryFn: async () => (await supabase.from("events").select("id, title, slug, status, featured, starts_at, fee_percent, fee_fixed, queue_enabled, queue_capacity, queue_window_minutes, producers(company_name)").order("created_at", { ascending: false })).data ?? [],
   });
   const paid = orders.filter((o) => o.status === "pago");
   const sum = (k: "total" | "platform_amount" | "producer_amount") => paid.reduce((s, o) => s + Number(o[k]), 0);
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-10">
+      <Tabs value={tab ?? "produtores"} onValueChange={(value) => navigate({ search: { tab: value }, replace: true, resetScroll: false })}>
+        <TabsList aria-label="Menu do super admin" className="mb-8 h-auto w-full flex-wrap justify-start gap-1">
+          <TabsTrigger value="financeiro">Financeiro</TabsTrigger>
+          <TabsTrigger value="produtores">Produtores {producers.some((p) => p.status === "pendente") && <Badge variant="warning" className="ml-2">{producers.filter((p) => p.status === "pendente").length}</Badge>}</TabsTrigger>
+          <TabsTrigger value="usuarios">Usuários</TabsTrigger>
+          <TabsTrigger value="eventos">Eventos</TabsTrigger>
+          <TabsTrigger value="inscricoes">Inscrições</TabsTrigger>
+          <TabsTrigger value="cupons">Cupons</TabsTrigger>
+          <TabsTrigger value="saques">Saques</TabsTrigger>
+          <TabsTrigger value="emails">E-mails</TabsTrigger>
+          <TabsTrigger value="logs">Logs</TabsTrigger>
+        </TabsList>
       <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
         <div>
           <p className="text-sm text-muted-foreground">Super admin</p>
@@ -284,18 +299,6 @@ function AdminDashboard() {
       </div>
       <div className="mt-6"><SalesChart orders={orders as any} /></div>
 
-      <Tabs defaultValue="produtores" className="mt-10">
-        <TabsList className="flex-wrap h-auto">
-          <TabsTrigger value="financeiro">Financeiro</TabsTrigger>
-          <TabsTrigger value="produtores">Produtores {producers.some((p) => p.status === "pendente") && <Badge variant="warning" className="ml-2">{producers.filter((p) => p.status === "pendente").length}</Badge>}</TabsTrigger>
-          <TabsTrigger value="usuarios">Usuários</TabsTrigger>
-          <TabsTrigger value="eventos">Eventos</TabsTrigger>
-          <TabsTrigger value="inscricoes">Inscrições</TabsTrigger>
-          <TabsTrigger value="cupons">Cupons</TabsTrigger>
-          <TabsTrigger value="saques">Saques</TabsTrigger>
-          <TabsTrigger value="emails">E-mails</TabsTrigger>
-          <TabsTrigger value="logs">Logs</TabsTrigger>
-        </TabsList>
         <TabsContent value="financeiro" className="mt-6"><AdminFinance /><Finance orders={orders} /></TabsContent>
         <TabsContent value="produtores" className="mt-6"><Producers producers={producers} /></TabsContent>
         <TabsContent value="usuarios" className="mt-6"><Users /></TabsContent>
@@ -521,7 +524,7 @@ function Events({ events }: { events: any[] }) {
     <div className="overflow-hidden rounded-2xl border bg-card shadow-card">
       {editing && <EventFeeDialog e={editing} onClose={() => setEditing(null)} onSave={async (p) => { await patch(editing.id, p); toast.success("Taxa do evento salva"); setEditing(null); }} />}
       <Table>
-        <TableHeader><TableRow><TableHead>Evento</TableHead><TableHead>Produtor</TableHead><TableHead>Data</TableHead><TableHead>Status</TableHead><TableHead>Destaque</TableHead><TableHead>Taxa do evento</TableHead><TableHead /></TableRow></TableHeader>
+        <TableHeader><TableRow><TableHead>Evento</TableHead><TableHead>Produtor</TableHead><TableHead>Data</TableHead><TableHead>Status</TableHead><TableHead>Destaque</TableHead><TableHead>Taxa do evento</TableHead><TableHead>Fila de espera</TableHead><TableHead>Ações</TableHead></TableRow></TableHeader>
         <TableBody>
           {events.map((e) => (
             <TableRow key={e.id}>
@@ -542,10 +545,20 @@ function Events({ events }: { events: any[] }) {
                   {e.fee_percent != null || e.fee_fixed != null ? `${e.fee_percent ?? "padrão"}% + ${e.fee_fixed != null ? brl(e.fee_fixed) : "padrão"}` : "Padrão"}
                 </Button>
               </TableCell>
-              <TableCell className="text-right">{e.status === "publicado" && <Link to="/eventos/$slug" params={{ slug: e.slug }} className="text-sm text-primary">Ver</Link>}</TableCell>
+              <TableCell>
+                <Badge variant={e.queue_enabled ? "success" : "secondary"}>{e.queue_enabled ? "Ativa" : "Desativada"}</Badge>
+                {e.queue_enabled && <p className="mt-1 whitespace-nowrap text-xs text-muted-foreground">{e.queue_capacity} por vez · {e.queue_window_minutes} min</p>}
+              </TableCell>
+              <TableCell>
+                <div className="flex flex-wrap gap-2">
+                  <Button size="sm" variant="outline" asChild><Link to="/produtor/eventos/$id" params={{ id: e.id }} search={{ tab: "dados" }}><Pencil /> Editar evento</Link></Button>
+                  <Button size="sm" variant="outline" asChild><Link to="/produtor/eventos/$id" params={{ id: e.id }} search={{ tab: "fila" }}><ListOrdered /> Configurar fila</Link></Button>
+                  {e.status === "publicado" && <Button size="sm" variant="ghost" asChild><Link to="/eventos/$slug" params={{ slug: e.slug }}>Ver</Link></Button>}
+                </div>
+              </TableCell>
             </TableRow>
           ))}
-          {events.length === 0 && <TableRow><TableCell colSpan={7} className="py-8 text-center text-muted-foreground">Nenhum evento.</TableCell></TableRow>}
+          {events.length === 0 && <TableRow><TableCell colSpan={8} className="py-8 text-center text-muted-foreground">Nenhum evento.</TableCell></TableRow>}
         </TableBody>
       </Table>
     </div>

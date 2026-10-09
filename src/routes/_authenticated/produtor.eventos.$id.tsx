@@ -22,8 +22,10 @@ import { TermsEditor } from "@/components/terms-editor";
 import { parseTerms } from "@/lib/terms";
 import { DescriptionEditor, myMapsEmbed } from "@/components/rich-description";
 import { formatAnswer, parseFields } from "@/lib/custom-fields";
+import { useAuth } from "@/hooks/use-auth";
 
 export const Route = createFileRoute("/_authenticated/produtor/eventos/$id")({
+  validateSearch: (search: Record<string, unknown>): { tab?: string } => typeof search['tab'] === "string" ? { tab: search['tab'] } : {},
   head: () => ({ meta: [{ title: "Gerenciar evento — Inscreva" }, { name: "description", content: "Gerencie inscrições, kits e informações do evento na Inscreva." }, { property: "og:title", content: "Gerenciar evento — Inscreva" }, { property: "og:description", content: "Gerencie inscrições, kits e informações do evento na Inscreva." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary_large_image" }, { name: "robots", content: "noindex" }] }),
   component: ManageEvent,
 });
@@ -32,6 +34,9 @@ const toLocal = (iso?: string | null) => (iso ? new Date(new Date(iso).getTime()
 
 function ManageEvent() {
   const { id } = Route.useParams();
+  const { tab } = Route.useSearch();
+  const navigate = Route.useNavigate();
+  const { isAdmin } = useAuth();
   const qc = useQueryClient();
   const { data: ev } = useQuery({
     queryKey: ["manage-event", id],
@@ -82,11 +87,12 @@ function ManageEvent() {
     if (error) { toast.error(error.message); return; }
     toast.success(status === "publicado" ? "Evento publicado!" : "Salvo");
     qc.invalidateQueries({ queryKey: ["manage-event", id] });
+    qc.invalidateQueries({ queryKey: ["admin-events"] });
   }
 
   return (
     <div className="mx-auto min-w-0 max-w-6xl px-4 py-10">
-      <Link to="/produtor" className="text-sm text-muted-foreground">← Painel</Link>
+      {isAdmin ? <Link to="/admin" search={{ tab: "eventos" }} className="text-sm text-muted-foreground">← Eventos do super admin</Link> : <Link to="/produtor" className="text-sm text-muted-foreground">← Painel</Link>}
       <div className="mt-2 grid min-w-0 gap-4 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
         <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-3">
           <h1 className="min-w-0 break-words text-3xl font-extrabold">{ev.title}</h1>
@@ -107,9 +113,10 @@ function ManageEvent() {
       </div>
       {!canPublish && <p className="mt-2 text-sm text-muted-foreground">Você poderá publicar assim que seu cadastro de produtor for aprovado.</p>}
 
-      <Tabs defaultValue="dados" className="mt-8">
+      <Tabs value={tab ?? "dados"} onValueChange={(value) => navigate({ search: { tab: value }, replace: true, resetScroll: false })} className="mt-8">
         <TabsList className="h-auto max-w-full flex-wrap justify-start gap-1">
           <TabsTrigger value="dados">Dados do evento</TabsTrigger>
+          <TabsTrigger value="fila">Fila de espera</TabsTrigger>
           <TabsTrigger value="docs">Documentos</TabsTrigger>
           <TabsTrigger value="lotes">Categorias e lotes</TabsTrigger>
           <TabsTrigger value="produtos">Kit e produtos</TabsTrigger>
@@ -132,13 +139,6 @@ function ManageEvent() {
             <F l="Abertura das inscrições (opcional)"><Input type="datetime-local" value={f.registrations_open_at ?? ""} onChange={set("registrations_open_at")} /></F>
             <F l="Fim das inscrições (opcional)"><Input type="datetime-local" value={f.registration_ends_at ?? ""} onChange={set("registration_ends_at")} /></F>
             <F l="Total de inscrições liberadas (vazio = sem limite)"><Input type="number" min="1" value={f.registration_limit} onChange={set("registration_limit")} placeholder="Ex.: 500 (somando todos os lotes)" /></F>
-            <F l="Fila de espera (para muitos acessos ao mesmo tempo)" c="sm:col-span-2">
-              <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={!!f.queue_enabled} onChange={(e) => setF({ ...f, queue_enabled: e.target.checked })} /> Ativar fila de espera neste evento</label>
-            </F>
-            {f.queue_enabled && <>
-              <F l="Pessoas se inscrevendo ao mesmo tempo"><Input type="number" min="1" value={f.queue_capacity ?? 200} onChange={set("queue_capacity")} /></F>
-              <F l="Tempo para concluir quando chegar a vez (minutos)"><Input type="number" min="1" value={f.queue_window_minutes ?? 10} onChange={set("queue_window_minutes")} placeholder="Ex.: 10 (1 dia = 1440)" /></F>
-            </>}
             <F l="Local"><Input value={f.venue ?? ""} onChange={set("venue")} /></F>
             <div className="grid grid-cols-[1fr_80px] gap-3">
               <F l="Cidade"><Input value={f.city ?? ""} onChange={set("city")} /></F>
@@ -153,6 +153,20 @@ function ManageEvent() {
             </F>
             <div><Button variant="hero" onClick={() => save()}>Salvar alterações</Button></div>
           </div>
+        </TabsContent>
+        <TabsContent value="fila" className="mt-6">
+          <section className="max-w-2xl space-y-6">
+            <h2 className="text-xl font-bold">Fila de espera</h2>
+            <div className="flex items-center justify-between gap-4 border-b pb-4">
+              <Label htmlFor="event-queue-enabled">Ativar fila de espera neste evento</Label>
+              <Switch id="event-queue-enabled" checked={!!f.queue_enabled} onCheckedChange={(value) => setF({ ...f, queue_enabled: value })} />
+            </div>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <F l="Pessoas se inscrevendo ao mesmo tempo"><Input aria-label="Pessoas se inscrevendo ao mesmo tempo" type="number" min="1" disabled={!f.queue_enabled} value={f.queue_capacity ?? 200} onChange={set("queue_capacity")} /></F>
+              <F l="Tempo para concluir a inscrição (minutos)"><Input aria-label="Tempo para concluir a inscrição (minutos)" type="number" min="1" disabled={!f.queue_enabled} value={f.queue_window_minutes ?? 10} onChange={set("queue_window_minutes")} /></F>
+            </div>
+            <Button variant="hero" onClick={() => save()}>Salvar configurações da fila</Button>
+          </section>
         </TabsContent>
         <TabsContent value="docs" className="mt-6"><EventDocsEditor eventId={id} producerId={ev.producer_id} /></TabsContent>
         <TabsContent value="produtos" className="mt-6 space-y-6">
