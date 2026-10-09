@@ -53,7 +53,7 @@ export const getPhotographerMenuAccess = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const admin = await getAdmin();
-    const { data: ph } = await admin.from("photographers").select("id").eq("user_id", context.userId).limit(1);
+    const { data: ph } = await admin.from("photographers").select("id").eq("user_id", context.userId).neq("status", "suspenso").limit(1);
     return { allowed: !!ph?.length };
   });
 
@@ -424,6 +424,24 @@ export const adminUpdatePhotographer = createServerFn({ method: "POST" })
       : await admin.from("photographers").insert({ user_id: userId, ...payload });
     if (error) throw new Error(error.message);
     return { ok: true };
+  });
+
+export const adminRemovePhotographer = createServerFn({ method: "POST" })
+  .middleware([auditedAction("adminRemovePhotographer")])
+  .inputValidator((d) => z.object({ userId: uuid }).parse(d))
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context);
+    const admin = await getAdmin();
+    const { error } = await admin.from("photographers").delete().eq("user_id", data.userId);
+    if (error) {
+      // Photographer with uploads/invites keeps history: suspend instead of deleting.
+      if (error.code === "23503" || (error.message ?? "").includes("foreign key")) {
+        await admin.from("photographers").update({ status: "suspenso" }).eq("user_id", data.userId);
+        return { ok: true, suspended: true };
+      }
+      throw new Error(error.message);
+    }
+    return { ok: true, suspended: false };
   });
 
 export const checkVpsStorage = createServerFn({ method: "GET" })
