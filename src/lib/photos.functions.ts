@@ -53,11 +53,8 @@ export const getPhotographerMenuAccess = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const admin = await getAdmin();
-    const [{ data: ph }, { data: inv }] = await Promise.all([
-      admin.from("photographers").select("id").eq("user_id", context.userId).limit(1),
-      admin.from("album_photographers").select("id").eq("user_id", context.userId).limit(1),
-    ]);
-    return { allowed: !!ph?.length || !!inv?.length };
+    const { data: ph } = await admin.from("photographers").select("id").eq("user_id", context.userId).limit(1);
+    return { allowed: !!ph?.length };
   });
 
 export const savePhotographer = createServerFn({ method: "POST" })
