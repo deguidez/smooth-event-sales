@@ -109,7 +109,7 @@ function Stat({ n, l }: { n: number; l: string }) {
 function ProfileForm() {
   const { user } = useAuth();
   const qc = useQueryClient();
-  const [f, setF] = useState({ full_name: "", cpf: "", phone: "", birth_date: "", city: "", state: "" });
+  const [f, setF] = useState({ full_name: "", cpf: "", phone: "", birth_date: "", city: "", state: "", emergency_contact_name: "", emergency_contact_phone: "", is_pcd: false, pcd_description: "" });
   useEffect(() => {
     if (!user) return;
     supabase.from("profiles").select("*").eq("id", user.id).single().then(({ data }) => {
@@ -121,6 +121,10 @@ function ProfileForm() {
           birth_date: data.birth_date ?? "",
           city: data.city ?? "",
           state: data.state ?? "",
+          emergency_contact_name: data.emergency_contact_name ?? "",
+          emergency_contact_phone: data.emergency_contact_phone ?? "",
+          is_pcd: data.is_pcd ?? false,
+          pcd_description: data.pcd_description ?? "",
         });
     });
   }, [user]);
