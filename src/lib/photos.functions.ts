@@ -53,7 +53,7 @@ export const getPhotographerMenuAccess = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const admin = await getAdmin();
-    const { data: ph } = await admin.from("photographers").select("id").eq("user_id", context.userId).neq("status", "suspenso").limit(1);
+    const { data: ph } = await admin.from("photographers").select("user_id").eq("user_id", context.userId).neq("status", "suspenso").limit(1);
     return { allowed: !!ph?.length };
   });
 
