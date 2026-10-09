@@ -91,7 +91,7 @@ export const getUploadTargets = createServerFn({ method: "POST" })
     const admin = await getAdmin();
     const { data: album } = await admin.from("photo_albums").select("watermark_photo_url, watermark_video_url").eq("id", data.albumId).single();
     const { vpsEnabled, uploadUrl } = await import("./media-storage.server");
-    const storage = vpsEnabled() ? "vps" : "cloud";
+    const storage = (await vpsEnabled()) ? "vps" : "cloud";
     const targets = [];
     for (const f of data.files) {
       const id = crypto.randomUUID();
@@ -450,6 +450,41 @@ export const checkVpsStorage = createServerFn({ method: "GET" })
     await assertAdmin(context);
     const { vpsCheck } = await import("./media-storage.server");
     return vpsCheck();
+  });
+
+export const getMediaStorageSettings = createServerFn({ method: "GET" })
+  .middleware([auditedAction("getMediaStorageSettings")])
+  .handler(async ({ context }) => {
+    await assertAdmin(context);
+    const admin = await getAdmin();
+    const { data: s } = await admin.from("platform_settings").select("media_storage, media_vps_endpoint, media_vps_bucket").eq("id", 1).single();
+    return {
+      storage: (s?.media_storage ?? "cloud") as "cloud" | "vps",
+      endpoint: s?.media_vps_endpoint ?? "",
+      bucket: s?.media_vps_bucket ?? "evenon-fotos",
+      keysConfigured: !!process.env["VPS_S3_ACCESS_KEY"] && !!process.env["VPS_S3_SECRET_KEY"],
+    };
+  });
+
+export const saveMediaStorageSettings = createServerFn({ method: "POST" })
+  .middleware([auditedAction("saveMediaStorageSettings")])
+  .inputValidator((d) => z.object({
+    storage: z.enum(["cloud", "vps"]),
+    endpoint: z.string().trim().url("Endereço inválido").max(200).or(z.literal("")),
+    bucket: z.string().trim().max(63).regex(/^[a-z0-9][a-z0-9.-]*$/, "Nome de bucket inválido").or(z.literal("")),
+  }).parse(d))
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context);
+    if (data.storage === "vps" && (!data.endpoint || !data.bucket)) throw new Error("Para usar a VPS, preencha endereço e bucket");
+    const admin = await getAdmin();
+    const { error } = await admin.from("platform_settings").update({
+      media_storage: data.storage,
+      media_vps_endpoint: data.endpoint || null,
+      media_vps_bucket: data.bucket || null,
+      updated_at: new Date().toISOString(),
+    }).eq("id", 1);
+    if (error) throw new Error(error.message);
+    return { ok: true };
   });
 
 export const setPhotographerStatus = createServerFn({ method: "POST" })
