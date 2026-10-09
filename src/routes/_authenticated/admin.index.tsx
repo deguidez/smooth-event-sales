@@ -273,7 +273,11 @@ function AdminDashboard() {
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-10">
-      <Tabs value={tab ?? "produtores"} onValueChange={(value) => navigate({ search: { tab: value }, replace: true, resetScroll: false })}>
+      <Tabs value={tab ?? "financeiro"} onValueChange={(value) => {
+        if (value === "configuracoes") { navigate({ to: "/admin/configuracoes" }); return; }
+        if (value === "caixa-email") { navigate({ to: "/admin/email" }); return; }
+        navigate({ search: { tab: value }, replace: true, resetScroll: false });
+      }}>
         <TabsList aria-label="Menu do super admin" className="mb-8 h-auto w-full flex-wrap justify-start gap-1">
           <TabsTrigger value="financeiro">Financeiro</TabsTrigger>
           <TabsTrigger value="produtores">Produtores {producers.some((p) => p.status === "pendente") && <Badge variant="warning" className="ml-2">{producers.filter((p) => p.status === "pendente").length}</Badge>}</TabsTrigger>
@@ -285,23 +289,21 @@ function AdminDashboard() {
           <TabsTrigger value="saques">Saques</TabsTrigger>
           <TabsTrigger value="emails">E-mails</TabsTrigger>
           <TabsTrigger value="logs">Logs</TabsTrigger>
+          <TabsTrigger value="configuracoes"><Settings className="mr-1.5 h-4 w-4" /> Configurações</TabsTrigger>
+          <TabsTrigger value="caixa-email">Caixa de e-mail</TabsTrigger>
         </TabsList>
-      <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <p className="text-sm text-muted-foreground">Super admin</p>
-          <h1 className="text-3xl font-extrabold md:text-4xl">Visão geral da plataforma</h1>
-        </div>
-        <div className="flex flex-wrap gap-2"><Button variant="outline" asChild><Link to="/admin/email">Caixa de e-mail</Link></Button><Button variant="ink" asChild><Link to="/admin/configuracoes"><Settings /> Configurações</Link></Button></div>
-      </div>
-      <div className="grid gap-4 md:grid-cols-4">
-        <StatCard icon={DollarSign} label="Volume vendido" value={brl(financial.data?.total ?? sum("total"))} hint={`${financial.data?.confirmed ?? paid.length} confirmadas · ${financial.data?.paid ?? paid.filter((o) => Number(o.total) > 0).length} pagas · ${financial.data?.free ?? paid.filter((o) => Number(o.total) === 0).length} gratuitas`} />
-        <StatCard icon={Landmark} label="Receita da plataforma" value={brl(sum("platform_amount"))} hint="Taxas e comissões líquidas" />
-        <StatCard icon={Briefcase} label="Repassado a produtores" value={brl(sum("producer_amount"))} hint={`${producers.length} produtores`} />
-        <StatCard icon={CalendarDays} label="Eventos" value={events.length} hint={`${events.filter((e) => e.status === "publicado").length} publicados`} />
-      </div>
-      <div className="mt-6"><SalesChart orders={orders as any} /></div>
 
-        <TabsContent value="financeiro" className="mt-6"><AdminFinance /><Finance orders={orders} /></TabsContent>
+        <TabsContent value="financeiro" className="mt-6 space-y-6">
+          <div className="grid gap-4 md:grid-cols-4">
+            <StatCard icon={DollarSign} label="Volume vendido" value={brl(financial.data?.total ?? sum("total"))} hint={`${financial.data?.confirmed ?? paid.length} confirmadas · ${financial.data?.paid ?? paid.filter((o) => Number(o.total) > 0).length} pagas · ${financial.data?.free ?? paid.filter((o) => Number(o.total) === 0).length} gratuitas`} />
+            <StatCard icon={Landmark} label="Receita da plataforma" value={brl(sum("platform_amount"))} hint="Taxas e comissões líquidas" />
+            <StatCard icon={Briefcase} label="Repassado a produtores" value={brl(sum("producer_amount"))} hint={`${producers.length} produtores`} />
+            <StatCard icon={CalendarDays} label="Eventos" value={events.length} hint={`${events.filter((e) => e.status === "publicado").length} publicados`} />
+          </div>
+          <SalesChart orders={orders as any} />
+          <AdminFinance />
+          <Finance orders={orders} />
+        </TabsContent>
         <TabsContent value="produtores" className="mt-6"><Producers producers={producers} /></TabsContent>
         <TabsContent value="usuarios" className="mt-6"><Users /></TabsContent>
         <TabsContent value="equipes" className="mt-6"><TeamManagersAdmin /></TabsContent>
