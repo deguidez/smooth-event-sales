@@ -15,6 +15,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { ProducerKeyField, WithdrawalsAdmin } from "@/components/withdrawals-admin";
 import { TeamManagersAdmin } from "@/components/team-admin";
 import { AdminFinance } from "@/components/admin-finance";
+import { PhotosAdmin } from "@/components/photos-admin";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { SalesChart, StatCard, toCsv } from "@/components/dash";
 import { supabase } from "@/integrations/supabase/client";
@@ -285,6 +286,7 @@ function AdminDashboard() {
           <TabsTrigger value="equipes">Equipes</TabsTrigger>
           <TabsTrigger value="eventos">Eventos</TabsTrigger>
           <TabsTrigger value="inscricoes">Inscrições</TabsTrigger>
+          <TabsTrigger value="fotos">Fotos</TabsTrigger>
           <TabsTrigger value="cupons">Cupons</TabsTrigger>
           <TabsTrigger value="saques">Saques</TabsTrigger>
           <TabsTrigger value="emails">E-mails</TabsTrigger>
@@ -310,6 +312,7 @@ function AdminDashboard() {
         <TabsContent value="eventos" className="mt-6"><Events events={events} /></TabsContent>
         <TabsContent value="inscricoes" className="mt-6"><Orders orders={orders} /></TabsContent>
         <TabsContent value="saques"><WithdrawalsAdmin /></TabsContent>
+        <TabsContent value="fotos" className="mt-6"><PhotosAdmin /></TabsContent>
         <TabsContent value="cupons" className="mt-6"><CouponsAdmin events={events} /></TabsContent>
         <TabsContent value="emails" className="mt-6"><Emails /></TabsContent>
         <TabsContent value="logs" className="mt-6"><ActivityLogView /></TabsContent>
