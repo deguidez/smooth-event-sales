@@ -15,11 +15,22 @@ export async function notifyPhotoOrder(orderId: string, kind: Kind) {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   const { data: o } = await supabaseAdmin.from("photo_orders").select("id, code, total, customer_name, customer_email, photo_albums(events(title))").eq("id", orderId).maybeSingle();
   if (!o) return;
+  // Ao pagar, anexa links diretos de download dos originais (sem marca d'água), válidos por 7 dias.
+  let downloads: { label: string; url: string }[] = [];
+  if (kind === "fotos_pagas") {
+    const { data: items } = await supabaseAdmin.from("photo_order_items").select("kind, media_items(storage, original_path)").eq("order_id", orderId);
+    const rows = (items ?? []).map((it: any) => it.media_items).filter(Boolean);
+    if (rows.length) {
+      const { signMany } = await import("./media-storage.server");
+      const signed = await signMany(rows.map((m: any) => ({ storage: m.storage ?? "cloud", path: m.original_path, kind: "original" as const, isVideo: false })), 7 * 86400, true);
+      downloads = rows.map((m: any, i: number) => ({ label: `Arquivo ${i + 1} (${(items as any[])[i]?.kind === "video" ? "vídeo" : "foto"})`, url: signed[m.original_path] })).filter((d) => d.url);
+    }
+  }
   let status = "enviado";
   try {
     status = await send(o.customer_email, {
       kind, name: o.customer_name, eventTitle: (o as any).photo_albums?.events?.title, code: o.code, total: brl(Number(o.total)),
-      url: `${SITE_URL}/minhas-fotos`,
+      url: `${SITE_URL}/minhas-fotos`, downloads,
     }, `photo-${kind}-${o.id}`);
   } catch (e) {
     console.error("photo email failed", e);
