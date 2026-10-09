@@ -394,3 +394,20 @@ export const setTeamManagerStatus = createServerFn({ method: "POST" })
     await admin.from("team_managers").update({ status: data.status }).eq("user_id", data.userId);
     return { ok: true };
   });
+
+export const createTeamManager = createServerFn({ method: "POST" })
+  .middleware([auditedAction("createTeamManager")])
+  .inputValidator((d) => z.object({ identifier: z.string().trim().min(3).max(200), teamName: z.string().trim().min(2).max(80) }).parse(d))
+  .handler(async ({ data, context }) => {
+    if (!(await isSuper(context))) throw new Error("Acesso restrito ao super admin");
+    const admin = await getAdmin();
+    const digits = data.identifier.replace(/\D/g, "");
+    const q = admin.from("profiles").select("id, full_name");
+    const { data: p } = data.identifier.includes("@")
+      ? await q.ilike("email", data.identifier).maybeSingle()
+      : await q.eq("cpf", digits).maybeSingle();
+    if (!p) throw new Error("Nenhum usuário cadastrado com esse e-mail ou CPF");
+    const { error } = await admin.from("team_managers").upsert({ user_id: p.id, team_name: data.teamName, status: "aprovado" }, { onConflict: "user_id" });
+    if (error) throw new Error(error.message);
+    return { name: p.full_name ?? "Usuário" };
+  });

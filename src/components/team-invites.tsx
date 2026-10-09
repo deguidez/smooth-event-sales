@@ -1,23 +1,19 @@
 import { Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { useState } from "react";
 import { toast } from "sonner";
 import { Users } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { getTeamState, removeTeamMember, requestTeamManager, respondTeamInvite } from "@/lib/team.functions";
+import { getTeamState, removeTeamMember, respondTeamInvite } from "@/lib/team.functions";
 
 /** Convites de equipe recebidos pelo atleta + pedido para virar gerente. */
 export function TeamInvites() {
   const get = useServerFn(getTeamState);
   const respond = useServerFn(respondTeamInvite);
   const leave = useServerFn(removeTeamMember);
-  const request = useServerFn(requestTeamManager);
   const qc = useQueryClient();
   const { data } = useQuery({ queryKey: ["team-state"], queryFn: () => get() });
-  const [name, setName] = useState("");
   const refresh = () => qc.invalidateQueries({ queryKey: ["team-state"] });
   const run = async (fn: () => Promise<unknown>, ok: string) => {
     try { await fn(); toast.success(ok); refresh(); } catch (e) { toast.error((e as Error).message); }
@@ -66,10 +62,7 @@ export function TeamInvites() {
         ) : m?.status === "suspenso" ? (
           <p className="mt-2 text-sm text-muted-foreground">Seu acesso de gerente está suspenso.</p>
         ) : (
-          <form className="mt-3 flex flex-wrap gap-2" onSubmit={(e) => { e.preventDefault(); run(() => request({ data: { teamName: name } }), "Pedido enviado"); }}>
-            <Input className="max-w-xs" placeholder="Nome da equipe / assessoria" value={name} onChange={(e) => setName(e.target.value)} required minLength={2} maxLength={80} />
-            <Button type="submit">Pedir acesso de gerente</Button>
-          </form>
+          <p className="mt-2 text-sm text-muted-foreground">Quer gerenciar uma equipe? Fale com a organização para liberar seu acesso.</p>
         )}
       </div>
     </div>

@@ -3,8 +3,10 @@ import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { useState } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { listTeamManagers, setTeamManagerStatus } from "@/lib/team.functions";
+import { createTeamManager, listTeamManagers, setTeamManagerStatus } from "@/lib/team.functions";
 import { fmtDate } from "@/lib/format";
 
 const ST: Record<string, { l: string; v: "success" | "warning" | "destructive" }> = {
@@ -17,6 +19,18 @@ export function TeamManagersAdmin() {
   const list = useServerFn(listTeamManagers);
   const setStatus = useServerFn(setTeamManagerStatus);
   const qc = useQueryClient();
+  const createFn = useServerFn(createTeamManager);
+  const [ident, setIdent] = useState("");
+  const [team, setTeam] = useState("");
+  async function create(e: React.FormEvent) {
+    e.preventDefault();
+    try {
+      const r = await createFn({ data: { identifier: ident, teamName: team } });
+      toast.success(`${r.name} agora gerencia a equipe ${team}`);
+      setIdent(""); setTeam("");
+      qc.invalidateQueries({ queryKey: ["team-managers"] });
+    } catch (err) { toast.error((err as Error).message); }
+  }
   const { data = [] } = useQuery({ queryKey: ["team-managers"], queryFn: () => list() });
   async function change(userId: string, status: "aprovado" | "suspenso") {
     try {
@@ -31,7 +45,12 @@ export function TeamManagersAdmin() {
     <div className="rounded-2xl border bg-card">
       <div className="border-b p-4">
         <h2 className="font-bold">Gerenciadores de equipe</h2>
-        <p className="text-sm text-muted-foreground">Atletas que pediram para inscrever e pagar por uma equipe.</p>
+        <p className="text-sm text-muted-foreground">Vincule uma equipe a um usuário já cadastrado. Todas as inscrições feitas por ele saem com o nome da equipe.</p>
+        <form onSubmit={create} className="mt-3 flex flex-wrap gap-2">
+          <Input className="max-w-xs" placeholder="E-mail ou CPF do usuário" value={ident} onChange={(e) => setIdent(e.target.value)} required />
+          <Input className="max-w-xs" placeholder="Nome da equipe" value={team} onChange={(e) => setTeam(e.target.value)} required minLength={2} maxLength={80} />
+          <Button type="submit">Criar gerente de equipe</Button>
+        </form>
       </div>
       <Table>
         <TableHeader>
