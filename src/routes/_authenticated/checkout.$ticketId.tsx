@@ -73,6 +73,7 @@ function Checkout() {
           phone: data?.phone ?? "",
           birth_date: data?.birth_date ?? "",
           gender: data?.gender ?? "",
+          team: data?.team ?? "",
           emergency_contact_name: data?.emergency_contact_name ?? "",
           emergency_contact_phone: data?.emergency_contact_phone ?? "",
           is_pcd: data?.is_pcd ?? false,
@@ -123,7 +124,7 @@ function Checkout() {
       const cpf = onlyDigits(f.cpf);
       if (!forOther) await supabase
         .from("profiles")
-        .update({ full_name: f.name, cpf, phone: f.phone, birth_date: f.birth_date || null, gender: f.gender || null, emergency_contact_name: f.emergency_contact_name || null, emergency_contact_phone: f.emergency_contact_phone || null, is_pcd: f.is_pcd, pcd_description: f.is_pcd ? f.pcd_description || null : null })
+        .update({ full_name: f.name, cpf, phone: f.phone, birth_date: f.birth_date || null, gender: f.gender || null, team: f.team || null, emergency_contact_name: f.emergency_contact_name || null, emergency_contact_phone: f.emergency_contact_phone || null, is_pcd: f.is_pcd, pcd_description: f.is_pcd ? f.pcd_description || null : null })
         .eq("id", user.id);
       const r = await submitOrder({
         data: {
