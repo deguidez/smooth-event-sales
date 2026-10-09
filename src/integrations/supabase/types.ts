@@ -314,6 +314,7 @@ export type Database = {
       }
       events: {
         Row: {
+          allow_third_party_free: boolean
           category: Database["public"]["Enums"]["event_category"]
           city: string | null
           cover_url: string | null
@@ -345,6 +346,7 @@ export type Database = {
           venue: string | null
         }
         Insert: {
+          allow_third_party_free?: boolean
           category?: Database["public"]["Enums"]["event_category"]
           city?: string | null
           cover_url?: string | null
@@ -376,6 +378,7 @@ export type Database = {
           venue?: string | null
         }
         Update: {
+          allow_third_party_free?: boolean
           category?: Database["public"]["Enums"]["event_category"]
           city?: string | null
           cover_url?: string | null
