@@ -158,6 +158,13 @@ function UserDialog({ u, onClose, onSaved }: { u: any; onClose: () => void; onSa
         birth_date: n(f.birth_date), gender: n(f.gender), city: n(f.city), state: n(f.state)?.toUpperCase() ?? null,
         password: f.password ? f.password : undefined, roles: roles as any,
       } });
+      if (photographer) {
+        await savePh({ data: {
+          userId: u.id, name: photographer.name.trim(), document: photographer.document.replace(/\D/g, ""),
+          phone: photographer.phone.trim(), asaas_wallet_id: photographer.asaas_wallet_id.trim(), status: photographer.status,
+          bank: { bank_name: photographer.bank_name.trim(), agency: photographer.agency.trim(), account: photographer.account.trim(), account_type: photographer.account_type, pix_key: photographer.pix_key.trim() },
+        } });
+      }
       toast.success("Usuário atualizado");
       onSaved();
     } catch (e) { toast.error((e as Error).message); } finally { setBusy(false); }
