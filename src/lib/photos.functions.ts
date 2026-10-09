@@ -24,16 +24,12 @@ async function assertAcceptedPhotographer(userId: string, albumId: string) {
   const { data: m } = await admin.from("album_photographers").select("status").eq("album_id", albumId).eq("user_id", userId).maybeSingle();
   if (m?.status !== "aceito") throw new Error("Aceite o convite deste álbum antes de enviar arquivos");
 }
-async function signPreviews(paths: string[], seconds = 60 * 60) {
-  if (!paths.length) return {} as Record<string, string>;
-  const admin = await getAdmin();
-  const out: Record<string, string> = {};
-  for (let i = 0; i < paths.length; i += 500) {
-    const { data } = await admin.storage.from("media-previews").createSignedUrls(paths.slice(i, i + 500), seconds);
-    for (const d of data ?? []) if (d.path && d.signedUrl) out[d.path] = d.signedUrl;
-  }
-  return out;
+type MRow = { storage?: string | null; kind: string; preview_path: string; original_path?: string };
+async function signPreviews(rows: MRow[], seconds = 60 * 60) {
+  const { signMany } = await import("./media-storage.server");
+  return signMany(rows.map((r) => ({ storage: r.storage ?? "cloud", path: r.preview_path, kind: "preview" as const, isVideo: r.kind === "video" })), seconds);
 }
+const SIX_MONTHS = 183 * 86400_000;
 
 /* ------------------------------ Fotógrafo ------------------------------ */
 
@@ -85,15 +81,16 @@ export const getUploadTargets = createServerFn({ method: "POST" })
     await assertAcceptedPhotographer(context.userId, data.albumId);
     const admin = await getAdmin();
     const { data: album } = await admin.from("photo_albums").select("watermark_photo_url, watermark_video_url").eq("id", data.albumId).single();
+    const { vpsEnabled, uploadUrl } = await import("./media-storage.server");
+    const storage = vpsEnabled() ? "vps" : "cloud";
     const targets = [];
     for (const f of data.files) {
       const id = crypto.randomUUID();
       const base = `${data.albumId}/${context.userId}/${id}`;
-      // Videos live only in media-previews (shown with a player overlay, downloaded after purchase).
-      const orig = await admin.storage.from(f.kind === "video" ? "media-previews" : "media-originals").createSignedUploadUrl(`${base}.${f.ext}`);
-      const prev = f.kind === "photo" ? await admin.storage.from("media-previews").createSignedUploadUrl(`${base}.jpg`) : null;
-      if (orig.error || prev?.error) throw new Error("Não foi possível preparar o envio");
-      targets.push({ original: { path: orig.data.path, token: orig.data.token }, preview: prev ? { path: prev.data!.path, token: prev.data!.token } : null });
+      const isVideo = f.kind === "video";
+      const orig = await uploadUrl(storage, `${base}.${f.ext}`, "original", isVideo);
+      const prev = isVideo ? null : await uploadUrl(storage, `${base}.jpg`, "preview", false);
+      targets.push({ storage, original: orig, preview: prev });
     }
     return { targets, watermarkPhoto: album?.watermark_photo_url ?? null, watermarkVideo: album?.watermark_video_url ?? null };
   });
@@ -103,7 +100,7 @@ export const registerMedia = createServerFn({ method: "POST" })
   .inputValidator((d) => z.object({
     albumId: uuid,
     items: z.array(z.object({
-      kind: z.enum(["photo", "video"]), original_path: z.string().max(300), preview_path: z.string().max(300).nullable(),
+      kind: z.enum(["photo", "video"]), storage: z.enum(["cloud", "vps"]).default("cloud"), original_path: z.string().max(300), preview_path: z.string().max(300).nullable(),
       width: z.number().int().nullable(), height: z.number().int().nullable(), faces: z.array(vec).max(60),
     })).min(1).max(50),
   }).parse(d))
@@ -116,7 +113,7 @@ export const registerMedia = createServerFn({ method: "POST" })
       // Videos are previewed from the original with an overlay in the player.
       const preview = it.kind === "video" ? it.original_path : it.preview_path!;
       const { data: m, error } = await admin.from("media_items").insert({
-        album_id: data.albumId, photographer_id: context.userId, kind: it.kind,
+        album_id: data.albumId, photographer_id: context.userId, kind: it.kind, storage: it.storage,
         original_path: it.original_path, preview_path: preview, width: it.width, height: it.height, faces: it.faces.length,
       }).select("id").single();
       if (error) throw new Error(error.message);
@@ -130,8 +127,8 @@ export const myAlbumMedia = createServerFn({ method: "GET" })
   .inputValidator((d) => z.object({ albumId: uuid }).parse(d))
   .handler(async ({ data, context }) => {
     const admin = await getAdmin();
-    const { data: rows } = await admin.from("media_items").select("id, kind, preview_path, faces, created_at").eq("album_id", data.albumId).eq("photographer_id", context.userId).order("created_at", { ascending: false }).limit(300);
-    const urls = await signPreviews((rows ?? []).filter((r) => r.kind === "photo").map((r) => r.preview_path));
+    const { data: rows } = await admin.from("media_items").select("id, kind, storage, preview_path, faces, created_at").eq("album_id", data.albumId).eq("photographer_id", context.userId).order("created_at", { ascending: false }).limit(300);
+    const urls = await signPreviews((rows ?? []).filter((r) => r.kind === "photo"));
     const { count: total } = await admin.from("media_items").select("id", { count: "exact", head: true }).eq("album_id", data.albumId).eq("photographer_id", context.userId);
     return { total: total ?? 0, items: (rows ?? []).map((r) => ({ ...r, url: urls[r.preview_path] ?? null })) };
   });
@@ -141,14 +138,14 @@ export const deleteMyMedia = createServerFn({ method: "POST" })
   .inputValidator((d) => z.object({ id: uuid }).parse(d))
   .handler(async ({ data, context }) => {
     const admin = await getAdmin();
-    const { data: m } = await admin.from("media_items").select("photographer_id, original_path, preview_path").eq("id", data.id).maybeSingle();
+    const { data: m } = await admin.from("media_items").select("photographer_id, kind, storage, original_path, preview_path").eq("id", data.id).maybeSingle();
     if (!m) throw new Error("Arquivo não encontrado");
     if (m.photographer_id !== context.userId && !(await isAdmin(context))) throw new Error("Sem permissão");
     const { count } = await admin.from("photo_order_items").select("id", { count: "exact", head: true }).eq("media_id", data.id);
     if (count) throw new Error("Este arquivo já foi vendido e não pode ser removido");
     await admin.from("media_items").delete().eq("id", data.id);
-    await admin.storage.from("media-originals").remove([m.original_path]);
-    await admin.storage.from("media-previews").remove([...new Set([m.preview_path, m.original_path])]);
+    const { removeMedia } = await import("./media-storage.server");
+    await removeMedia(m);
     return { ok: true };
   });
 
@@ -186,11 +183,11 @@ export const listAlbumMedia = createServerFn({ method: "POST" })
     const admin = await getAdmin();
     const { data: a } = await admin.from("photo_albums").select("active").eq("id", data.albumId).maybeSingle();
     if (!a?.active) throw new Error("Álbum não disponível");
-    let q = admin.from("media_items").select("id, kind, preview_path, width, height").eq("album_id", data.albumId);
+    let q = admin.from("media_items").select("id, kind, storage, preview_path, width, height").eq("album_id", data.albumId).is("purged_at", null);
     if (data.ids) q = q.in("id", data.ids.length ? data.ids : ["00000000-0000-0000-0000-000000000000"]);
     if (data.kind) q = q.eq("kind", data.kind);
     const { data: rows } = await q.order("created_at").range(data.page * 60, data.page * 60 + 59);
-    const urls = await signPreviews((rows ?? []).map((r) => r.preview_path), 60 * 60 * 2);
+    const urls = await signPreviews(rows ?? [], 60 * 60 * 2);
     return (rows ?? []).map((r) => ({ id: r.id, kind: r.kind, width: r.width, height: r.height, url: urls[r.preview_path] ?? null }));
   });
 
@@ -206,6 +203,19 @@ export const searchFaces = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const matches = await matchIds(data.albumId, data.embedding);
     return matches.map((m) => m.media_id);
+  });
+
+/** Registra a busca do cliente logado para o e-mail "encontramos suas fotos". */
+export const trackPhotoSearch = createServerFn({ method: "POST" })
+  .middleware([auditedAction("trackPhotoSearch")])
+  .inputValidator((d) => z.object({ albumId: uuid, matches: z.number().int().min(0).max(5000) }).parse(d))
+  .handler(async ({ data, context }) => {
+    if (!data.matches) return { ok: true };
+    const email = (context as any).claims?.email as string | undefined;
+    if (!email) return { ok: true };
+    const admin = await getAdmin();
+    await admin.from("photo_searches").upsert({ album_id: data.albumId, user_id: context.userId, email, matches: data.matches, created_at: new Date().toISOString(), reminded_at: null }, { onConflict: "album_id,user_id" });
+    return { ok: true };
   });
 
 /* ------------------------------ Compra ------------------------------ */
@@ -292,6 +302,8 @@ export const createPhotoOrder = createServerFn({ method: "POST" })
         patch.pix_qr_image = qr.encodedImage; patch.pix_payload = qr.payload;
       }
       await admin.from("photo_orders").update(patch).eq("id", order.id);
+      const { notifyPhotoOrder } = await import("./photo-notify.server");
+      await notifyPhotoOrder(order.id, "fotos_pedido_criado");
     } catch (e) {
       await admin.from("photo_orders").update({ status: "cancelado" }).eq("id", order.id);
       throw new Error("Não foi possível gerar a cobrança: " + (e as Error).message);
@@ -304,7 +316,12 @@ export async function applyPhotoOrderStatus(orderId: string, status: string) {
   const admin = await getAdmin();
   const { data: o } = await admin.from("photo_orders").select("status").eq("id", orderId).maybeSingle();
   if (!o || o.status === status || (o.status === "pago" && status === "vencido")) return;
-  await admin.from("photo_orders").update({ status, ...(status === "pago" ? { paid_at: new Date().toISOString() } : {}) }).eq("id", orderId);
+  const now = Date.now();
+  await admin.from("photo_orders").update({ status, ...(status === "pago" ? { paid_at: new Date(now).toISOString(), expires_at: new Date(now + SIX_MONTHS).toISOString() } : {}) }).eq("id", orderId);
+  if (status === "pago") {
+    const { notifyPhotoOrder } = await import("./photo-notify.server");
+    await notifyPhotoOrder(orderId, "fotos_pagas");
+  }
 }
 
 export const refreshPhotoOrder = createServerFn({ method: "POST" })
@@ -324,21 +341,13 @@ export const refreshPhotoOrder = createServerFn({ method: "POST" })
 export const myPhotoOrders = createServerFn({ method: "GET" })
   .middleware([auditedAction("myPhotoOrders")])
   .handler(async ({ context }) => {
-    const { data } = await context.supabase.from("photo_orders").select("id, code, status, total, package, payment_method, invoice_url, pix_qr_image, pix_payload, created_at, paid_at, photo_albums(events(title))").eq("user_id", context.userId).order("created_at", { ascending: false });
+    const { data } = await context.supabase.from("photo_orders").select("id, code, status, total, package, payment_method, invoice_url, pix_qr_image, pix_payload, created_at, paid_at, expires_at, photo_albums(events(title, starts_at))").eq("user_id", context.userId).order("created_at", { ascending: false });
     return data ?? [];
   });
 
-async function signOriginals(items: { kind: string; path: string }[]) {
-  const admin = await getAdmin();
-  const out: Record<string, string> = {};
-  for (const bucket of ["media-originals", "media-previews"] as const) {
-    const paths = items.filter((i) => (i.kind === "video") === (bucket === "media-previews")).map((i) => i.path);
-    for (let i = 0; i < paths.length; i += 500) {
-      const { data: s } = await admin.storage.from(bucket).createSignedUrls(paths.slice(i, i + 500), 60 * 60 * 24, { download: true });
-      for (const d of s ?? []) if (d.path && d.signedUrl) out[d.path] = d.signedUrl;
-    }
-  }
-  return out;
+async function signOriginals(items: { kind: string; path: string; storage?: string | null }[]) {
+  const { signMany } = await import("./media-storage.server");
+  return signMany(items.map((i) => ({ storage: i.storage ?? "cloud", path: i.path, kind: "original" as const, isVideo: i.kind === "video" })), 60 * 60 * 24, true);
 }
 
 /** Signed original links — only for paid orders of the caller (or super admin). */
@@ -346,13 +355,14 @@ export const photoOrderDownloads = createServerFn({ method: "POST" })
   .middleware([auditedAction("photoOrderDownloads")])
   .inputValidator((d) => z.object({ orderId: uuid }).parse(d))
   .handler(async ({ data, context }) => {
-    const { data: o } = await context.supabase.from("photo_orders").select("id, status").eq("id", data.orderId).maybeSingle();
+    const { data: o } = await context.supabase.from("photo_orders").select("id, status, expires_at").eq("id", data.orderId).maybeSingle();
     if (!o) throw new Error("Pedido não encontrado");
     if (o.status !== "pago") throw new Error("Pagamento ainda não confirmado");
+    if (o.expires_at && new Date(o.expires_at).getTime() < Date.now()) throw new Error("O prazo de 6 meses para baixar estas fotos terminou");
     const admin = await getAdmin();
-    const { data: items } = await admin.from("photo_order_items").select("media_id, kind, media_items(original_path, preview_path)").eq("order_id", o.id);
-    const previews = await signPreviews((items ?? []).filter((i: any) => i.kind === "photo").map((i: any) => i.media_items.preview_path));
-    const urls = await signOriginals((items ?? []).map((i: any) => ({ kind: i.kind, path: i.media_items.original_path })));
+    const { data: items } = await admin.from("photo_order_items").select("media_id, kind, media_items(storage, original_path, preview_path)").eq("order_id", o.id);
+    const previews = await signPreviews((items ?? []).filter((i: any) => i.kind === "photo").map((i: any) => ({ ...i.media_items, kind: i.kind })));
+    const urls = await signOriginals((items ?? []).map((i: any) => ({ kind: i.kind, path: i.media_items.original_path, storage: i.media_items.storage })));
     return (items ?? []).map((i: any) => ({ id: i.media_id, kind: i.kind, download: urls[i.media_items.original_path] ?? null, thumb: previews[i.media_items.preview_path] ?? null }));
   });
 
@@ -475,8 +485,8 @@ export const adminPhotoOrderDownloads = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     await assertAdmin(context);
     const admin = await getAdmin();
-    const { data: items } = await admin.from("photo_order_items").select("media_id, kind, media_items(original_path)").eq("order_id", data.orderId);
-    const urls = await signOriginals((items ?? []).map((i: any) => ({ kind: i.kind, path: i.media_items.original_path })));
+    const { data: items } = await admin.from("photo_order_items").select("media_id, kind, media_items(storage, original_path)").eq("order_id", data.orderId);
+    const urls = await signOriginals((items ?? []).map((i: any) => ({ kind: i.kind, path: i.media_items.original_path, storage: i.media_items.storage })));
     return (items ?? []).map((i: any) => ({ id: i.media_id, kind: i.kind, url: urls[i.media_items.original_path] ?? null }));
   });
 

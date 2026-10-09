@@ -147,13 +147,13 @@ function Uploader({ album, onBack }: { album: { id: string; title: string }; onB
             const desc = await faceDescriptors(scaled(img, 1600));
             faces += desc.length;
             const prev = await watermarkedPreview(img, t.watermarkPhoto);
-            await supabase.storage.from("media-originals").uploadToSignedUrl(tg.original.path, tg.original.token, file, { contentType: file.type });
-            await supabase.storage.from("media-previews").uploadToSignedUrl(tg.preview!.path, tg.preview!.token, prev, { contentType: "image/jpeg" });
-            items.push({ kind, original_path: tg.original.path, preview_path: tg.preview!.path, width: img.naturalWidth, height: img.naturalHeight, faces: desc });
+            await putFile(tg.original, file, file.type);
+            await putFile(tg.preview!, prev, "image/jpeg");
+            items.push({ storage: tg.storage, kind, original_path: tg.original.path, preview_path: tg.preview!.path, width: img.naturalWidth, height: img.naturalHeight, faces: desc });
             URL.revokeObjectURL(img.src);
           } else {
-            await supabase.storage.from("media-previews").uploadToSignedUrl(tg.original.path, tg.original.token, file, { contentType: file.type || "video/mp4" });
-            items.push({ kind, original_path: tg.original.path, preview_path: null, width: null, height: null, faces: [] });
+            await putFile(tg.original, file, file.type || "video/mp4");
+            items.push({ storage: tg.storage, kind, original_path: tg.original.path, preview_path: null, width: null, height: null, faces: [] });
           }
           setProgress({ done: i + k + 1, total: all.length, faces });
         }
@@ -201,4 +201,14 @@ function Uploader({ album, onBack }: { album: { id: string; title: string }; onB
       </div>
     </div>
   );
+}
+
+async function putFile(t: { url: string | null; path: string; token: string | null; bucket?: string }, body: Blob, type: string) {
+  if (t.url) {
+    const r = await fetch(t.url, { method: "PUT", body, headers: { "Content-Type": type } });
+    if (!r.ok) throw new Error(`Falha ao enviar para o servidor de fotos (${r.status})`);
+    return;
+  }
+  const { error } = await supabase.storage.from(t.bucket!).uploadToSignedUrl(t.path, t.token!, body, { contentType: type });
+  if (error) throw new Error(error.message);
 }
