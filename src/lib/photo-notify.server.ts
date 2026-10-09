@@ -23,7 +23,7 @@ export async function notifyPhotoOrder(orderId: string, kind: Kind) {
     if (rows.length) {
       const { signMany } = await import("./media-storage.server");
       const signed = await signMany(rows.map((it: any) => ({ storage: it.media_items.storage ?? "cloud", path: it.media_items.original_path, kind: "original" as const, isVideo: it.kind === "video" })), 7 * 86400, true);
-      downloads = rows.map((it: any, i: number) => ({ label: `Arquivo ${i + 1} (${it.kind === "video" ? "vídeo" : "foto"})`, url: signed[it.media_items.original_path] })).filter((d) => d.url);
+      downloads = rows.map((it: any, i: number) => ({ label: `Arquivo ${i + 1} (${it.kind === "video" ? "vídeo" : "foto"})`, url: signed[it.media_items.original_path] as string | undefined })).filter((d): d is { label: string; url: string } => !!d.url);
     }
   }
   let status = "enviado";

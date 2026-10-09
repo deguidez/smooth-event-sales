@@ -139,8 +139,8 @@ function UserDialog({ u, onClose, onSaved }: { u: any; onClose: () => void; onSa
   const photographer = pf ?? (ph ? {
     name: ph.name ?? "", document: ph.document ?? "", phone: ph.phone ?? "",
     asaas_wallet_id: ph.asaas_wallet_id ?? "", status: ph.status ?? "pendente",
-    bank_name: ph.bank?.bank_name ?? "", agency: ph.bank?.agency ?? "", account: ph.bank?.account ?? "",
-    account_type: ph.bank?.account_type ?? "CONTA_CORRENTE", pix_key: ph.bank?.pix_key ?? "",
+    bank_name: (ph.bank as any)?.bank_name ?? "", agency: (ph.bank as any)?.agency ?? "", account: (ph.bank as any)?.account ?? "",
+    account_type: (ph.bank as any)?.account_type ?? "CONTA_CORRENTE", pix_key: (ph.bank as any)?.pix_key ?? "",
   } : null);
   const setP = (k: string) => (e: React.ChangeEvent<HTMLInputElement>) => setPf({ ...(photographer ?? {}), [k]: e.target.value });
   const [f, setF] = useState({
