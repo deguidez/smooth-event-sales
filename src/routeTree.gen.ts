@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AuthRouteImport } from './routes/auth'
+import { Route as AuthenticatedEquipeRouteImport } from './routes/_authenticated/equipe'
 import { Route as AuthenticatedMinhaContaRouteImport } from './routes/_authenticated/minha-conta'
 import { Route as EventosIndexRouteImport } from './routes/eventos.index'
 import { Route as EventosSlugRouteImport } from './routes/eventos.$slug'
@@ -40,6 +41,11 @@ const AuthRoute = AuthRouteImport.update({
   id: '/auth',
   path: '/auth',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedEquipeRoute = AuthenticatedEquipeRouteImport.update({
+  id: '/equipe',
+  path: '/equipe',
+  getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedMinhaContaRoute = AuthenticatedMinhaContaRouteImport.update({
   id: '/minha-conta',
@@ -121,6 +127,7 @@ const LovableEmailTransactionalPreviewRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/equipe': typeof AuthenticatedEquipeRoute
   '/minha-conta': typeof AuthenticatedMinhaContaRoute
   '/eventos/$slug': typeof EventosSlugRoute
   '/webhook/asaas': typeof WebhookAsaasRoute
@@ -139,6 +146,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/equipe': typeof AuthenticatedEquipeRoute
   '/minha-conta': typeof AuthenticatedMinhaContaRoute
   '/eventos/$slug': typeof EventosSlugRoute
   '/webhook/asaas': typeof WebhookAsaasRoute
@@ -159,6 +167,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
+  '/_authenticated/equipe': typeof AuthenticatedEquipeRoute
   '/_authenticated/minha-conta': typeof AuthenticatedMinhaContaRoute
   '/eventos/$slug': typeof EventosSlugRoute
   '/webhook/asaas': typeof WebhookAsaasRoute
@@ -179,6 +188,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/auth'
+    | '/equipe'
     | '/minha-conta'
     | '/eventos/$slug'
     | '/webhook/asaas'
@@ -197,6 +207,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/auth'
+    | '/equipe'
     | '/minha-conta'
     | '/eventos/$slug'
     | '/webhook/asaas'
@@ -216,6 +227,7 @@ export interface FileRouteTypes {
     | '/'
     | '/_authenticated'
     | '/auth'
+    | '/_authenticated/equipe'
     | '/_authenticated/minha-conta'
     | '/eventos/$slug'
     | '/webhook/asaas'
@@ -266,6 +278,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/auth'
       preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/equipe': {
+      id: '/_authenticated/equipe'
+      path: '/equipe'
+      fullPath: '/equipe'
+      preLoaderRoute: typeof AuthenticatedEquipeRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/minha-conta': {
       id: '/_authenticated/minha-conta'
@@ -369,6 +388,7 @@ declare module '@tanstack/react-router' {
 }
 
 interface AuthenticatedRouteRouteChildren {
+  AuthenticatedEquipeRoute: typeof AuthenticatedEquipeRoute
   AuthenticatedMinhaContaRoute: typeof AuthenticatedMinhaContaRoute
   AuthenticatedAdminConfiguracoesRoute: typeof AuthenticatedAdminConfiguracoesRoute
   AuthenticatedAdminEmailRoute: typeof AuthenticatedAdminEmailRoute
@@ -380,6 +400,7 @@ interface AuthenticatedRouteRouteChildren {
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedEquipeRoute: AuthenticatedEquipeRoute,
   AuthenticatedMinhaContaRoute: AuthenticatedMinhaContaRoute,
   AuthenticatedAdminConfiguracoesRoute: AuthenticatedAdminConfiguracoesRoute,
   AuthenticatedAdminEmailRoute: AuthenticatedAdminEmailRoute,
