@@ -225,7 +225,7 @@ export const createTeamOrders = createServerFn({ method: "POST" })
         event_id: ev.id, ticket_type_id: tt.id, producer_id: producer.id,
         participant_name: p.full_name, participant_email: p.email, participant_cpf: p.cpf,
         participant_phone: p.phone || null, participant_birth_date: p.birth_date || null, participant_gender: p.gender || null,
-        shirt_size: ev.shirt_enabled ? e.shirt_size : null, team: mgr.team_name,
+        shirt_size: ev.shirt_enabled ? e.shirt_size ?? null : null, team: mgr.team_name,
         ticket_price: price, products_total: 0, items: [] as any, custom_answers: answers, accepted_terms: acceptedTerms as any,
         service_fee: f.serviceFee, total: f.total, producer_amount: f.producerAmount, platform_amount: f.platformAmount,
         asaas_fee_estimate: f.asaasFee, payment_method: data.method, discount: 0,

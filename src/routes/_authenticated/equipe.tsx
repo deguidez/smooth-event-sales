@@ -129,7 +129,7 @@ function NewRegistration({ members, onDone }: { members: Member[]; onDone: () =>
   const [accepted, setAccepted] = useState<string[]>([]);
   const [busy, setBusy] = useState(false);
   const ev = data?.events.find((e) => e.id === eventId);
-  const tk = ev?.tickets.find((t) => t.id === ticketId);
+  const tk = ev?.tickets.find((t: any) => t.id === ticketId);
   const fees = useMemo(() => (tk && data ? computeFees(tk.price, method, data.feeSettings as any, ev!.feeOverride) : null), [tk, method, data, ev]);
   const n = Object.keys(sel).length;
 
@@ -167,7 +167,7 @@ function NewRegistration({ members, onDone }: { members: Member[]; onDone: () =>
           <Label>Lote</Label>
           <Select value={ticketId} onValueChange={setTicketId} disabled={!ev}>
             <SelectTrigger><SelectValue placeholder="Escolha o lote" /></SelectTrigger>
-            <SelectContent>{ev?.tickets.map((t) => <SelectItem key={t.id} value={t.id} disabled={t.available <= 0}>{t.name} · {brl(t.price)} ({t.available} vagas)</SelectItem>)}</SelectContent>
+            <SelectContent>{ev?.tickets.map((t: any) => <SelectItem key={t.id} value={t.id} disabled={t.available <= 0}>{t.name} · {brl(t.price)} ({t.available} vagas)</SelectItem>)}</SelectContent>
           </Select>
         </div>
         <div className="space-y-1.5">
@@ -219,7 +219,7 @@ function NewRegistration({ members, onDone }: { members: Member[]; onDone: () =>
           {ev.terms.length > 0 && (
             <div className="space-y-2 rounded-2xl border bg-card p-5">
               <p className="font-semibold">Termos (aceitos em nome dos atletas)</p>
-              {ev.terms.map((t) => (
+              {ev.terms.map((t: any) => (
                 <label key={t.id} className="flex items-start gap-2 text-sm">
                   <Checkbox checked={accepted.includes(t.id)} onCheckedChange={(c) => setAccepted((a) => c ? [...a, t.id] : a.filter((x) => x !== t.id))} />
                   <span><b>{t.title}.</b> {t.text}</span>
