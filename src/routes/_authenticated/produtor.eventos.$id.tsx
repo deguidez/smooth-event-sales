@@ -68,6 +68,7 @@ function ManageEvent() {
         route_map_url: f.route_map_url?.trim() || null,
         cover_url: f.cover_url || null,
         shirt_enabled: !!f.shirt_enabled,
+        allow_third_party_free: !!f.allow_third_party_free,
         custom_fields: parseFields(f.custom_fields).map((x) => ({ ...x, label: x.label.trim() })) as any,
         shirt_sizes: f.shirt_sizes?.length ? f.shirt_sizes : ["PP", "P", "M", "G", "GG", "XG"],
         venue: f.venue,
@@ -139,6 +140,7 @@ function ManageEvent() {
             <F l="Abertura das inscrições (opcional)"><Input type="datetime-local" value={f.registrations_open_at ?? ""} onChange={set("registrations_open_at")} /></F>
             <F l="Fim das inscrições (opcional)"><Input type="datetime-local" value={f.registration_ends_at ?? ""} onChange={set("registration_ends_at")} /></F>
             <F l="Total de inscrições liberadas (vazio = sem limite)"><Input type="number" min="1" value={f.registration_limit} onChange={set("registration_limit")} placeholder="Ex.: 500 (somando todos os lotes)" /></F>
+            <label className="flex items-center gap-3 sm:col-span-2 text-sm"><Switch checked={!!f.allow_third_party_free} onCheckedChange={(v) => setF({ ...f, allow_third_party_free: v })} /> <span><b>Permitir inscrição gratuita para terceiros</b> — inscrições pagas sempre podem ser feitas para outra pessoa</span></label>
             <F l="Local"><Input value={f.venue ?? ""} onChange={set("venue")} /></F>
             <div className="grid grid-cols-[1fr_80px] gap-3">
               <F l="Cidade"><Input value={f.city ?? ""} onChange={set("city")} /></F>

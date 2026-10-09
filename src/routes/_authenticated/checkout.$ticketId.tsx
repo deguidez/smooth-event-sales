@@ -47,6 +47,8 @@ function Checkout() {
   const [installments, setInstallments] = useState(1);
   const [busy, setBusy] = useState(false);
   const [f, setF] = useState({ name: "", email: "", cpf: "", phone: "", birth_date: "", gender: "", shirt_size: "", team: "", emergency_contact_name: "", emergency_contact_phone: "", is_pcd: false, pcd_description: "" });
+  const [forOther, setForOther] = useState(false);
+  const [own, setOwn] = useState<typeof f | null>(null);
   const [answers, setAnswers] = useState<Record<string, any>>({});
   const [accepted, setAccepted] = useState<string[]>([]);
   const applyCoupon = useServerFn(checkCoupon);
@@ -62,7 +64,8 @@ function Checkout() {
       .eq("id", user.id)
       .single()
       .then(({ data }) => {
-        setF((p) => ({
+        setF((p) => {
+          const next = {
           ...p,
           name: data?.full_name ?? "",
           email: data?.email ?? user.email ?? "",
@@ -74,7 +77,10 @@ function Checkout() {
           emergency_contact_phone: data?.emergency_contact_phone ?? "",
           is_pcd: data?.is_pcd ?? false,
           pcd_description: data?.pcd_description ?? "",
-        }));
+          };
+          setOwn(next);
+          return next;
+        });
       });
   }, [user]);
 
@@ -115,7 +121,7 @@ function Checkout() {
     setBusy(true);
     try {
       const cpf = onlyDigits(f.cpf);
-      await supabase
+      if (!forOther) await supabase
         .from("profiles")
         .update({ full_name: f.name, cpf, phone: f.phone, birth_date: f.birth_date || null, gender: f.gender || null, emergency_contact_name: f.emergency_contact_name || null, emergency_contact_phone: f.emergency_contact_phone || null, is_pcd: f.is_pcd, pcd_description: f.is_pcd ? f.pcd_description || null : null })
         .eq("id", user.id);
@@ -146,6 +152,17 @@ function Checkout() {
         <div>
           <h1 className="text-3xl font-extrabold">Finalizar inscrição</h1>
           <p className="text-muted-foreground">Preencha os dados do participante.</p>
+          {(!free || (info.event as any).allow_third_party_free) && (
+            <label className="mt-3 flex items-center gap-2 text-sm font-medium">
+              <Checkbox checked={forOther} onCheckedChange={(c) => {
+                const on = !!c;
+                setForOther(on);
+                if (on) setF((p) => ({ ...p, name: "", email: "", cpf: "", phone: "", birth_date: "", gender: "", emergency_contact_name: "", emergency_contact_phone: "", is_pcd: false, pcd_description: "" }));
+                else if (own) setF((p) => ({ ...own, shirt_size: p.shirt_size, team: p.team }));
+              }} />
+              Inscrição para outra pessoa
+            </label>
+          )}
         </div>
         <section className="grid gap-4 rounded-2xl border bg-card p-6 shadow-card sm:grid-cols-2">
           <Field label="Nome completo" className="sm:col-span-2"><Input value={f.name} onChange={set("name")} required minLength={3} maxLength={120} /></Field>

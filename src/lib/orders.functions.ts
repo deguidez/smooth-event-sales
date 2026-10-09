@@ -15,7 +15,7 @@ export const getCheckoutInfo = createServerFn({ method: "GET" })
     const admin = await getAdmin();
     const { data: tt } = await admin
       .from("ticket_types")
-      .select("*, events!inner(id, title, slug, category, cover_url, starts_at, city, state, venue, status, producer_id, shirt_enabled, shirt_sizes, fee_percent, fee_fixed, custom_fields, terms)")
+      .select("*, events!inner(id, title, slug, category, cover_url, starts_at, city, state, venue, status, producer_id, shirt_enabled, shirt_sizes, fee_percent, fee_fixed, custom_fields, terms, allow_third_party_free)")
       .eq("id", data.ticketId)
       .single();
     if (!tt || tt.events.status !== "publicado" || !tt.active) throw new Error("Inscrição indisponível");
@@ -88,7 +88,7 @@ export const createOrder = createServerFn({ method: "POST" })
     const s = await loadSettings();
     const { data: tt } = await admin
       .from("ticket_types")
-      .select("*, events!inner(id, title, status, producer_id, starts_at, shirt_enabled, shirt_sizes, fee_percent, fee_fixed, custom_fields, terms, registration_ends_at, registrations_open_at, registration_limit, queue_enabled)")
+      .select("*, events!inner(id, title, status, producer_id, starts_at, shirt_enabled, shirt_sizes, fee_percent, fee_fixed, custom_fields, terms, registration_ends_at, registrations_open_at, registration_limit, queue_enabled, allow_third_party_free)")
       .eq("id", data.ticketId)
       .single();
     if (!tt || tt.events.status !== "publicado" || !tt.active) throw new Error("Inscrição indisponível");
@@ -107,6 +107,10 @@ export const createOrder = createServerFn({ method: "POST" })
       const { count: evCount } = await admin.from("orders").select("id", { count: "exact", head: true }).eq("event_id", ev.id).in("status", ["pago", "pendente"]);
       if ((evCount ?? 0) >= ev.registration_limit) throw new Error("Inscrições esgotadas para este evento");
     }
+    // Uma inscrição ativa por CPF em cada evento.
+    const { count: cpfCount } = await admin.from("orders").select("id", { count: "exact", head: true })
+      .eq("event_id", ev.id).eq("participant_cpf", data.participant.cpf).in("status", ["pago", "pendente"]);
+    if ((cpfCount ?? 0) > 0) throw new Error("Já existe uma inscrição para este CPF neste evento");
     if (tt.events.shirt_enabled && !tt.events.shirt_sizes.includes(data.participant.shirt_size ?? ""))
       throw new Error("Escolha o tamanho da camisa do kit");
     const terms = activeTerms(tt.events.terms);
@@ -185,8 +189,12 @@ export const createOrder = createServerFn({ method: "POST" })
       discount: coupon?.discount ?? 0,
     };
 
-    // Inscrição gratuita: confirma direto
+    // Inscrição gratuita: confirma direto (para terceiros só se o evento permitir)
     if (price <= 0) {
+      if (!ev.allow_third_party_free) {
+        const { data: me } = await admin.from("profiles").select("cpf").eq("id", context.userId).maybeSingle();
+        if (me?.cpf && me.cpf !== p.cpf) throw new Error("Este evento gratuito aceita apenas inscrição do próprio titular da conta");
+      }
       const { data: o, error } = await admin.from("orders").insert({ ...base, status: "pendente" }).select("id").single();
       if (error) throw new Error(error.message);
       await applyOrderStatus(o.id, "pago");
