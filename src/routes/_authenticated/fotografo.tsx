@@ -65,7 +65,7 @@ function ProfileForm({ me }: { me: any }) {
       <div className="space-y-1.5 sm:col-span-2"><Label>Nome profissional</Label><Input value={f.name} onChange={set("name")} required /></div>
       <div className="space-y-1.5"><Label>CPF ou CNPJ</Label><Input value={f.document} onChange={set("document")} required /></div>
       <div className="space-y-1.5"><Label>Telefone / WhatsApp</Label><Input value={f.phone} onChange={set("phone")} required /></div>
-      <div className="space-y-1.5 sm:col-span-2"><Label>Carteira Asaas (walletId)</Label><Input value={f.asaas_wallet_id} onChange={set("asaas_wallet_id")} placeholder="Ex.: 0b1c2d3e-..." required /><p className="text-xs text-muted-foreground">No Asaas: Minha conta → Integrações → Carteira (Wallet ID). Seus ganhos caem direto nela.</p></div>
+      <div className="space-y-1.5 sm:col-span-2"><Label>Carteira Asaas (walletId)</Label><Input value={f.asaas_wallet_id} onChange={set("asaas_wallet_id")} placeholder="Ex.: 0b1c2d3e-..." /><p className="text-xs text-muted-foreground">No Asaas: Minha conta → Integrações → Carteira (Wallet ID). Opcional agora — você pode preencher depois. Sem ela, suas fotos não podem ser vendidas.</p></div>
       <div className="space-y-1.5"><Label>Banco</Label><Input value={f.bank.bank_name} onChange={setB("bank_name")} /></div>
       <div className="grid grid-cols-2 gap-3"><div className="space-y-1.5"><Label>Agência</Label><Input value={f.bank.agency} onChange={setB("agency")} /></div><div className="space-y-1.5"><Label>Conta</Label><Input value={f.bank.account} onChange={setB("account")} /></div></div>
       <div className="space-y-1.5 sm:col-span-2"><Label>Chave Pix</Label><Input value={f.bank.pix_key} onChange={setB("pix_key")} /></div>

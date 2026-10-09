@@ -61,7 +61,7 @@ export const savePhotographer = createServerFn({ method: "POST" })
   .middleware([auditedAction("savePhotographer")])
   .inputValidator((d) => z.object({
     name: z.string().trim().min(3).max(120), document: z.string().regex(/^\d{11}$|^\d{14}$/, "CPF/CNPJ inválido"),
-    phone: z.string().trim().min(10).max(20), asaas_wallet_id: z.string().trim().uuid("Carteira Asaas (walletId) inválida"), bank: bankSchema,
+    phone: z.string().trim().min(10).max(20), asaas_wallet_id: z.union([z.literal(""), z.string().trim().uuid("Carteira Asaas (walletId) inválida")]).optional().transform((v) => v || null), bank: bankSchema,
   }).parse(d))
   .handler(async ({ data, context }) => {
     const admin = await getAdmin();
@@ -410,7 +410,7 @@ export const adminUpdatePhotographer = createServerFn({ method: "POST" })
   .inputValidator((d) => z.object({
     userId: uuid,
     name: z.string().trim().min(3).max(120), document: z.string().regex(/^\d{11}$|^\d{14}$/, "CPF/CNPJ inválido"),
-    phone: z.string().trim().min(10).max(20), asaas_wallet_id: z.string().trim().uuid("Carteira Asaas (walletId) inválida"),
+    phone: z.string().trim().min(10).max(20), asaas_wallet_id: z.union([z.literal(""), z.string().trim().uuid("Carteira Asaas (walletId) inválida")]).optional().transform((v) => v || null),
     status: z.enum(["pendente", "aprovado", "suspenso"]), bank: bankSchema,
   }).parse(d))
   .handler(async ({ data, context }) => {
