@@ -9,6 +9,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { TeamInvites } from "@/components/team-invites";
 import { OrderQrDialog, OrderQrImage } from "@/components/order-qr";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -50,6 +51,7 @@ function AthleteArea() {
         <TabsList>
           <TabsTrigger value="inscricoes">Minhas inscrições</TabsTrigger>
           <TabsTrigger value="perfil">Meus dados</TabsTrigger>
+          <TabsTrigger value="equipes">Equipes</TabsTrigger>
         </TabsList>
         <TabsContent value="inscricoes" className="mt-6">
           {orders.length === 0 ? (
@@ -93,6 +95,7 @@ function AthleteArea() {
         <TabsContent value="perfil" className="mt-6">
           <ProfileForm />
         </TabsContent>
+        <TabsContent value="equipes" className="mt-6"><TeamInvites /></TabsContent>
       </Tabs>
     </div>
   );

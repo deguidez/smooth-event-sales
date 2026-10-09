@@ -433,6 +433,7 @@ export type Database = {
           id: string
           invoice_url: string | null
           items: Json
+          manager_id: string | null
           paid_at: string | null
           participant_birth_date: string | null
           participant_cpf: string
@@ -440,6 +441,7 @@ export type Database = {
           participant_gender: string | null
           participant_name: string
           participant_phone: string | null
+          payment_group_id: string | null
           payment_method: Database["public"]["Enums"]["payment_method"]
           pix_payload: string | null
           pix_qr_image: string | null
@@ -473,6 +475,7 @@ export type Database = {
           id?: string
           invoice_url?: string | null
           items?: Json
+          manager_id?: string | null
           paid_at?: string | null
           participant_birth_date?: string | null
           participant_cpf: string
@@ -480,6 +483,7 @@ export type Database = {
           participant_gender?: string | null
           participant_name: string
           participant_phone?: string | null
+          payment_group_id?: string | null
           payment_method: Database["public"]["Enums"]["payment_method"]
           pix_payload?: string | null
           pix_qr_image?: string | null
@@ -513,6 +517,7 @@ export type Database = {
           id?: string
           invoice_url?: string | null
           items?: Json
+          manager_id?: string | null
           paid_at?: string | null
           participant_birth_date?: string | null
           participant_cpf?: string
@@ -520,6 +525,7 @@ export type Database = {
           participant_gender?: string | null
           participant_name?: string
           participant_phone?: string | null
+          payment_group_id?: string | null
           payment_method?: Database["public"]["Enums"]["payment_method"]
           pix_payload?: string | null
           pix_qr_image?: string | null
@@ -966,6 +972,54 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      team_managers: {
+        Row: {
+          created_at: string
+          status: string
+          team_name: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          status?: string
+          team_name: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          status?: string
+          team_name?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      team_members: {
+        Row: {
+          athlete_id: string
+          created_at: string
+          id: string
+          manager_id: string
+          responded_at: string | null
+          status: string
+        }
+        Insert: {
+          athlete_id: string
+          created_at?: string
+          id?: string
+          manager_id: string
+          responded_at?: string | null
+          status?: string
+        }
+        Update: {
+          athlete_id?: string
+          created_at?: string
+          id?: string
+          manager_id?: string
+          responded_at?: string | null
+          status?: string
+        }
+        Relationships: []
       }
       ticket_types: {
         Row: {

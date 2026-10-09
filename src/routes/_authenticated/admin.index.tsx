@@ -13,6 +13,7 @@ import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { ProducerKeyField, WithdrawalsAdmin } from "@/components/withdrawals-admin";
+import { TeamManagersAdmin } from "@/components/team-admin";
 import { AdminFinance } from "@/components/admin-finance";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { SalesChart, StatCard, toCsv } from "@/components/dash";
@@ -277,6 +278,7 @@ function AdminDashboard() {
           <TabsTrigger value="financeiro">Financeiro</TabsTrigger>
           <TabsTrigger value="produtores">Produtores {producers.some((p) => p.status === "pendente") && <Badge variant="warning" className="ml-2">{producers.filter((p) => p.status === "pendente").length}</Badge>}</TabsTrigger>
           <TabsTrigger value="usuarios">Usuários</TabsTrigger>
+          <TabsTrigger value="equipes">Equipes</TabsTrigger>
           <TabsTrigger value="eventos">Eventos</TabsTrigger>
           <TabsTrigger value="inscricoes">Inscrições</TabsTrigger>
           <TabsTrigger value="cupons">Cupons</TabsTrigger>
@@ -302,6 +304,7 @@ function AdminDashboard() {
         <TabsContent value="financeiro" className="mt-6"><AdminFinance /><Finance orders={orders} /></TabsContent>
         <TabsContent value="produtores" className="mt-6"><Producers producers={producers} /></TabsContent>
         <TabsContent value="usuarios" className="mt-6"><Users /></TabsContent>
+        <TabsContent value="equipes" className="mt-6"><TeamManagersAdmin /></TabsContent>
         <TabsContent value="eventos" className="mt-6"><Events events={events} /></TabsContent>
         <TabsContent value="inscricoes" className="mt-6"><Orders orders={orders} /></TabsContent>
         <TabsContent value="saques"><WithdrawalsAdmin /></TabsContent>
