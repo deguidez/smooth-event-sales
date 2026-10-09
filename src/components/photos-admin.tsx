@@ -226,7 +226,7 @@ function AlbumDialog({ album, events, onClose }: { album: any; events: any[]; on
             ))}
           </div>
           <label className="flex items-center gap-3 text-sm"><Switch checked={!!f.owner_sees_total} onCheckedChange={(v) => setF({ ...f, owner_sees_total: v })} /> Organizador vê o faturamento total do álbum (sem nomes de fotógrafos e sem fotos)</label>
-          <Button variant="hero" className="w-full" onClick={submit} disabled={!f.event_id}>Salvar álbum</Button>
+          <Button variant="hero" className="w-full" onClick={submit} disabled={!f.event_id || (creatingEvent && !newEvValid)}>Salvar álbum</Button>
         </div>
       </DialogContent>
     </Dialog>
