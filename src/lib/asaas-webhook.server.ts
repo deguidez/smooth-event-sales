@@ -19,6 +19,23 @@ export async function handleAsaasWebhook(request: Request) {
   } catch {
     return new Response("bad request", { status: 400 });
   }
+
+  // Validação de saque (Asaas pede autorização antes de cada transferência)
+  if (typeof body?.type === "string" && !body?.event) {
+    if (body.type !== "TRANSFER") return Response.json({ status: "APPROVED" });
+    const t = body.transfer ?? {};
+    const value = Number(t.value);
+    const { supabaseAdmin: a } = await import("@/integrations/supabase/client.server");
+    for (const table of ["withdrawals", "platform_withdrawals"] as const) {
+      const { data } = await a.from(table).select("id, amount, asaas_transfer_id")
+        .eq("status", "processando");
+      const ok = (data ?? []).some((w: any) =>
+        (t.id && w.asaas_transfer_id === t.id) ||
+        (!w.asaas_transfer_id && Math.abs(Number(w.amount) - value) < 0.005));
+      if (ok) return Response.json({ status: "APPROVED" });
+    }
+    return Response.json({ status: "REFUSED", refuseReason: "Saque não solicitado pelo sistema" });
+  }
   const payment = body?.payment;
   const orderId = typeof payment?.externalReference === "string" ? payment.externalReference : null;
   if (!orderId || !/^[0-9a-f-]{36}$/i.test(orderId)) return Response.json({ ignored: true });
