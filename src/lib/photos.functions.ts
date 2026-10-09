@@ -553,7 +553,7 @@ export const inviteAlbumPhotographerByEmail = createServerFn({ method: "POST" })
     const { data: ph } = await admin.from("photographers").select("status").eq("user_id", userId).maybeSingle();
     if (!ph) {
       const { error } = await admin.from("photographers").insert({
-        user_id: userId!, name: data.name || prof?.full_name || data.email.split("@")[0],
+        user_id: userId!, name: data.name || prof?.full_name || (data.email.split("@")[0] ?? data.email),
         document: (prof?.cpf ?? "").replace(/\D/g, ""), phone: prof?.phone ?? null, status: "aprovado",
       });
       if (error) throw new Error(error.message);
