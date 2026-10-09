@@ -1,5 +1,7 @@
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
+import { getPhotographerMenuAccess } from "@/lib/photos.functions";
 import { getBranding } from "@/lib/public.functions";
 import { useEffect, useState } from "react";
 import { LogOut, Shield, Store, Ticket, User, Users } from "lucide-react";
@@ -38,6 +40,9 @@ export function Logo() {
 export function SiteHeader() {
   const { user, isAdmin, isProducer } = useAuth();
   const navigate = useNavigate();
+  const photographerAccess = useServerFn(getPhotographerMenuAccess);
+  const { data: phAccess } = useQuery({ queryKey: ["photographer-menu", user?.id], queryFn: () => photographerAccess(), enabled: !!user, staleTime: 60_000 });
+  const showPhotographer = !!user && !!phAccess?.allowed;
   const qc = useQueryClient();
 
   async function signOut() {
