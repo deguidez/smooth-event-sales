@@ -19,6 +19,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { brl, categoryCover, fmtDate, onlyDigits } from "@/lib/format";
 import { cn } from "@/lib/utils";
+import { QueueGate } from "@/components/queue-gate";
 
 export const Route = createFileRoute("/_authenticated/checkout/$ticketId")({
   head: () => ({ meta: [{ title: "Finalizar inscrição — Inscreva" }, { name: "description", content: "Finalize sua inscrição com pagamento seguro na Inscreva." }, { property: "og:title", content: "Finalizar inscrição — Inscreva" }, { property: "og:description", content: "Finalize sua inscrição com pagamento seguro na Inscreva." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary_large_image" }, { name: "robots", content: "noindex" }] }),
@@ -134,6 +135,7 @@ function Checkout() {
   }
 
   return (
+    <QueueGate eventId={info.event.id}>
     <form onSubmit={submit} className="mx-auto grid max-w-6xl grid-cols-[minmax(0,1fr)] gap-8 px-4 py-10 lg:grid-cols-[minmax(0,1fr)_380px]">
       <div className="min-w-0 space-y-6">
         <div>

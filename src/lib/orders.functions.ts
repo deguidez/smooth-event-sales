@@ -80,7 +80,7 @@ export const createOrder = createServerFn({ method: "POST" })
     const s = await loadSettings();
     const { data: tt } = await admin
       .from("ticket_types")
-      .select("*, events!inner(id, title, status, producer_id, starts_at, shirt_enabled, shirt_sizes, fee_percent, fee_fixed, custom_fields, terms, registration_ends_at, registrations_open_at, registration_limit)")
+      .select("*, events!inner(id, title, status, producer_id, starts_at, shirt_enabled, shirt_sizes, fee_percent, fee_fixed, custom_fields, terms, registration_ends_at, registrations_open_at, registration_limit, queue_enabled)")
       .eq("id", data.ticketId)
       .single();
     if (!tt || tt.events.status !== "publicado" || !tt.active) throw new Error("Inscrição indisponível");
@@ -90,6 +90,11 @@ export const createOrder = createServerFn({ method: "POST" })
     const ev: any = tt.events;
     if (ev.registrations_open_at && new Date(ev.registrations_open_at).getTime() > now) throw new Error("As inscrições ainda não abriram para este evento");
     if (ev.registration_ends_at && new Date(ev.registration_ends_at).getTime() < now) throw new Error("Inscrições encerradas para este evento");
+    if (ev.queue_enabled) {
+      const { data: qe } = await admin.from("queue_entries").select("status, expires_at").eq("event_id", ev.id).eq("user_id", context.userId).maybeSingle();
+      if (!qe || qe.status !== "admitted" || !qe.expires_at || new Date(qe.expires_at).getTime() < now)
+        throw new Error("Sua vez na fila expirou ou ainda não chegou. Volte à fila para continuar.");
+    }
     if (ev.registration_limit != null) {
       const { count: evCount } = await admin.from("orders").select("id", { count: "exact", head: true }).eq("event_id", ev.id).in("status", ["pago", "pendente"]);
       if ((evCount ?? 0) >= ev.registration_limit) throw new Error("Inscrições esgotadas para este evento");
