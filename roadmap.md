@@ -1,4 +1,5 @@
 # Roadmap
+- [ ] Menu no topo do super admin e acesso à edição do evento e configurações da fila
 - [x] Contagem financeira separa confirmadas, pagas e gratuitas, sem truncar pedidos — verificada com a inscrição gratuita real nos painéis admin e produtor
 - [x] Logs seguros de atividades e erros de admin, produtor e atleta, com consulta exclusiva do superadmin — acessos, alterações reais, operação de servidor e filtro de erros verificados
 - [x] Ingresso com QR dentro do comprovante e adicionar ao calendário — inscrição real, QR, link Google e download .ics verificados; sem rolagem lateral no celular

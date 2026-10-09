@@ -10,6 +10,7 @@
 <!-- LOVABLE:END -->
 
 ## Architecture rules
+- Super admins and producers share the existing event editor, with a dedicated queue tab selected through URL search — avoids duplicate event forms and keeps queue settings consistent.
 - Activity auditing combines transactional database triggers with authenticated action middleware and browser events; logs omit payloads, secrets and personal fields, and only super admins can read them.
 - Financial totals use an RLS-scoped SQL aggregate and paginated order reads; confirmed registrations include free orders while paid counts require a positive total.
 - Post-login navigation is resolved once on the auth page after roles finish loading, including OAuth returns, to avoid competing redirects.
