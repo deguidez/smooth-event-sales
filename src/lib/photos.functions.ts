@@ -390,6 +390,34 @@ export const adminPhotoOverview = createServerFn({ method: "GET" })
     return { albums: albums ?? [], photographers: photographers ?? [], events: events ?? [] };
   });
 
+export const adminGetPhotographer = createServerFn({ method: "GET" })
+  .middleware([auditedAction("adminGetPhotographer")])
+  .inputValidator((d) => z.object({ userId: uuid }).parse(d))
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context);
+    const { data: ph } = await (await getAdmin()).from("photographers").select("*").eq("user_id", data.userId).maybeSingle();
+    return { photographer: ph };
+  });
+
+export const adminUpdatePhotographer = createServerFn({ method: "POST" })
+  .middleware([auditedAction("adminUpdatePhotographer")])
+  .inputValidator((d) => z.object({
+    userId: uuid,
+    name: z.string().trim().min(3).max(120), document: z.string().regex(/^\d{11}$|^\d{14}$/, "CPF/CNPJ inválido"),
+    phone: z.string().trim().min(10).max(20), asaas_wallet_id: z.string().trim().uuid("Carteira Asaas (walletId) inválida"),
+    status: z.enum(["pendente", "aprovado", "suspenso"]), bank: bankSchema,
+  }).parse(d))
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context);
+    const { userId, ...row } = data;
+    const admin = await getAdmin();
+    const { data: ex } = await admin.from("photographers").select("user_id").eq("user_id", userId).maybeSingle();
+    if (!ex) throw new Error("Este usuário não tem cadastro de fotógrafo");
+    const { error } = await admin.from("photographers").update({ ...row, bank: row.bank as any }).eq("user_id", userId);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
 export const setPhotographerStatus = createServerFn({ method: "POST" })
   .middleware([auditedAction("setPhotographerStatus")])
   .inputValidator((d) => z.object({ userId: uuid, status: z.enum(["pendente", "aprovado", "suspenso"]) }).parse(d))
