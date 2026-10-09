@@ -135,7 +135,8 @@ function AlbumDialog({ album, events, onClose }: { album: any; events: any[]; on
   async function submit() {
     try {
       await save({ data: {
-        ...(f.id ? { id: f.id } : {}), event_id: f.event_id, active: !!f.active,
+        ...(f.id ? { id: f.id } : {}), event_id: creatingEvent ? undefined : f.event_id, active: !!f.active,
+        ...(creatingEvent ? { new_event: { title: newEv.title.trim(), starts_at: newEv.starts_at, city: newEv.city.trim(), state: newEv.state.trim(), category: newEv.category } } : {}),
         owner_percent: Number(f.owner_percent), platform_percent: Number(f.platform_percent), photographer_percent: Number(f.photographer_percent),
         photo_price: Number(f.photo_price), video_price: Number(f.video_price),
         tiers: (f.tiers ?? []).map((t: any) => ({ min_qty: Number(t.min_qty), discount_percent: num(t.discount_percent) })),
@@ -156,9 +157,33 @@ function AlbumDialog({ album, events, onClose }: { album: any; events: any[]; on
           <div className="space-y-1.5"><Label>Evento</Label>
             <Select value={f.event_id} onValueChange={(v) => setF({ ...f, event_id: v })} disabled={!!f.id}>
               <SelectTrigger><SelectValue placeholder="Escolha o evento" /></SelectTrigger>
-              <SelectContent>{events.map((e) => <SelectItem key={e.id} value={e.id}>{e.title} — {fmtDate(e.starts_at)}</SelectItem>)}</SelectContent>
+              <SelectContent>
+                <SelectItem value="__new__">＋ Criar novo evento (só fotos, sem inscrições)</SelectItem>
+                {events.map((e) => <SelectItem key={e.id} value={e.id}>{e.title} — {fmtDate(e.starts_at)}</SelectItem>)}
+              </SelectContent>
             </Select>
           </div>
+          {creatingEvent && (
+            <div className="space-y-3 rounded-xl border p-3">
+              <p className="text-sm font-semibold">Dados do novo evento</p>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div className="sm:col-span-2"><Label>Nome do evento</Label><Input value={newEv.title} onChange={(e) => setNewEv({ ...newEv, title: e.target.value })} /></div>
+                <div><Label>Data</Label><Input type="datetime-local" value={newEv.starts_at} onChange={(e) => setNewEv({ ...newEv, starts_at: e.target.value })} /></div>
+                <div><Label>Categoria</Label>
+                  <Select value={newEv.category} onValueChange={(v) => setNewEv({ ...newEv, category: v })}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="esporte">Esporte</SelectItem><SelectItem value="show">Show</SelectItem>
+                      <SelectItem value="congresso">Congresso</SelectItem><SelectItem value="curso">Curso</SelectItem><SelectItem value="outro">Outro</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div><Label>Cidade</Label><Input value={newEv.city} onChange={(e) => setNewEv({ ...newEv, city: e.target.value })} /></div>
+                <div><Label>UF</Label><Input maxLength={2} value={newEv.state} onChange={(e) => setNewEv({ ...newEv, state: e.target.value })} /></div>
+              </div>
+              <p className="text-xs text-muted-foreground">O evento é criado como rascunho (não aparece na venda de inscrições) e fica vinculado a você como organizador.</p>
+            </div>
+          )}
           <label className="flex items-center gap-3"><Switch checked={!!f.active} onCheckedChange={(v) => setF({ ...f, active: v })} /> Álbum à venda (visível para os clientes)</label>
           <div>
             <Label>Comissões (precisam somar 100%) — soma atual: <b className={sum === 100 ? "" : "text-destructive"}>{sum}%</b></Label>
