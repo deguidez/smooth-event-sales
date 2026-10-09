@@ -98,6 +98,47 @@ export type Database = {
         }
         Relationships: []
       }
+      checkout_starts: {
+        Row: {
+          created_at: string
+          email: string
+          event_id: string
+          id: string
+          name: string | null
+          reminded_at: string | null
+          ticket_type_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          event_id: string
+          id?: string
+          name?: string | null
+          reminded_at?: string | null
+          ticket_type_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          event_id?: string
+          id?: string
+          name?: string | null
+          reminded_at?: string | null
+          ticket_type_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "checkout_starts_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       coupons: {
         Row: {
           active: boolean
@@ -529,6 +570,7 @@ export type Database = {
       }
       platform_settings: {
         Row: {
+          abandoned_minutes: number
           asaas_api_key: string | null
           asaas_env: string
           asaas_fee_boleto: number
@@ -537,8 +579,13 @@ export type Database = {
           asaas_fee_paid_by: string
           asaas_fee_pix: number
           asaas_webhook_token: string | null
+          auto_cancel_enabled: boolean
+          auto_cancel_minutes: number
           boleto_due_days: number
           card_release_days: number
+          email_abandoned_enabled: boolean
+          email_cancelled_enabled: boolean
+          email_event_reminder_enabled: boolean
           email_from_address: string | null
           email_from_name: string | null
           enable_boleto: boolean
@@ -551,6 +598,7 @@ export type Database = {
           id: number
           max_installments: number
           platform_wallet_id: string | null
+          reminder_days_before: number
           site_domain: string | null
           site_favicon: string | null
           site_logo: string | null
@@ -559,6 +607,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          abandoned_minutes?: number
           asaas_api_key?: string | null
           asaas_env?: string
           asaas_fee_boleto?: number
@@ -567,8 +616,13 @@ export type Database = {
           asaas_fee_paid_by?: string
           asaas_fee_pix?: number
           asaas_webhook_token?: string | null
+          auto_cancel_enabled?: boolean
+          auto_cancel_minutes?: number
           boleto_due_days?: number
           card_release_days?: number
+          email_abandoned_enabled?: boolean
+          email_cancelled_enabled?: boolean
+          email_event_reminder_enabled?: boolean
           email_from_address?: string | null
           email_from_name?: string | null
           enable_boleto?: boolean
@@ -581,6 +635,7 @@ export type Database = {
           id?: number
           max_installments?: number
           platform_wallet_id?: string | null
+          reminder_days_before?: number
           site_domain?: string | null
           site_favicon?: string | null
           site_logo?: string | null
@@ -589,6 +644,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          abandoned_minutes?: number
           asaas_api_key?: string | null
           asaas_env?: string
           asaas_fee_boleto?: number
@@ -597,8 +653,13 @@ export type Database = {
           asaas_fee_paid_by?: string
           asaas_fee_pix?: number
           asaas_webhook_token?: string | null
+          auto_cancel_enabled?: boolean
+          auto_cancel_minutes?: number
           boleto_due_days?: number
           card_release_days?: number
+          email_abandoned_enabled?: boolean
+          email_cancelled_enabled?: boolean
+          email_event_reminder_enabled?: boolean
           email_from_address?: string | null
           email_from_name?: string | null
           enable_boleto?: boolean
@@ -611,6 +672,7 @@ export type Database = {
           id?: number
           max_installments?: number
           platform_wallet_id?: string | null
+          reminder_days_before?: number
           site_domain?: string | null
           site_favicon?: string | null
           site_logo?: string | null
