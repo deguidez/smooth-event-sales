@@ -28,6 +28,35 @@ async function sha256(s: string) {
 
 const round = (n: number) => Math.round(n * 100) / 100;
 
+/**
+ * Confere no Asaas saques parados em "processando" e atualiza a situação.
+ * Se a transferência falhou ou foi cancelada, o valor volta ao saldo
+ * (status "falhou" não é contado como sacado).
+ */
+async function reconcileProcessing(table: "withdrawals" | "platform_withdrawals", scope: { column: string; value: string }) {
+  const a = await admin();
+  const { data: rows } = await a.from(table).select("id, producer_id, user_id, asaas_transfer_id")
+    .eq("status", "processando").eq(scope.column, scope.value).not("asaas_transfer_id", "is", null);
+  if (!rows?.length) return;
+  const { data: s } = await a.from("platform_settings").select("asaas_env, asaas_api_key").eq("id", 1).single();
+  if (!s?.asaas_env) return;
+  const { asaasFetch } = await import("./asaas.server");
+  for (const w of rows) {
+    let apiKey = s.asaas_api_key;
+    if (table === "withdrawals") {
+      const { data: sec } = await a.from("producer_secrets").select("asaas_api_key").eq("producer_id", (w as any).producer_id).maybeSingle();
+      if (!sec?.asaas_api_key) continue;
+      apiKey = sec.asaas_api_key;
+    }
+    if (!apiKey) continue;
+    try {
+      const t: any = await asaasFetch({ asaas_env: s.asaas_env, asaas_api_key: apiKey }, `/transfers/${(w as any).asaas_transfer_id}`, { method: "GET" });
+      const st = t?.status === "DONE" ? "pago" : t?.status === "FAILED" || t?.status === "CANCELLED" ? "falhou" : null;
+      if (st) await a.from(table).update({ status: st, processed_at: new Date().toISOString(), error: st === "falhou" ? "Transferência recusada pelo Asaas — o valor voltou ao saldo" : null }).eq("id", w.id);
+    } catch { /* tenta de novo na próxima consulta */ }
+  }
+}
+
 /** Saldo do produtor: cartão só libera depois de X dias do pagamento. */
 async function computeBalance(producerId: string) {
   const a = await admin();
