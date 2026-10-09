@@ -47,6 +47,7 @@ const settingsSchema = z.object({
   }).optional(),
   asaas_env: z.enum(["sandbox", "producao"]).optional(),
   asaas_api_key: z.string().trim().max(400).optional(),
+  asaas_webhook_token: z.string().trim().min(8).max(200).optional(),
   platform_wallet_id: z.string().trim().max(100).nullable().optional(),
   fee_percent: z.number().min(0).max(50).optional(),
   fee_fixed: z.number().min(0).max(1000).optional(),
@@ -110,6 +111,7 @@ export const saveAdminSettings = createServerFn({ method: "POST" })
     await assertAdmin(context);
     const patch: any = { ...data, updated_at: new Date().toISOString() };
     if (!data.asaas_api_key) delete patch.asaas_api_key;
+    if (!data.asaas_webhook_token) delete patch.asaas_webhook_token;
     const admin = await getAdmin();
     const { error } = await admin.from("platform_settings").update(patch).eq("id", 1);
     if (error) throw new Error(error.message);
