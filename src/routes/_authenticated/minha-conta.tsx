@@ -113,7 +113,7 @@ function Stat({ n, l }: { n: number; l: string }) {
 function ProfileForm() {
   const { user } = useAuth();
   const qc = useQueryClient();
-  const [f, setF] = useState({ full_name: "", cpf: "", phone: "", birth_date: "", city: "", state: "", emergency_contact_name: "", emergency_contact_phone: "", is_pcd: false, pcd_description: "" });
+  const [f, setF] = useState({ full_name: "", cpf: "", phone: "", birth_date: "", city: "", state: "", team: "", emergency_contact_name: "", emergency_contact_phone: "", is_pcd: false, pcd_description: "" });
   useEffect(() => {
     if (!user) return;
     supabase.from("profiles").select("*").eq("id", user.id).single().then(({ data }) => {
@@ -125,6 +125,7 @@ function ProfileForm() {
           birth_date: data.birth_date ?? "",
           city: data.city ?? "",
           state: data.state ?? "",
+          team: data.team ?? "",
           emergency_contact_name: data.emergency_contact_name ?? "",
           emergency_contact_phone: data.emergency_contact_phone ?? "",
           is_pcd: data.is_pcd ?? false,
@@ -153,6 +154,7 @@ function ProfileForm() {
       <div className="space-y-1.5"><Label>Nascimento</Label><Input type="date" value={f.birth_date} onChange={set("birth_date")} /></div>
       <div className="space-y-1.5"><Label>Cidade</Label><Input value={f.city} onChange={set("city")} /></div>
       <div className="space-y-1.5"><Label>UF</Label><Input value={f.state} onChange={set("state")} maxLength={2} /></div>
+      <div className="space-y-1.5 sm:col-span-2"><Label>Equipe</Label><Input value={f.team} onChange={set("team")} maxLength={80} placeholder="Nome da sua equipe (opcional)" /></div>
       <div className="space-y-1.5"><Label>Contato de emergência (nome)</Label><Input value={f.emergency_contact_name} onChange={set("emergency_contact_name")} maxLength={120} placeholder="Nome de quem avisar" /></div>
       <div className="space-y-1.5"><Label>Telefone de emergência</Label><Input value={f.emergency_contact_phone} onChange={set("emergency_contact_phone")} maxLength={20} placeholder="(11) 99999-9999" /></div>
       <div className="flex items-center gap-2 sm:col-span-2">
