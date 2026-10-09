@@ -206,6 +206,21 @@ function UserDialog({ u, onClose, onSaved }: { u: any; onClose: () => void; onSa
               </div>
             ))}
           </div>
+          {!photographer && (
+            <div className="sm:col-span-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setPf({
+                  name: u.full_name ?? "", document: (u.cpf ?? "").replace(/\D/g, ""), phone: u.phone ?? "",
+                  asaas_wallet_id: "", status: "pendente",
+                  bank_name: "", agency: "", account: "", account_type: "CONTA_CORRENTE", pix_key: "",
+                })}
+              >
+                Tornar fotógrafo
+              </Button>
+            </div>
+          )}
           {photographer && (
             <div className="sm:col-span-2 space-y-3 rounded-xl border p-3">
               <div className="flex items-center justify-between">
