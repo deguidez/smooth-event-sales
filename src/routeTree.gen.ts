@@ -13,6 +13,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedEquipeRouteImport } from './routes/_authenticated/equipe'
+import { Route as AuthenticatedFotografoRouteImport } from './routes/_authenticated/fotografo'
 import { Route as AuthenticatedMinhaContaRouteImport } from './routes/_authenticated/minha-conta'
 import { Route as EntregaKitTokenRouteImport } from './routes/entrega-kit.$token'
 import { Route as EventosIndexRouteImport } from './routes/eventos.index'
@@ -46,6 +47,11 @@ const AuthRoute = AuthRouteImport.update({
 const AuthenticatedEquipeRoute = AuthenticatedEquipeRouteImport.update({
   id: '/equipe',
   path: '/equipe',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedFotografoRoute = AuthenticatedFotografoRouteImport.update({
+  id: '/fotografo',
+  path: '/fotografo',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedMinhaContaRoute = AuthenticatedMinhaContaRouteImport.update({
@@ -134,6 +140,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/equipe': typeof AuthenticatedEquipeRoute
+  '/fotografo': typeof AuthenticatedFotografoRoute
   '/minha-conta': typeof AuthenticatedMinhaContaRoute
   '/entrega-kit/$token': typeof EntregaKitTokenRoute
   '/eventos/$slug': typeof EventosSlugRoute
@@ -154,6 +161,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/equipe': typeof AuthenticatedEquipeRoute
+  '/fotografo': typeof AuthenticatedFotografoRoute
   '/minha-conta': typeof AuthenticatedMinhaContaRoute
   '/entrega-kit/$token': typeof EntregaKitTokenRoute
   '/eventos/$slug': typeof EventosSlugRoute
@@ -176,6 +184,7 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
   '/_authenticated/equipe': typeof AuthenticatedEquipeRoute
+  '/_authenticated/fotografo': typeof AuthenticatedFotografoRoute
   '/_authenticated/minha-conta': typeof AuthenticatedMinhaContaRoute
   '/entrega-kit/$token': typeof EntregaKitTokenRoute
   '/eventos/$slug': typeof EventosSlugRoute
@@ -198,6 +207,7 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/equipe'
+    | '/fotografo'
     | '/minha-conta'
     | '/entrega-kit/$token'
     | '/eventos/$slug'
@@ -218,6 +228,7 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/equipe'
+    | '/fotografo'
     | '/minha-conta'
     | '/entrega-kit/$token'
     | '/eventos/$slug'
@@ -239,6 +250,7 @@ export interface FileRouteTypes {
     | '/_authenticated'
     | '/auth'
     | '/_authenticated/equipe'
+    | '/_authenticated/fotografo'
     | '/_authenticated/minha-conta'
     | '/entrega-kit/$token'
     | '/eventos/$slug'
@@ -297,6 +309,13 @@ declare module '@tanstack/react-router' {
       path: '/equipe'
       fullPath: '/equipe'
       preLoaderRoute: typeof AuthenticatedEquipeRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/fotografo': {
+      id: '/_authenticated/fotografo'
+      path: '/fotografo'
+      fullPath: '/fotografo'
+      preLoaderRoute: typeof AuthenticatedFotografoRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/minha-conta': {
@@ -409,6 +428,7 @@ declare module '@tanstack/react-router' {
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedEquipeRoute: typeof AuthenticatedEquipeRoute
+  AuthenticatedFotografoRoute: typeof AuthenticatedFotografoRoute
   AuthenticatedMinhaContaRoute: typeof AuthenticatedMinhaContaRoute
   AuthenticatedAdminConfiguracoesRoute: typeof AuthenticatedAdminConfiguracoesRoute
   AuthenticatedAdminEmailRoute: typeof AuthenticatedAdminEmailRoute
@@ -421,6 +441,7 @@ interface AuthenticatedRouteRouteChildren {
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedEquipeRoute: AuthenticatedEquipeRoute,
+  AuthenticatedFotografoRoute: AuthenticatedFotografoRoute,
   AuthenticatedMinhaContaRoute: AuthenticatedMinhaContaRoute,
   AuthenticatedAdminConfiguracoesRoute: AuthenticatedAdminConfiguracoesRoute,
   AuthenticatedAdminEmailRoute: AuthenticatedAdminEmailRoute,
