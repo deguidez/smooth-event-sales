@@ -21,6 +21,7 @@ import { SalesChart, StatCard, toCsv } from "@/components/dash";
 import { supabase } from "@/integrations/supabase/client";
 import { AdminGate } from "@/components/admin-gate";
 import { createProducerWallet, listUsers, setUserRole, updateProducer, updateUser, adminCreateProducer, deleteProducer, adminCreateUser, deleteUser } from "@/lib/admin.functions";
+import { adminGetPhotographer, adminUpdatePhotographer } from "@/lib/photos.functions";
 import { CouponsAdmin } from "@/components/coupons-admin";
 import { ActivityLogView } from "@/components/activity-log-view";
 import { loadFinancialOrders, loadFinancialSummary } from "@/lib/financial";
