@@ -466,7 +466,7 @@ export const adminAlbumDashboard = createServerFn({ method: "GET" })
     const stats = await albumStats(data.albumId);
     const { data: members } = await admin.from("album_photographers").select("id, user_id, status").eq("album_id", data.albumId);
     const { data: phs } = await admin.from("photographers").select("user_id, name, phone, status");
-    return { ...stats, members: members ?? [], photographers: phs ?? [] };
+    return { ...stats, members: members ?? [], phList: phs ?? [] };
   });
 
 export const adminPhotoOrderDownloads = createServerFn({ method: "POST" })

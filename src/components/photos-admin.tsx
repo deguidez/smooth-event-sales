@@ -199,7 +199,7 @@ function AlbumDashboard({ albumId, onBack }: { albumId: string; onBack: () => vo
   const [orderFilter, setOrderFilter] = useState("todos");
   useEffect(() => setPick(""), [albumId]);
   if (!d) return <p className="text-muted-foreground">Carregando...</p>;
-  const name = (id: string) => d.photographers.find((p: any) => p.user_id === id);
+  const name = (id: string) => d.phList.find((p: any) => p.user_id === id);
   const refresh = () => qc.invalidateQueries({ queryKey: ["photo-dash", albumId] });
   const orders = orderFilter === "todos" ? d.orders : d.orders.filter((o: any) => o.status === orderFilter);
 
@@ -229,7 +229,7 @@ function AlbumDashboard({ albumId, onBack }: { albumId: string; onBack: () => vo
           <div className="flex gap-2">
             <Select value={pick} onValueChange={setPick}>
               <SelectTrigger className="w-64"><SelectValue placeholder="Escolha um fotógrafo aprovado" /></SelectTrigger>
-              <SelectContent>{d.photographers.filter((p: any) => p.status === "aprovado" && !d.members.some((m: any) => m.user_id === p.user_id)).map((p: any) => <SelectItem key={p.user_id} value={p.user_id}>{p.name}</SelectItem>)}</SelectContent>
+              <SelectContent>{d.phList.filter((p: any) => p.status === "aprovado" && !d.members.some((m: any) => m.user_id === p.user_id)).map((p: any) => <SelectItem key={p.user_id} value={p.user_id}>{p.name}</SelectItem>)}</SelectContent>
             </Select>
             <Button disabled={!pick} onClick={async () => { try { await invite({ data: { albumId, userId: pick } }); toast.success("Convite enviado"); setPick(""); refresh(); } catch (e: any) { toast.error(e.message); } }}><UserPlus /> Convidar</Button>
           </div>
