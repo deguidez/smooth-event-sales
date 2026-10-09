@@ -14,7 +14,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { brl, fmtDate } from "@/lib/format";
 import { loadImage, scaled, selfieDescriptor } from "@/lib/face";
 import { cartTotal, type AlbumPricing, type Package } from "@/lib/photo-pricing";
-import { createPhotoOrder, getPublicAlbum, listAlbumMedia, searchFaces } from "@/lib/photos.functions";
+import { createPhotoOrder, getPublicAlbum, listAlbumMedia, searchFaces, trackPhotoSearch } from "@/lib/photos.functions";
 
 export const Route = createFileRoute("/fotos/$albumId")({
   head: () => ({ meta: [
@@ -30,6 +30,8 @@ function AlbumPage() {
   const getAlbum = useServerFn(getPublicAlbum);
   const listMedia = useServerFn(listAlbumMedia);
   const search = useServerFn(searchFaces);
+  const track = useServerFn(trackPhotoSearch);
+  const { user: me } = useAuth();
   const { data, error } = useQuery({ queryKey: ["album", albumId], queryFn: () => getAlbum({ data: { albumId } }) });
   const [matched, setMatched] = useState<string[] | null>(null);
   const [embedding, setEmbedding] = useState<number[] | null>(null);
@@ -56,6 +58,7 @@ function AlbumPage() {
       const d = await selfieDescriptor(scaled(img, 1024));
       if (!d) { toast.error("Não encontramos um rosto na foto. Tente com o rosto bem iluminado e de frente."); return; }
       const ids = await search({ data: { albumId, embedding: d } });
+      if (me && ids.length) track({ data: { albumId, matches: ids.length } }).catch(() => {});
       setEmbedding(d); setMatched(ids); setPage(0); setMedia([]);
       toast.success(ids.length ? `Encontramos ${ids.length} arquivos com você!` : "Nenhuma foto encontrada com esse rosto.");
     } catch { toast.error("Não foi possível analisar a selfie"); }

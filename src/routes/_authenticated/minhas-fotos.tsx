@@ -41,7 +41,7 @@ function OrderCard({ o }: { o: any }) {
   return (
     <div className="rounded-2xl border bg-card p-5 shadow-card">
       <div className="flex flex-wrap items-start justify-between gap-2">
-        <div><p className="font-bold">{o.photo_albums?.events?.title}</p><p className="text-sm text-muted-foreground">#{o.code} · {fmtDate(o.created_at)} · {brl(o.total)}</p></div>
+        <div><p className="font-bold">{o.photo_albums?.events?.title}</p><p className="text-sm text-muted-foreground">#{o.code} · {fmtDate(o.created_at)} · {brl(o.total)}</p>{o.status === "pago" && o.expires_at && <p className="text-xs text-muted-foreground">Disponível para download até {fmtDate(o.expires_at)}</p>}</div>
         <Badge variant={o.status === "pago" ? "success" : o.status === "pendente" ? "warning" : "secondary"}>{o.status}</Badge>
       </div>
       {o.status === "pendente" && (

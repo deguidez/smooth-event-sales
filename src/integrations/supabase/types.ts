@@ -590,6 +590,8 @@ export type Database = {
           original_path: string
           photographer_id: string
           preview_path: string
+          purged_at: string | null
+          storage: string
           width: number | null
         }
         Insert: {
@@ -602,6 +604,8 @@ export type Database = {
           original_path: string
           photographer_id: string
           preview_path: string
+          purged_at?: string | null
+          storage?: string
           width?: number | null
         }
         Update: {
@@ -614,6 +618,8 @@ export type Database = {
           original_path?: string
           photographer_id?: string
           preview_path?: string
+          purged_at?: string | null
+          storage?: string
           width?: number | null
         }
         Relationships: [
@@ -903,6 +909,7 @@ export type Database = {
           customer_name: string
           customer_phone: string | null
           discount: number
+          expires_at: string | null
           id: string
           invoice_url: string | null
           owner_amount: number
@@ -913,6 +920,7 @@ export type Database = {
           pix_payload: string | null
           pix_qr_image: string | null
           platform_amount: number
+          reminded_at: string | null
           split: Json
           status: string
           subtotal: number
@@ -930,6 +938,7 @@ export type Database = {
           customer_name: string
           customer_phone?: string | null
           discount?: number
+          expires_at?: string | null
           id?: string
           invoice_url?: string | null
           owner_amount?: number
@@ -940,6 +949,7 @@ export type Database = {
           pix_payload?: string | null
           pix_qr_image?: string | null
           platform_amount?: number
+          reminded_at?: string | null
           split?: Json
           status?: string
           subtotal: number
@@ -957,6 +967,7 @@ export type Database = {
           customer_name?: string
           customer_phone?: string | null
           discount?: number
+          expires_at?: string | null
           id?: string
           invoice_url?: string | null
           owner_amount?: number
@@ -967,6 +978,7 @@ export type Database = {
           pix_payload?: string | null
           pix_qr_image?: string | null
           platform_amount?: number
+          reminded_at?: string | null
           split?: Json
           status?: string
           subtotal?: number
@@ -976,6 +988,44 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "photo_orders_album_id_fkey"
+            columns: ["album_id"]
+            isOneToOne: false
+            referencedRelation: "photo_albums"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      photo_searches: {
+        Row: {
+          album_id: string
+          created_at: string
+          email: string
+          id: string
+          matches: number
+          reminded_at: string | null
+          user_id: string
+        }
+        Insert: {
+          album_id: string
+          created_at?: string
+          email: string
+          id?: string
+          matches?: number
+          reminded_at?: string | null
+          user_id: string
+        }
+        Update: {
+          album_id?: string
+          created_at?: string
+          email?: string
+          id?: string
+          matches?: number
+          reminded_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "photo_searches_album_id_fkey"
             columns: ["album_id"]
             isOneToOne: false
             referencedRelation: "photo_albums"
