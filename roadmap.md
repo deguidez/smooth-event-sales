@@ -23,4 +23,4 @@
 - [x] Cupons de desconto (aba Cupons do super admin + campo no checkout)
 - [x] Upload de capa do evento + documentos (PDF/link: regulamento, resultado)
 - [x] Kit com camisa + produtos extras com foto no checkout
-- [ ] Enviar fotos/vídeos ao cliente assim que pagar (álbum expira em 6 meses): e-mail com links de download dos originais
+- [x] Enviar fotos/vídeos ao cliente assim que pagar: e-mail "fotos_pagas" inclui links de download direto dos originais (sem marca d'água), válidos por 7 dias
