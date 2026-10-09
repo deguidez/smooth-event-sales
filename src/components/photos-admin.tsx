@@ -128,6 +128,9 @@ function AlbumDialog({ album, events, onClose }: { album: any; events: any[]; on
     event_id: "", active: false, owner_percent: 10, platform_percent: 20, photographer_percent: 70, photo_price: 15, video_price: 30,
     tiers: [], pkg_all_photos: "", pkg_all_videos: "", pkg_all: "", watermark_photo_url: null, watermark_video_url: null, owner_sees_total: false, ...album,
   });
+  const [newEv, setNewEv] = useState<any>({ title: "", starts_at: "", city: "", state: "", category: "outro" });
+  const creatingEvent = !f.id && f.event_id === "__new__";
+  const newEvValid = newEv.title.trim().length >= 3 && newEv.starts_at.length >= 10;
   const sum = Number(f.owner_percent) + Number(f.platform_percent) + Number(f.photographer_percent);
   async function submit() {
     try {
