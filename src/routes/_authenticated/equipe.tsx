@@ -3,10 +3,11 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
-import { Copy, RefreshCw, Trash2, UserPlus, Users, X } from "lucide-react";
+import { Copy, Pencil, RefreshCw, Trash2, UserPlus, Users, X } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -15,7 +16,7 @@ import { CustomFieldsForm } from "@/components/custom-fields";
 import { computeFees, type Method } from "@/lib/fees";
 import { brl, fmtDate, METHOD_LABEL, onlyDigits, ORDER_STATUS } from "@/lib/format";
 import {
-  cancelTeamOrders, createTeamOrders, getTeamState, inviteByCpf, listTeamEvents, listTeamOrders, refreshTeamOrders, removeTeamMember,
+  cancelTeamOrders, createTeamOrders, getTeamAthlete, getTeamState, inviteByCpf, listTeamEvents, listTeamOrders, refreshTeamOrders, removeTeamMember, updateTeamAthlete,
 } from "@/lib/team.functions";
 
 const TITLE = "Minha equipe — Evenon";
