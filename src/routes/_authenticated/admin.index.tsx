@@ -21,7 +21,7 @@ import { SalesChart, StatCard, toCsv } from "@/components/dash";
 import { supabase } from "@/integrations/supabase/client";
 import { AdminGate } from "@/components/admin-gate";
 import { createProducerWallet, listUsers, setUserRole, updateProducer, updateUser, adminCreateProducer, deleteProducer, adminCreateUser, deleteUser } from "@/lib/admin.functions";
-import { adminGetPhotographer, adminUpdatePhotographer } from "@/lib/photos.functions";
+import { adminGetPhotographer, adminUpdatePhotographer, adminRemovePhotographer } from "@/lib/photos.functions";
 import { CouponsAdmin } from "@/components/coupons-admin";
 import { ActivityLogView } from "@/components/activity-log-view";
 import { loadFinancialOrders, loadFinancialSummary } from "@/lib/financial";
@@ -132,6 +132,8 @@ function UserDialog({ u, onClose, onSaved }: { u: any; onClose: () => void; onSa
   const del = useServerFn(deleteUser);
   const loadPh = useServerFn(adminGetPhotographer);
   const savePh = useServerFn(adminUpdatePhotographer);
+  const removePh = useServerFn(adminRemovePhotographer);
+  const qc = useQueryClient();
   const [busy, setBusy] = useState(false);
   const { data: phData } = useQuery({ queryKey: ["admin-photographer", u.id], queryFn: () => loadPh({ data: { userId: u.id } }) });
   const ph = phData?.photographer;
@@ -175,6 +177,17 @@ function UserDialog({ u, onClose, onSaved }: { u: any; onClose: () => void; onSa
     try {
       await del({ data: { userId: u.id } });
       toast.success("Usuário excluído");
+      onSaved();
+    } catch (e) { toast.error((e as Error).message); } finally { setBusy(false); }
+  }
+  async function removePhotographer() {
+    if (!confirm("Remover o cadastro de fotógrafo deste usuário? Ele perderá o acesso à área do fotógrafo.")) return;
+    setBusy(true);
+    try {
+      const r = await removePh({ data: { userId: u.id } });
+      setPf(null);
+      await qc.invalidateQueries({ queryKey: ["admin-photographer", u.id] });
+      toast.success(r?.suspended ? "Fotógrafo suspenso — ele possui fotos vinculadas, o histórico foi mantido" : "Cadastro de fotógrafo removido");
       onSaved();
     } catch (e) { toast.error((e as Error).message); } finally { setBusy(false); }
   }
