@@ -72,6 +72,9 @@ function ManageEvent() {
         ends_at: f.ends_at ? new Date(f.ends_at).toISOString() : null,
         registration_ends_at: f.registration_ends_at ? new Date(f.registration_ends_at).toISOString() : null,
         registrations_open_at: f.registrations_open_at ? new Date(f.registrations_open_at).toISOString() : null,
+        queue_enabled: !!f.queue_enabled,
+        queue_capacity: Math.max(1, Number(f.queue_capacity) || 200),
+        queue_window_minutes: Math.max(1, Number(f.queue_window_minutes) || 10),
         registration_limit: f.registration_limit === "" || f.registration_limit == null ? null : Math.max(1, Number(f.registration_limit)),
         ...(status ? { status: status as any } : {}),
       })
@@ -129,6 +132,13 @@ function ManageEvent() {
             <F l="Abertura das inscrições (opcional)"><Input type="datetime-local" value={f.registrations_open_at ?? ""} onChange={set("registrations_open_at")} /></F>
             <F l="Fim das inscrições (opcional)"><Input type="datetime-local" value={f.registration_ends_at ?? ""} onChange={set("registration_ends_at")} /></F>
             <F l="Total de inscrições liberadas (vazio = sem limite)"><Input type="number" min="1" value={f.registration_limit} onChange={set("registration_limit")} placeholder="Ex.: 500 (somando todos os lotes)" /></F>
+            <F l="Fila de espera (para muitos acessos ao mesmo tempo)" c="sm:col-span-2">
+              <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={!!f.queue_enabled} onChange={(e) => setF({ ...f, queue_enabled: e.target.checked })} /> Ativar fila de espera neste evento</label>
+            </F>
+            {f.queue_enabled && <>
+              <F l="Pessoas se inscrevendo ao mesmo tempo"><Input type="number" min="1" value={f.queue_capacity ?? 200} onChange={set("queue_capacity")} /></F>
+              <F l="Tempo para concluir quando chegar a vez (minutos)"><Input type="number" min="1" value={f.queue_window_minutes ?? 10} onChange={set("queue_window_minutes")} placeholder="Ex.: 10 (1 dia = 1440)" /></F>
+            </>}
             <F l="Local"><Input value={f.venue ?? ""} onChange={set("venue")} /></F>
             <div className="grid grid-cols-[1fr_80px] gap-3">
               <F l="Cidade"><Input value={f.city ?? ""} onChange={set("city")} /></F>
