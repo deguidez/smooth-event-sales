@@ -412,8 +412,10 @@ export const adminUpdatePhotographer = createServerFn({ method: "POST" })
     const { userId, ...row } = data;
     const admin = await getAdmin();
     const { data: ex } = await admin.from("photographers").select("user_id").eq("user_id", userId).maybeSingle();
-    if (!ex) throw new Error("Este usuário não tem cadastro de fotógrafo");
-    const { error } = await admin.from("photographers").update({ ...row, bank: row.bank as any }).eq("user_id", userId);
+    const payload = { ...row, bank: row.bank as any };
+    const { error } = ex
+      ? await admin.from("photographers").update(payload).eq("user_id", userId)
+      : await admin.from("photographers").insert({ user_id: userId, ...payload });
     if (error) throw new Error(error.message);
     return { ok: true };
   });
