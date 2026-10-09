@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import { CreditCard, Minus, Plus, QrCode, Receipt, ShieldCheck } from "lucide-react";
 import { computeFees } from "@/lib/fees";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -45,7 +46,7 @@ function Checkout() {
   const [method, setMethod] = useState<"PIX" | "BOLETO" | "CREDIT_CARD">("PIX");
   const [installments, setInstallments] = useState(1);
   const [busy, setBusy] = useState(false);
-  const [f, setF] = useState({ name: "", email: "", cpf: "", phone: "", birth_date: "", gender: "", shirt_size: "", team: "" });
+  const [f, setF] = useState({ name: "", email: "", cpf: "", phone: "", birth_date: "", gender: "", shirt_size: "", team: "", emergency_contact_name: "", emergency_contact_phone: "", is_pcd: false, pcd_description: "" });
   const [answers, setAnswers] = useState<Record<string, any>>({});
   const [accepted, setAccepted] = useState<string[]>([]);
   const applyCoupon = useServerFn(checkCoupon);
@@ -69,6 +70,10 @@ function Checkout() {
           phone: data?.phone ?? "",
           birth_date: data?.birth_date ?? "",
           gender: data?.gender ?? "",
+          emergency_contact_name: data?.emergency_contact_name ?? "",
+          emergency_contact_phone: data?.emergency_contact_phone ?? "",
+          is_pcd: data?.is_pcd ?? false,
+          pcd_description: data?.pcd_description ?? "",
         }));
       });
   }, [user]);
@@ -112,7 +117,7 @@ function Checkout() {
       const cpf = onlyDigits(f.cpf);
       await supabase
         .from("profiles")
-        .update({ full_name: f.name, cpf, phone: f.phone, birth_date: f.birth_date || null, gender: f.gender || null })
+        .update({ full_name: f.name, cpf, phone: f.phone, birth_date: f.birth_date || null, gender: f.gender || null, emergency_contact_name: f.emergency_contact_name || null, emergency_contact_phone: f.emergency_contact_phone || null, is_pcd: f.is_pcd, pcd_description: f.is_pcd ? f.pcd_description || null : null })
         .eq("id", user.id);
       const r = await submitOrder({
         data: {
@@ -170,6 +175,15 @@ function Checkout() {
           )}
           {info.event.category === "esporte" && (
             <Field label="Equipe / assessoria"><Input value={f.team} onChange={set("team")} maxLength={100} /></Field>
+          )}
+          <Field label="Contato de emergência (nome)"><Input value={f.emergency_contact_name} onChange={set("emergency_contact_name")} maxLength={120} placeholder="Nome de quem avisar" /></Field>
+          <Field label="Telefone de emergência"><Input value={f.emergency_contact_phone} onChange={set("emergency_contact_phone")} maxLength={20} placeholder="(11) 99999-9999" /></Field>
+          <div className="flex items-center gap-2 sm:col-span-2">
+            <Checkbox id="checkout-pcd" checked={f.is_pcd} onCheckedChange={(v) => setF({ ...f, is_pcd: v === true })} />
+            <Label htmlFor="checkout-pcd" className="cursor-pointer text-sm font-normal">Sou pessoa com deficiência (PCD)</Label>
+          </div>
+          {f.is_pcd && (
+            <Field label="Qual deficiência?" className="sm:col-span-2"><Input value={f.pcd_description} onChange={set("pcd_description")} maxLength={200} placeholder="Ex.: mobilidade reduzida, deficiência visual..." /></Field>
           )}
           <CustomFieldsForm fields={parseFields(info.event.custom_fields)} answers={answers} onChange={setAnswers} />
         </section>

@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { Calendar, Ticket } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -109,7 +110,7 @@ function Stat({ n, l }: { n: number; l: string }) {
 function ProfileForm() {
   const { user } = useAuth();
   const qc = useQueryClient();
-  const [f, setF] = useState({ full_name: "", cpf: "", phone: "", birth_date: "", city: "", state: "" });
+  const [f, setF] = useState({ full_name: "", cpf: "", phone: "", birth_date: "", city: "", state: "", emergency_contact_name: "", emergency_contact_phone: "", is_pcd: false, pcd_description: "" });
   useEffect(() => {
     if (!user) return;
     supabase.from("profiles").select("*").eq("id", user.id).single().then(({ data }) => {
@@ -121,6 +122,10 @@ function ProfileForm() {
           birth_date: data.birth_date ?? "",
           city: data.city ?? "",
           state: data.state ?? "",
+          emergency_contact_name: data.emergency_contact_name ?? "",
+          emergency_contact_phone: data.emergency_contact_phone ?? "",
+          is_pcd: data.is_pcd ?? false,
+          pcd_description: data.pcd_description ?? "",
         });
     });
   }, [user]);
@@ -145,6 +150,15 @@ function ProfileForm() {
       <div className="space-y-1.5"><Label>Nascimento</Label><Input type="date" value={f.birth_date} onChange={set("birth_date")} /></div>
       <div className="space-y-1.5"><Label>Cidade</Label><Input value={f.city} onChange={set("city")} /></div>
       <div className="space-y-1.5"><Label>UF</Label><Input value={f.state} onChange={set("state")} maxLength={2} /></div>
+      <div className="space-y-1.5"><Label>Contato de emergência (nome)</Label><Input value={f.emergency_contact_name} onChange={set("emergency_contact_name")} maxLength={120} placeholder="Nome de quem avisar" /></div>
+      <div className="space-y-1.5"><Label>Telefone de emergência</Label><Input value={f.emergency_contact_phone} onChange={set("emergency_contact_phone")} maxLength={20} placeholder="(11) 99999-9999" /></div>
+      <div className="flex items-center gap-2 sm:col-span-2">
+        <Checkbox id="is_pcd" checked={f.is_pcd} onCheckedChange={(v) => setF({ ...f, is_pcd: v === true })} />
+        <Label htmlFor="is_pcd" className="cursor-pointer font-normal">Sou pessoa com deficiência (PCD)</Label>
+      </div>
+      {f.is_pcd && (
+        <div className="space-y-1.5 sm:col-span-2"><Label>Qual deficiência?</Label><Input value={f.pcd_description} onChange={set("pcd_description")} maxLength={200} placeholder="Ex.: mobilidade reduzida, deficiência visual..." /></div>
+      )}
       <div className="sm:col-span-2"><Button variant="hero" type="submit">Salvar</Button></div>
     </form>
   );

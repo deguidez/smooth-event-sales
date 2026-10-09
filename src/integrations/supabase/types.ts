@@ -880,9 +880,13 @@ export type Database = {
           cpf: string | null
           created_at: string
           email: string | null
+          emergency_contact_name: string | null
+          emergency_contact_phone: string | null
           full_name: string | null
           gender: string | null
           id: string
+          is_pcd: boolean
+          pcd_description: string | null
           phone: string | null
           state: string | null
           updated_at: string
@@ -894,9 +898,13 @@ export type Database = {
           cpf?: string | null
           created_at?: string
           email?: string | null
+          emergency_contact_name?: string | null
+          emergency_contact_phone?: string | null
           full_name?: string | null
           gender?: string | null
           id: string
+          is_pcd?: boolean
+          pcd_description?: string | null
           phone?: string | null
           state?: string | null
           updated_at?: string
@@ -908,9 +916,13 @@ export type Database = {
           cpf?: string | null
           created_at?: string
           email?: string | null
+          emergency_contact_name?: string | null
+          emergency_contact_phone?: string | null
           full_name?: string | null
           gender?: string | null
           id?: string
+          is_pcd?: boolean
+          pcd_description?: string | null
           phone?: string | null
           state?: string | null
           updated_at?: string
