@@ -33,10 +33,12 @@ const round = (n: number) => Math.round(n * 100) / 100;
  * Se a transferência falhou ou foi cancelada, o valor volta ao saldo
  * (status "falhou" não é contado como sacado).
  */
-async function reconcileProcessing(table: "withdrawals" | "platform_withdrawals", scope: { column: string; value: string }) {
+async function reconcileProcessing(table: "withdrawals" | "platform_withdrawals", scope?: { column: string; value: string }) {
   const a = await admin();
-  const { data: rows } = await a.from(table).select("id, producer_id, user_id, asaas_transfer_id")
-    .eq("status", "processando").eq(scope.column, scope.value).not("asaas_transfer_id", "is", null);
+  let q = a.from(table).select("id, producer_id, user_id, asaas_transfer_id")
+    .eq("status", "processando").not("asaas_transfer_id", "is", null);
+  if (scope) q = q.eq(scope.column, scope.value);
+  const { data: rows } = await q;
   if (!rows?.length) return;
   const { data: s } = await a.from("platform_settings").select("asaas_env, asaas_api_key").eq("id", 1).single();
   if (!s?.asaas_env) return;
