@@ -544,7 +544,7 @@ export const inviteAlbumPhotographerByEmail = createServerFn({ method: "POST" })
       const origin = host ? `https://${host}` : url?.origin;
       const { data: inv, error } = await admin.auth.admin.inviteUserByEmail(data.email, {
         data: { full_name: data.name || "" },
-        redirectTo: origin ? `${origin}/fotografo` : undefined,
+        ...(origin ? { redirectTo: `${origin}/fotografo` } : {}),
       });
       if (error || !inv?.user) throw new Error("Não foi possível convidar: " + (error?.message ?? "erro"));
       userId = inv.user.id;
@@ -553,14 +553,14 @@ export const inviteAlbumPhotographerByEmail = createServerFn({ method: "POST" })
     const { data: ph } = await admin.from("photographers").select("status").eq("user_id", userId).maybeSingle();
     if (!ph) {
       const { error } = await admin.from("photographers").insert({
-        user_id: userId, name: data.name || prof?.full_name || data.email.split("@")[0],
+        user_id: userId!, name: data.name || prof?.full_name || data.email.split("@")[0],
         document: (prof?.cpf ?? "").replace(/\D/g, ""), phone: prof?.phone ?? null, status: "aprovado",
       });
       if (error) throw new Error(error.message);
     } else if (ph.status !== "aprovado") {
       await admin.from("photographers").update({ status: "aprovado" }).eq("user_id", userId);
     }
-    const { error } = await admin.from("album_photographers").upsert({ album_id: data.albumId, user_id: userId, status: "convidado" }, { onConflict: "album_id,user_id", ignoreDuplicates: true });
+    const { error } = await admin.from("album_photographers").upsert({ album_id: data.albumId, user_id: userId!, status: "convidado" }, { onConflict: "album_id,user_id", ignoreDuplicates: true });
     if (error) throw new Error(error.message);
     return { ok: true, created };
   });
