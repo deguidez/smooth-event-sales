@@ -245,6 +245,9 @@ function AlbumDashboard({ albumId, onBack }: { albumId: string; onBack: () => vo
   const qc = useQueryClient();
   const { data: d } = useQuery({ queryKey: ["photo-dash", albumId], queryFn: () => load({ data: { albumId } }) });
   const [pick, setPick] = useState("");
+  const inviteEmail = useServerFn(inviteAlbumPhotographerByEmail);
+  const [invEmail, setInvEmail] = useState("");
+  const [invName, setInvName] = useState("");
   const [links, setLinks] = useState<{ order: any; items: any[] } | null>(null);
   const [orderFilter, setOrderFilter] = useState("todos");
   useEffect(() => setPick(""), [albumId]);
@@ -283,6 +286,12 @@ function AlbumDashboard({ albumId, onBack }: { albumId: string; onBack: () => vo
             </Select>
             <Button disabled={!pick} onClick={async () => { try { await invite({ data: { albumId, userId: pick } }); toast.success("Convite enviado"); setPick(""); refresh(); } catch (e: any) { toast.error(e.message); } }}><UserPlus /> Convidar</Button>
           </div>
+        </div>
+        <div className="flex flex-wrap items-center gap-2 rounded-2xl border bg-card p-3">
+          <span className="text-sm font-semibold">Convidar por e-mail:</span>
+          <Input className="w-48" placeholder="Nome (opcional)" value={invName} onChange={(e) => setInvName(e.target.value)} />
+          <Input className="w-64" type="email" placeholder="email@exemplo.com" value={invEmail} onChange={(e) => setInvEmail(e.target.value)} />
+          <Button variant="outline" disabled={!invEmail.includes("@")} onClick={async () => { try { const r = await inviteEmail({ data: { albumId, email: invEmail, name: invName || undefined } }); toast.success(r.created ? "Conta criada e convite enviado por e-mail" : "Convite enviado — ele aceita na Área do fotógrafo"); setInvEmail(""); setInvName(""); refresh(); } catch (e: any) { toast.error(e.message); } }}><UserPlus /> Enviar convite</Button>
         </div>
         <div className="overflow-x-auto rounded-2xl border bg-card shadow-card">
           <Table>
