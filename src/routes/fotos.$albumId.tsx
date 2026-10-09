@@ -180,7 +180,7 @@ function Cart({ open, onOpenChange, album, albumId, cart, media, embedding, matc
           <div className="text-sm">
             <p>{photos} fotos × {brl(t.photoUnit)}</p>
             <p>{videos} vídeos × {brl(t.videoUnit)}</p>
-            {(album.tiers ?? []).length > 0 && <p className="mt-1 text-xs text-muted-foreground">Desconto progressivo: {(album.tiers as any[]).map((x) => `${x.min_qty}+ ${x.photo_price ? `foto ${brl(x.photo_price)}` : ""}${x.video_price ? ` vídeo ${brl(x.video_price)}` : ""}`).join(" · ")}</p>}
+            {(album.tiers ?? []).length > 0 && <p className="mt-1 text-xs text-muted-foreground">Desconto progressivo: {(album.tiers as any[]).map((x) => `${x.min_qty}+ itens: ${x.discount_percent ?? 0}% off`).join(" · ")}</p>}
           </div>
           {packages.length > 0 && (
             <div className="space-y-2">
