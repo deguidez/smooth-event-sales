@@ -1,23 +1,42 @@
-// Armazenamento de fotos/vídeos: VPS (MinIO compatível com S3) quando configurado,
-// senão o armazenamento da nuvem (arquivos antigos continuam onde estão: coluna media_items.storage).
+// Armazenamento de fotos/vídeos: nuvem (padrão) ou VPS (MinIO compatível com S3).
+// A escolha e o endereço/bucket ficam em platform_settings (Super admin → Fotos);
+// as chaves de acesso da VPS continuam em segredos do servidor (env).
+// Arquivos antigos continuam onde estão: coluna media_items.storage.
 import { AwsClient } from "aws4fetch";
 
 export type Kind = "original" | "preview";
 
-function cfg() {
-  const endpoint = process.env["VPS_S3_ENDPOINT"]?.replace(/\/+$/, "");
+type VpsCfg = { endpoint: string; bucket: string; client: AwsClient };
+
+async function cfg(): Promise<VpsCfg | null> {
   const accessKeyId = process.env["VPS_S3_ACCESS_KEY"];
   const secretAccessKey = process.env["VPS_S3_SECRET_KEY"];
-  const bucket = process.env["VPS_S3_BUCKET"] || "evenon-fotos";
+  let endpoint = process.env["VPS_S3_ENDPOINT"]?.replace(/\/+$/, "") ?? null;
+  let bucket = process.env["VPS_S3_BUCKET"] || "evenon-fotos";
+  try {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: s } = await supabaseAdmin
+      .from("platform_settings")
+      .select("media_storage, media_vps_endpoint, media_vps_bucket")
+      .eq("id", 1)
+      .maybeSingle();
+    if (s) {
+      if (s.media_storage !== "vps") return null; // nuvem é o padrão e a escolha atual
+      endpoint = s.media_vps_endpoint?.replace(/\/+$/, "") || endpoint;
+      bucket = s.media_vps_bucket || bucket;
+    }
+  } catch {
+    // sem acesso às configurações, cai no comportamento por env
+  }
   if (!endpoint || !accessKeyId || !secretAccessKey) return null;
   return { endpoint, bucket, client: new AwsClient({ accessKeyId, secretAccessKey, service: "s3", region: process.env["VPS_S3_REGION"] || "us-east-1" }) };
 }
 
-export const vpsEnabled = () => !!cfg();
+export const vpsEnabled = async () => !!(await cfg());
 
 /** Diagnóstico (somente admin): testa listagem do bucket na VPS. */
 export async function vpsCheck() {
-  const c = cfg();
+  const c = await cfg();
   if (!c) return { enabled: false as const };
   try {
     const res = await c.client.fetch(`${c.endpoint}/${c.bucket}?list-type=2&max-keys=1`, { method: "GET" });
@@ -37,7 +56,7 @@ export const vpsKey = (path: string, kind: Kind, isVideo: boolean) => {
 };
 
 async function presign(method: "GET" | "PUT" | "DELETE", key: string, seconds: number, download?: boolean) {
-  const c = cfg()!;
+  const c = (await cfg())!;
   const url = new URL(`${c.endpoint}/${c.bucket}/${key.split("/").map(encodeURIComponent).join("/")}`);
   url.searchParams.set("X-Amz-Expires", String(seconds));
   if (download) url.searchParams.set("response-content-disposition", `attachment; filename="${key.split("/").pop()}"`);
@@ -87,7 +106,7 @@ export async function removeMedia(m: { storage: string; kind: string; original_p
 
 /** Teste de conexão para o super admin. */
 export async function testVps() {
-  if (!cfg()) return { ok: false, message: "Dados da VPS ainda não cadastrados" };
+  if (!(await cfg())) return { ok: false, message: "Dados da VPS ainda não cadastrados" };
   const key = `_teste/${crypto.randomUUID()}.txt`;
   const put = await fetch(await presign("PUT", key, 300), { method: "PUT", body: "ok" }).catch((e) => ({ ok: false, status: 0, statusText: String(e) }) as any);
   if (!put.ok) return { ok: false, message: `Falha ao gravar na VPS (${put.status} ${put.statusText})` };
