@@ -898,6 +898,7 @@ export type Database = {
           pcd_description: string | null
           phone: string | null
           state: string | null
+          team: string | null
           updated_at: string
         }
         Insert: {
@@ -916,6 +917,7 @@ export type Database = {
           pcd_description?: string | null
           phone?: string | null
           state?: string | null
+          team?: string | null
           updated_at?: string
         }
         Update: {
@@ -934,6 +936,7 @@ export type Database = {
           pcd_description?: string | null
           phone?: string | null
           state?: string | null
+          team?: string | null
           updated_at?: string
         }
         Relationships: []
