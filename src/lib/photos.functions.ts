@@ -48,6 +48,17 @@ export const getPhotographerMe = createServerFn({ method: "GET" })
     return { me, invites: invites ?? [] };
   });
 
+export const getPhotographerMenuAccess = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const admin = await getAdmin();
+    const [{ data: ph }, { data: inv }] = await Promise.all([
+      admin.from("photographers").select("id").eq("user_id", context.userId).limit(1),
+      admin.from("album_photographers").select("id").eq("user_id", context.userId).limit(1),
+    ]);
+    return { allowed: !!ph?.length || !!inv?.length };
+  });
+
 export const savePhotographer = createServerFn({ method: "POST" })
   .middleware([auditedAction("savePhotographer")])
   .inputValidator((d) => z.object({
