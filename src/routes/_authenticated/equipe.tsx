@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Copy, Pencil, RefreshCw, Trash2, UserPlus, Users, X } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -70,6 +70,7 @@ function Members({ members }: { members: Member[] }) {
   const qc = useQueryClient();
   const [cpf, setCpf] = useState("");
   const [busy, setBusy] = useState(false);
+  const [editing, setEditing] = useState<Member | null>(null);
   async function add(e: React.FormEvent) {
     e.preventDefault();
     setBusy(true);
@@ -135,7 +136,7 @@ function AthleteDialog({ member, onClose }: { member: Member; onClose: () => voi
   const [cpf, setCpf] = useState("");
   const [busy, setBusy] = useState(false);
 
-  useState(() => {
+  useEffect(() => {
     get({ data: { memberId: member.id } }).then((p: any) => {
       setCpf(p.cpf ?? "");
       setForm({
