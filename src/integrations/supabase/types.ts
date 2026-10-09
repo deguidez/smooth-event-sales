@@ -419,6 +419,98 @@ export type Database = {
           },
         ]
       }
+      kit_access: {
+        Row: {
+          active: boolean
+          created_at: string
+          event_id: string
+          token: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          event_id: string
+          token: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          event_id?: string
+          token?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "kit_access_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: true
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      kit_deliveries: {
+        Row: {
+          delivered_at: string
+          event_id: string
+          id: string
+          ip: string | null
+          items: Json
+          operator_name: string
+          order_id: string
+          photo_path: string | null
+          receiver_type: string
+          third_cpf: string | null
+          third_name: string | null
+          third_phone: string | null
+          user_agent: string | null
+        }
+        Insert: {
+          delivered_at?: string
+          event_id: string
+          id?: string
+          ip?: string | null
+          items?: Json
+          operator_name: string
+          order_id: string
+          photo_path?: string | null
+          receiver_type?: string
+          third_cpf?: string | null
+          third_name?: string | null
+          third_phone?: string | null
+          user_agent?: string | null
+        }
+        Update: {
+          delivered_at?: string
+          event_id?: string
+          id?: string
+          ip?: string | null
+          items?: Json
+          operator_name?: string
+          order_id?: string
+          photo_path?: string | null
+          receiver_type?: string
+          third_cpf?: string | null
+          third_name?: string | null
+          third_phone?: string | null
+          user_agent?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "kit_deliveries_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "kit_deliveries_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: true
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       orders: {
         Row: {
           accepted_terms: Json

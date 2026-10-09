@@ -14,6 +14,7 @@ import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedEquipeRouteImport } from './routes/_authenticated/equipe'
 import { Route as AuthenticatedMinhaContaRouteImport } from './routes/_authenticated/minha-conta'
+import { Route as EntregaKitTokenRouteImport } from './routes/entrega-kit.$token'
 import { Route as EventosIndexRouteImport } from './routes/eventos.index'
 import { Route as EventosSlugRouteImport } from './routes/eventos.$slug'
 import { Route as WebhookAsaasRouteImport } from './routes/webhook.asaas'
@@ -51,6 +52,11 @@ const AuthenticatedMinhaContaRoute = AuthenticatedMinhaContaRouteImport.update({
   id: '/minha-conta',
   path: '/minha-conta',
   getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const EntregaKitTokenRoute = EntregaKitTokenRouteImport.update({
+  id: '/entrega-kit/$token',
+  path: '/entrega-kit/$token',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const EventosIndexRoute = EventosIndexRouteImport.update({
   id: '/eventos/',
@@ -129,6 +135,7 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/equipe': typeof AuthenticatedEquipeRoute
   '/minha-conta': typeof AuthenticatedMinhaContaRoute
+  '/entrega-kit/$token': typeof EntregaKitTokenRoute
   '/eventos/$slug': typeof EventosSlugRoute
   '/webhook/asaas': typeof WebhookAsaasRoute
   '/eventos/': typeof EventosIndexRoute
@@ -148,6 +155,7 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/equipe': typeof AuthenticatedEquipeRoute
   '/minha-conta': typeof AuthenticatedMinhaContaRoute
+  '/entrega-kit/$token': typeof EntregaKitTokenRoute
   '/eventos/$slug': typeof EventosSlugRoute
   '/webhook/asaas': typeof WebhookAsaasRoute
   '/eventos': typeof EventosIndexRoute
@@ -169,6 +177,7 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/_authenticated/equipe': typeof AuthenticatedEquipeRoute
   '/_authenticated/minha-conta': typeof AuthenticatedMinhaContaRoute
+  '/entrega-kit/$token': typeof EntregaKitTokenRoute
   '/eventos/$slug': typeof EventosSlugRoute
   '/webhook/asaas': typeof WebhookAsaasRoute
   '/eventos/': typeof EventosIndexRoute
@@ -190,6 +199,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/equipe'
     | '/minha-conta'
+    | '/entrega-kit/$token'
     | '/eventos/$slug'
     | '/webhook/asaas'
     | '/eventos/'
@@ -209,6 +219,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/equipe'
     | '/minha-conta'
+    | '/entrega-kit/$token'
     | '/eventos/$slug'
     | '/webhook/asaas'
     | '/eventos'
@@ -229,6 +240,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/_authenticated/equipe'
     | '/_authenticated/minha-conta'
+    | '/entrega-kit/$token'
     | '/eventos/$slug'
     | '/webhook/asaas'
     | '/eventos/'
@@ -248,6 +260,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
+  EntregaKitTokenRoute: typeof EntregaKitTokenRoute
   EventosSlugRoute: typeof EventosSlugRoute
   WebhookAsaasRoute: typeof WebhookAsaasRoute
   EventosIndexRoute: typeof EventosIndexRoute
@@ -292,6 +305,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/minha-conta'
       preLoaderRoute: typeof AuthenticatedMinhaContaRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/entrega-kit/$token': {
+      id: '/entrega-kit/$token'
+      path: '/entrega-kit/$token'
+      fullPath: '/entrega-kit/$token'
+      preLoaderRoute: typeof EntregaKitTokenRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/eventos/': {
       id: '/eventos/'
@@ -418,6 +438,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
+  EntregaKitTokenRoute: EntregaKitTokenRoute,
   EventosSlugRoute: EventosSlugRoute,
   WebhookAsaasRoute: WebhookAsaasRoute,
   EventosIndexRoute: EventosIndexRoute,

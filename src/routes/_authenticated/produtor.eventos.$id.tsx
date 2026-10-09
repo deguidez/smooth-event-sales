@@ -23,6 +23,7 @@ import { parseTerms } from "@/lib/terms";
 import { DescriptionEditor, myMapsEmbed } from "@/components/rich-description";
 import { formatAnswer, parseFields } from "@/lib/custom-fields";
 import { useAuth } from "@/hooks/use-auth";
+import { KitDeliveryPanel } from "@/components/kit-delivery-panel";
 
 export const Route = createFileRoute("/_authenticated/produtor/eventos/$id")({
   validateSearch: (search: Record<string, unknown>): { tab?: string } => typeof search['tab'] === "string" ? { tab: search['tab'] } : {},
@@ -124,6 +125,7 @@ function ManageEvent() {
           <TabsTrigger value="campos">Campos da inscrição</TabsTrigger>
           <TabsTrigger value="termos">Termos</TabsTrigger>
           <TabsTrigger value="inscritos">Inscritos</TabsTrigger>
+          <TabsTrigger value="kits">Entrega de kits</TabsTrigger>
         </TabsList>
         <TabsContent value="dados" className="mt-6">
           <div className="grid min-w-0 grid-cols-[minmax(0,1fr)] gap-4 rounded-2xl border bg-card p-4 shadow-card sm:grid-cols-2 sm:p-6">
@@ -203,6 +205,7 @@ function ManageEvent() {
           </div>
         </TabsContent>
         <TabsContent value="lotes" className="mt-6"><Tickets eventId={id} /></TabsContent>
+        <TabsContent value="kits" className="mt-6"><KitDeliveryPanel eventId={id} title={ev.title} fields={parseFields(ev.custom_fields)} /></TabsContent>
         <TabsContent value="inscritos" className="mt-6"><Attendees eventId={id} title={ev.title} fields={parseFields(ev.custom_fields)} /></TabsContent>
       </Tabs>
     </div>
