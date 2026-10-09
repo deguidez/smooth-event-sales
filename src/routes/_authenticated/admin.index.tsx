@@ -130,7 +130,19 @@ export const Route = createFileRoute("/_authenticated/admin/")({
 function UserDialog({ u, onClose, onSaved }: { u: any; onClose: () => void; onSaved: () => void }) {
   const save = useServerFn(updateUser);
   const del = useServerFn(deleteUser);
+  const loadPh = useServerFn(adminGetPhotographer);
+  const savePh = useServerFn(adminUpdatePhotographer);
   const [busy, setBusy] = useState(false);
+  const { data: phData } = useQuery({ queryKey: ["admin-photographer", u.id], queryFn: () => loadPh({ data: { userId: u.id } }) });
+  const ph = phData?.photographer;
+  const [pf, setPf] = useState<any>(null);
+  const photographer = pf ?? (ph ? {
+    name: ph.name ?? "", document: ph.document ?? "", phone: ph.phone ?? "",
+    asaas_wallet_id: ph.asaas_wallet_id ?? "", status: ph.status ?? "pendente",
+    bank_name: ph.bank?.bank_name ?? "", agency: ph.bank?.agency ?? "", account: ph.bank?.account ?? "",
+    account_type: ph.bank?.account_type ?? "CONTA_CORRENTE", pix_key: ph.bank?.pix_key ?? "",
+  } : null);
+  const setP = (k: string) => (e: React.ChangeEvent<HTMLInputElement>) => setPf({ ...(photographer ?? {}), [k]: e.target.value });
   const [f, setF] = useState({
     full_name: u.full_name ?? "", email: u.email ?? "", phone: u.phone ?? "", cpf: u.cpf ?? "",
     birth_date: u.birth_date ?? "", gender: u.gender ?? "", city: u.city ?? "", state: u.state ?? "", password: "",
