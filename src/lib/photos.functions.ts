@@ -481,7 +481,7 @@ export const saveAlbum = createServerFn({ method: "POST" })
         if (pErr) throw new Error("Não foi possível criar o organizador: " + pErr.message);
         prod = created;
       }
-      const slug = new_event.title.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 60) + "-" + crypto.randomUUID().slice(0, 8);
+      const slug = new_event.title.toLowerCase().normalize("NFD").replace(/\p{Diacritic}/gu, "").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 60) + "-" + crypto.randomUUID().slice(0, 8);
       const { data: ev, error: eErr } = await admin.from("events").insert({
         producer_id: prod.id, title: new_event.title, slug, category: new_event.category,
         city: new_event.city || null, state: new_event.state ? new_event.state.toUpperCase() : null,
