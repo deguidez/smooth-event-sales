@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import { CreditCard, Minus, Plus, QrCode, Receipt, ShieldCheck } from "lucide-react";
 import { computeFees } from "@/lib/fees";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
