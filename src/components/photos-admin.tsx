@@ -111,7 +111,7 @@ export function PhotosAdmin() {
 
   return (
     <div className="space-y-8">
-      <VpsTest />
+      <MediaStorageCard />
       <section className="space-y-3">
         <div className="flex items-center justify-between">
           <h2 className="text-xl font-bold">Álbuns de fotos</h2>
