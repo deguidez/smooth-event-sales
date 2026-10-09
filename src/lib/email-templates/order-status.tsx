@@ -3,7 +3,7 @@ import { Body, Button, Container, Head, Heading, Html, Preview, Text } from '@re
 import type { TemplateEntry } from './registry'
 
 interface Props {
-  kind?: 'inscricao_criada' | 'pagamento_confirmado' | 'pagamento_vencido' | 'inscricao_cancelada' | 'checkout_abandonado' | 'lembrete_evento'
+  kind?: 'inscricao_criada' | 'pagamento_confirmado' | 'pagamento_vencido' | 'inscricao_cancelada' | 'checkout_abandonado' | 'lembrete_evento' | 'fotos_encontradas' | 'fotos_pedido_criado' | 'fotos_nao_pagas' | 'fotos_pagas'
   name?: string
   eventTitle?: string
   code?: string
@@ -17,6 +17,10 @@ const copy = {
   inscricao_cancelada: { title: 'Sua inscrição foi cancelada', text: 'Não identificamos o pagamento no prazo, então a inscrição foi cancelada e a vaga liberada. Ainda dá tempo: faça uma nova inscrição enquanto houver vagas.', cta: 'Inscrever-me novamente' },
   checkout_abandonado: { title: 'Falta pouco para garantir sua vaga', text: 'Você começou sua inscrição mas não finalizou. As vagas são limitadas — conclua agora.', cta: 'Finalizar inscrição' },
   lembrete_evento: { title: 'Seu evento está chegando!', text: 'Faltam poucos dias. Leve o comprovante de inscrição (com QR code) para a retirada do kit.', cta: 'Ver comprovante de retirada' },
+  fotos_encontradas: { title: 'Encontramos suas fotos!', text: 'Você buscou suas fotos e encontramos você no álbum do evento. Elas estão esperando por você — garanta as suas antes que acabe o prazo.', cta: 'Ver minhas fotos' },
+  fotos_pedido_criado: { title: 'Pedido de fotos recebido', text: 'Recebemos seu pedido de fotos. Finalize o pagamento para liberar os arquivos em alta qualidade, sem marca d’água.', cta: 'Pagar meu pedido' },
+  fotos_nao_pagas: { title: 'Seu pedido de fotos ainda não foi pago', text: 'Notamos que o pagamento das suas fotos ainda não foi concluído. Pague agora para liberar os arquivos.', cta: 'Concluir pagamento' },
+  fotos_pagas: { title: 'Suas fotos estão liberadas!', text: 'Pagamento confirmado. Suas fotos e vídeos em alta qualidade, sem marca d’água, ficam no link abaixo, organizados por evento, por 6 meses.', cta: 'Baixar minhas fotos' },
   pagamento_vencido: { title: 'Pagamento não identificado', text: 'O prazo de pagamento da sua inscrição venceu. Acesse para gerar um novo pagamento, se ainda houver vagas.', cta: 'Ver inscrição' },
 }
 

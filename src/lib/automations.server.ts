@@ -9,7 +9,7 @@ const BATCH = 40;
 export async function runAutomations() {
   const admin = await getAdmin();
   const s: any = await loadSettings();
-  const result = { cancelled: 0, paidFound: 0, abandoned: 0, reminders: 0 };
+  const result: Record<string, number> = { cancelled: 0, paidFound: 0, abandoned: 0, reminders: 0 };
 
   // 1) Cancelamento automático (Pix e cartão; boleto respeita o vencimento próprio).
   if (s.auto_cancel_enabled) {
@@ -88,6 +88,12 @@ export async function runAutomations() {
       }
       if (result.reminders >= BATCH) break;
     }
+  }
+  try {
+    const { runPhotoAutomations } = await import("./photo-notify.server");
+    Object.assign(result, await runPhotoAutomations());
+  } catch (e) {
+    console.error("photo automations failed", e);
   }
   return result;
 }
