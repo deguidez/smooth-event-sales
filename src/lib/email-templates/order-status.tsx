@@ -9,6 +9,7 @@ interface Props {
   code?: string
   total?: string
   url?: string
+  downloads?: { label: string; url: string }[]
 }
 
 const copy = {
@@ -24,7 +25,7 @@ const copy = {
   pagamento_vencido: { title: 'Pagamento não identificado', text: 'O prazo de pagamento da sua inscrição venceu. Acesse para gerar um novo pagamento, se ainda houver vagas.', cta: 'Ver inscrição' },
 }
 
-function OrderStatusEmail({ kind = 'inscricao_criada', name = 'Atleta', eventTitle = 'seu evento', code = '', total = '', url = 'https://evenon.com.br' }: Props) {
+function OrderStatusEmail({ kind = 'inscricao_criada', name = 'Atleta', eventTitle = 'seu evento', code = '', total = '', url = 'https://evenon.com.br', downloads = [] }: Props) {
   const c = copy[kind] ?? copy.inscricao_criada
   return (
     <Html lang="pt-BR">
