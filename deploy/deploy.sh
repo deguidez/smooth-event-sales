@@ -15,6 +15,14 @@ git fetch origin "$BRANCH"
 git checkout "$BRANCH"
 git reset --hard "origin/$BRANCH"
 
+# Variáveis do servidor (banco, chaves, e-mail). Ficam só na VPS.
+if [ -f "$APP_DIR/.env.production" ]; then
+  set -a
+  # shellcheck disable=SC1091
+  . "$APP_DIR/.env.production"
+  set +a
+fi
+
 echo "==> Dependências"
 bun install --frozen-lockfile
 
