@@ -25,3 +25,9 @@
 - [x] Kit com camisa + produtos extras com foto no checkout
 - [x] Enviar fotos/vídeos ao cliente assim que pagar: e-mail "fotos_pagas" inclui links de download direto dos originais (sem marca d'água), válidos por 7 dias
 - [x] Carteira Asaas opcional no cadastro do fotógrafo
+
+- [ ] Migração completa para a VPS (aaPanel): site em Node/PM2, banco de dados self-hosted, MinIO e webhook Asaas
+  - [x] Arquivos de instalação do site na VPS (build Node, PM2, proxy nginx, script de atualização)
+  - [ ] Banco self-hosted no aaPanel com os dados atuais copiados (inscrições, produtores, pedidos, cupons, configurações)
+  - [ ] Logins recriados no novo banco (e-mails e senhas) — depende da instância nova estar no ar
+  - [ ] Webhook Asaas, Google, domínio evenon.com.br e e-mails apontando para a VPS
